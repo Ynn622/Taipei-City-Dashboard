@@ -1,6 +1,11 @@
 import { defineStore } from "pinia";
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import http from "../router/axios";
+import {
+	COMPONENT_GEOJSON_FALLBACKS,
+	buildFallbackChartData,
+	localSuggestion,
+} from "../components/value-added/valueAddedAnalytics";
 
 
 export const useValueAddedStore = defineStore("valueAdded", () => {
@@ -12,50 +17,92 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 	});
 
 	const componentCache = reactive(new Map());
+	const geoJsonCache = reactive(new Map());
 	const llmResult = reactive(new Map());
+	const profileVersion = ref(0);
 
 	function loadProfile() {
 		const saved = localStorage.getItem("valueAdded_profile");
 		if (saved) {
-			Object.assign(userProfile, JSON.parse(saved));
+			try {
+				Object.assign(userProfile, JSON.parse(saved));
+			} catch (error) {
+				console.error("ValueAddedProfileParseError:", error);
+			}
 		}
 	}
 
 	function saveProfile(profile) {
 		Object.assign(userProfile, profile);
 		localStorage.setItem("valueAdded_profile", JSON.stringify(userProfile));
+		profileVersion.value += 1;
+		llmResult.clear();
 	}
 
-	async function fetchComponentData(id) {
-		if (componentCache.has(id)) {
-			return componentCache.get(id);
+	async function fetchComponentData(id, options = {}) {
+		const city = options.city || "metrotaipei";
+		const cacheKey = `${id}:${city}`;
+		if (componentCache.has(cacheKey)) {
+			return componentCache.get(cacheKey);
+		}
+
+		const fallbackConfig = COMPONENT_GEOJSON_FALLBACKS[id];
+		if (fallbackConfig && !options.preferApi) {
+			const collections = await fetchGeoJsonFiles(fallbackConfig.files);
+			const fallbackData = buildFallbackChartData(id, collections);
+			componentCache.set(cacheKey, fallbackData);
+			return fallbackData;
 		}
 		
 		try {
-			const res = await http.get(`/component/${id}/chart`);
-			componentCache.set(id, res.data);
+			const res = await http.get(`/component/${id}/chart`, {
+				params: { city },
+			});
+			componentCache.set(cacheKey, res.data);
 			return res.data;
 		} catch (error) {
-			console.error(error);
+			console.error("ValueAddedComponentFetchError:", error);
+			if (!fallbackConfig) return null;
+
+			const collections = await fetchGeoJsonFiles(fallbackConfig.files);
+			const fallbackData = buildFallbackChartData(id, collections);
+			componentCache.set(cacheKey, fallbackData);
+			return fallbackData;
+		}
+	}
+
+	async function fetchGeoJson(fileName) {
+		if (geoJsonCache.has(fileName)) {
+			return geoJsonCache.get(fileName);
+		}
+
+		try {
+			const res = await fetch(`/mapData/${fileName}`);
+			if (!res.ok) throw new Error(`${res.status} ${fileName}`);
+			const data = await res.json();
+			geoJsonCache.set(fileName, data);
+			return data;
+		} catch (error) {
+			console.error("ValueAddedGeoJsonFetchError:", error);
+			geoJsonCache.set(fileName, null);
 			return null;
 		}
 	}
 
+	async function fetchGeoJsonFiles(fileNames) {
+		const results = await Promise.all(fileNames.map((fileName) => fetchGeoJson(fileName)));
+		return results.filter(Boolean);
+	}
+
 	async function fetchLLMSuggestion(featureKey, promptData) {
 		llmResult.set(featureKey, { loading: true, text: "" });
-		
-		try {
-			const res = await http.post("/llm/suggest", {
-				feature: featureKey,
-				profile: userProfile,
-				...promptData,
-			});
-			
-			llmResult.set(featureKey, { loading: false, text: res.data.suggestion || res.data.text || "" });
-		} catch (error) {
-			console.error(error);
-			llmResult.set(featureKey, { loading: false, text: "無法取得 LLM 建議，請稍後再試。" });
-		}
+
+		llmResult.set(featureKey, {
+			loading: false,
+			text: localSuggestion(featureKey, userProfile, promptData?.context),
+			fallback: true,
+		});
+		return llmResult.get(featureKey);
 	}
 
 	loadProfile();
@@ -63,9 +110,12 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 	return {
 		userProfile,
 		componentCache,
+		geoJsonCache,
 		llmResult,
+		profileVersion,
 		saveProfile,
 		fetchComponentData,
+		fetchGeoJsonFiles,
 		fetchLLMSuggestion,
 	};
 });

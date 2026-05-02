@@ -145,7 +145,9 @@ const close = () => {
 .profile-modal-overlay {
   position: fixed;
   inset: 0;
-  background: var(--color-overlay);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: grid;
   place-items: center;
   z-index: 2000;
@@ -153,42 +155,63 @@ const close = () => {
 
   .profile-modal-panel {
     width: min(760px, 100%);
-    border-radius: 5px;
-    border: solid 1px var(--color-border);
+    border-radius: 8px;
+    border: solid 1px rgba(255, 255, 255, 0.1);
     background: var(--color-component-background);
-    box-shadow: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     padding: var(--font-m);
     color: var(--color-normal-text);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
 
     .modal-head {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 0.8rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
 
       .eyebrow {
-        margin: 0 0 0.3rem;
-        font-size: 0.72rem;
-        letter-spacing: 0.16em;
-        color: var(--color-complement-text);
+        margin: 0 0 0.4rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        font-weight: 600;
+        color: var(--color-highlight);
       }
 
       h3 {
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.25rem;
+        font-weight: 800;
         color: var(--color-normal-text);
+        letter-spacing: 0.02em;
       }
 
       .icon-btn {
         width: 32px;
         height: 32px;
-        border-radius: 5px;
-        border: solid 1px var(--color-border);
-        background: transparent;
+        border-radius: 6px;
+        border: solid 1px transparent;
+        background: rgba(255, 255, 255, 0.05);
         color: var(--color-complement-text);
         font-size: 1.2rem;
         cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--color-normal-text);
+        }
       }
     }
   }
@@ -197,13 +220,13 @@ const close = () => {
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1.2rem;
 
     .form-group {
-      flex: 1 1 calc(50% - 0.5rem);
+      flex: 1 1 calc(50% - 0.6rem);
       display: flex;
       flex-direction: column;
-      gap: 0.45rem;
+      gap: 0.5rem;
 
       &.full-row {
         flex-basis: 100%;
@@ -211,56 +234,73 @@ const close = () => {
 
       label {
         font-weight: 600;
-        font-size: 0.82rem;
+        font-size: 0.85rem;
         color: var(--color-complement-text);
+        letter-spacing: 0.02em;
       }
 
       input,
       textarea {
-        padding: 0.62rem 0.72rem;
-        border: solid 1px var(--color-border);
-        border-radius: 5px;
-        background: var(--color-background);
+        padding: 0.75rem 0.85rem;
+        border: solid 1px rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.2);
         color: var(--color-normal-text);
         outline: none;
+        transition: all 0.3s ease;
 
         &::placeholder {
-          color: var(--color-complement-text);
+          color: rgba(255, 255, 255, 0.3);
         }
 
         &:focus {
           border-color: var(--color-highlight);
-          box-shadow: 0 0 0 1px var(--color-highlight);
+          background: rgba(0, 0, 0, 0.3);
+          box-shadow: 0 0 0 3px rgba(90, 156, 248, 0.15);
         }
       }
     }
   }
 
   .modal-actions {
-    margin-top: 1rem;
+    margin-top: 1.8rem;
     display: flex;
     justify-content: flex-end;
-    gap: 0.6rem;
+    gap: 0.8rem;
 
     .ghost-btn,
     .save-btn {
-      border-radius: 0.68rem;
-      padding: 0.5rem 0.92rem;
+      border-radius: 6px;
+      padding: 0.65rem 1.2rem;
       border: 1px solid transparent;
       font-weight: 600;
+      font-size: 0.95rem;
       cursor: pointer;
+      transition: all 0.2s ease;
     }
 
     .ghost-btn {
-      border-color: var(--color-border);
+      border-color: rgba(255, 255, 255, 0.15);
       background: transparent;
       color: var(--color-complement-text);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--color-normal-text);
+      }
     }
 
     .save-btn {
       border-color: var(--color-highlight);
-      background: rgba(90, 156, 248, 0.16);
+      background: rgba(90, 156, 248, 0.1);
       color: var(--color-normal-text);
+      box-shadow: 0 4px 12px rgba(90, 156, 248, 0.1);
+
+      &:hover {
+        background: rgba(90, 156, 248, 0.2);
+        box-shadow: 0 4px 15px rgba(90, 156, 248, 0.2);
+        transform: translateY(-1px);
+      }
     }
   }
 }
@@ -274,7 +314,7 @@ const close = () => {
     }
 
     .modal-actions {
-      justify-content: stretch;
+      flex-direction: column;
 
       .ghost-btn,
       .save-btn {

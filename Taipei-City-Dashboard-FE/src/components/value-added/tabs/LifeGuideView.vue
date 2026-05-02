@@ -17,7 +17,8 @@ import LifeFoodIdentity from "./life/LifeFoodIdentity.vue";
 .tab-view {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.85rem;
+  align-items: start;
 }
 
 @media (max-width: 860px) {

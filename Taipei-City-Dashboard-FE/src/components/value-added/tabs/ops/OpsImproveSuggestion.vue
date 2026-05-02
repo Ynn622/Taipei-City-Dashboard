@@ -1,28 +1,51 @@
-<template>
-  <div class="card">
-    <h3>OpsImproveSuggestion</h3>
-    <p>載入中...</p>
-  </div>
-</template>
+<script setup>
+import { computed, onMounted, ref, watch } from "vue";
+import { useValueAddedStore } from "../../../../store/valueAddedStore";
+import ValueAddedCard from "../../ValueAddedCard.vue";
+import { COMPONENT_IDS, topRows } from "../../valueAddedAnalytics";
 
-<style scoped lang="scss">
-.card {
-  padding: 1rem;
-  border: solid 1px var(--color-border);
-  border-radius: 5px;
-  background: var(--color-component-background);
-  box-shadow: none;
+const store = useValueAddedStore();
+const loading = ref(true);
+const rows = ref([]);
+const featureKey = "operations-improve";
 
-  h3 {
-    margin: 0;
-    color: var(--color-normal-text);
-    font-size: 1rem;
-  }
-
-  p {
-    margin: 0.45rem 0 0;
-    color: var(--color-complement-text);
-    font-size: 0.88rem;
-  }
+async function generate() {
+	loading.value = true;
+	rows.value = rows.value?.length
+		? rows.value
+		: (await store.fetchComponentData(COMPONENT_IDS.foodSource)) || [];
+	await store.fetchLLMSuggestion(featureKey, {
+		context: {
+			topItems: topRows(rows.value, 5),
+			task: "營運管理改善建議",
+		},
+	});
+	loading.value = false;
 }
-</style>
+
+onMounted(generate);
+watch(() => store.profileVersion, generate);
+
+const result = computed(() => store.llmResult.get(featureKey));
+</script>
+
+<template>
+  <ValueAddedCard
+    title="LLM 改善建議"
+    subtitle="根據用戶輪廓與供應來源資料產生營運改善重點。"
+    :loading="loading || result?.loading"
+    wide
+  >
+    <template #action>
+      <button
+        class="action-btn"
+        @click="generate"
+      >
+        重新產生
+      </button>
+    </template>
+    <p class="suggestion">
+      {{ result?.text }}
+    </p>
+  </ValueAddedCard>
+</template>
