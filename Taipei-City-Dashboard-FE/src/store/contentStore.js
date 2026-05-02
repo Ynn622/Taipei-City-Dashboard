@@ -75,6 +75,12 @@ export const useContentStore = defineStore("content", {
 			"metro_green_line",
 			"metro_br_line",
 		],
+		hiddenMapLayersByDashboard: {
+			food_safety_health_tpe: ["bike_map"],
+			food_safety_health_metrotaipei: ["bike_map"],
+			"food-safety-health-tpe": ["bike_map"],
+			"food-safety-health-metrotaipei": ["bike_map"],
+		},
 	}),
 	getters: {},
 	actions: {
@@ -766,9 +772,16 @@ export const useContentStore = defineStore("content", {
 		},
 		// Filter layers by city
 		filterMapLayersByCity(city) {
+			const hiddenLayerIndexes =
+				this.hiddenMapLayersByDashboard[
+					this.currentDashboard.index
+				] || [];
+
 			// Filter layers of the specified city from allMapLayers
 			this.mapLayers = this.allMapLayers.filter(
-				(item) => item.city === city,
+				(item) =>
+					item.city === city &&
+					!hiddenLayerIndexes.includes(item.index),
 			);
 		},
 		// 8. Call an API for each map layer component to get its chart data and store it (if in /mapview)
