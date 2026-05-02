@@ -19,7 +19,7 @@ import OpsImproveSuggestion from "./ops/OpsImproveSuggestion.vue";
 .tab-view {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
+  gap: 1rem;
   align-items: start;
 }
 

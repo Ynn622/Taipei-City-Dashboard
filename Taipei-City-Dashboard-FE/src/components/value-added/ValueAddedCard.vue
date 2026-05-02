@@ -60,14 +60,17 @@ defineProps({
 
 <style scoped lang="scss">
 .value-card {
-  min-height: 188px;
+  position: relative;
+  min-height: 206px;
   padding: 1rem;
-  border: solid 1px var(--color-border);
-  border-radius: 5px;
+  border: solid 1px rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
   background: var(--color-component-background);
   color: var(--color-normal-text);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
 
   &.wide {
     grid-column: 1 / -1;
@@ -78,19 +81,22 @@ defineProps({
     justify-content: space-between;
     align-items: flex-start;
     gap: 0.75rem;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.95rem;
+    padding-bottom: 0.75rem;
+    border-bottom: solid 1px rgba(255, 255, 255, 0.07);
 
     h3 {
       margin: 0;
       color: var(--color-normal-text);
-      font-size: 1rem;
+      font-size: 1.02rem;
+      line-height: 1.35;
       font-weight: 700;
     }
 
     p {
       margin: 0.32rem 0 0;
       color: var(--color-complement-text);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       line-height: 1.45;
     }
   }
@@ -101,11 +107,13 @@ defineProps({
     place-items: center;
     color: var(--color-complement-text);
     font-size: 0.95rem;
+    min-height: 130px;
 
     &.error {
       color: #E86F51;
       background: rgba(232, 111, 81, 0.05);
-      border-radius: 5px;
+      border: solid 1px rgba(232, 111, 81, 0.18);
+      border-radius: 8px;
       padding: 1rem;
     }
   }
@@ -121,15 +129,15 @@ defineProps({
 :slotted(.summary-grid) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
 :slotted(.summary-item) {
   min-width: 0;
-  padding: 0.72rem;
-  border: solid 1px var(--color-border);
-  border-radius: 5px;
-  background: var(--color-background);
+  padding: 0.72rem 0.78rem;
+  border: solid 1px rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(9, 9, 9, 0.32);
 }
 
 :slotted(.summary-label) {
@@ -141,16 +149,17 @@ defineProps({
 
 :slotted(.summary-value) {
   color: var(--color-normal-text);
-  font-size: 1.18rem;
+  font-size: 1.12rem;
   font-weight: 700;
   line-height: 1.2;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 :slotted(.rank-list) {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.62rem;
 }
 
 :slotted(.rank-row) {
@@ -160,11 +169,12 @@ defineProps({
   align-items: center;
   color: var(--color-normal-text);
   font-size: 0.9rem;
+  padding: 0.25rem 0;
 }
 
 :slotted(.bar-track) {
   grid-column: 1 / -1;
-  height: 5px;
+  height: 6px;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
@@ -182,7 +192,8 @@ defineProps({
   font-size: 0.86rem;
   line-height: 1.6;
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding: 0.7rem 0.75rem 0;
+  border-top: solid 1px rgba(255, 255, 255, 0.07);
 }
 
 :slotted(.suggestion) {
@@ -190,26 +201,27 @@ defineProps({
   color: var(--color-normal-text);
   font-size: 0.92rem;
   line-height: 1.7;
-  padding: 0.45rem 0;
-  border-left: 3px solid #1E88E5;
-  padding-left: 0.8rem;
-  background: rgba(30, 136, 229, 0.05);
-  border-radius: 0 4px 4px 0;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid rgba(255, 255, 255, 0.12);
+  background: rgba(90, 156, 248, 0.08);
+  border-radius: 0 8px 8px 0;
 }
 
 :slotted(.action-btn) {
-  border: solid 1px #1E88E5;
-  border-radius: 5px;
-  background: rgba(30, 136, 229, 0.1);
+  min-height: 34px;
+  border: solid 1px rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
   color: var(--color-normal-text);
   font-weight: 600;
-  padding: 0.55rem 0.8rem;
-  font-size: 0.9rem;
+  padding: 0.48rem 0.75rem;
+  font-size: 0.86rem;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 
   &:hover {
-    background: rgba(30, 136, 229, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
   }
 }
 
