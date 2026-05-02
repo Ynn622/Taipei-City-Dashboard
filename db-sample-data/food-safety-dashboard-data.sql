@@ -7,6 +7,10 @@ BEGIN;
 
 DROP TABLE IF EXISTS public.food_source_tpe;
 DROP TABLE IF EXISTS public.food_source_ntpe;
+DROP TABLE IF EXISTS public.food_audit_violation_tpe;
+DROP TABLE IF EXISTS public.food_audit_violation_ntpe;
+DROP TABLE IF EXISTS public.health_audit_violation_tpe;
+DROP TABLE IF EXISTS public.health_audit_violation_ntpe;
 DROP TABLE IF EXISTS public.post_help_agency_tpe;
 DROP TABLE IF EXISTS public.post_help_agency_ntpe;
 DROP TABLE IF EXISTS public.fda_good_restaurants;
@@ -18,6 +22,22 @@ CREATE TABLE public.food_source_tpe (
 );
 
 CREATE TABLE public.food_source_ntpe (
+    district text
+);
+
+CREATE TABLE public.food_audit_violation_tpe (
+    district text
+);
+
+CREATE TABLE public.food_audit_violation_ntpe (
+    district text
+);
+
+CREATE TABLE public.health_audit_violation_tpe (
+    district text
+);
+
+CREATE TABLE public.health_audit_violation_ntpe (
     district text
 );
 
@@ -109,6 +129,98 @@ FROM (
         ('瑞芳區', 1),
         ('新莊區', 1),
         ('汐止區', 1)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.food_audit_violation_tpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('中山區', 102),
+        ('萬華區', 85),
+        ('大安區', 77),
+        ('士林區', 70),
+        ('內湖區', 55),
+        ('松山區', 49),
+        ('信義區', 48),
+        ('北投區', 40),
+        ('中正區', 36),
+        ('南港區', 30),
+        ('大同區', 23),
+        ('文山區', 11)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.food_audit_violation_ntpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('板橋區', 29),
+        ('新店區', 13),
+        ('新莊區', 12),
+        ('中和區', 11),
+        ('蘆洲區', 10),
+        ('三重區', 9),
+        ('永和區', 6),
+        ('樹林區', 5),
+        ('土城區', 4),
+        ('深坑區', 4),
+        ('淡水區', 3),
+        ('五股區', 3),
+        ('汐止區', 2),
+        ('林口區', 2),
+        ('泰山區', 2),
+        ('鶯歌區', 2),
+        ('八里區', 1),
+        ('瑞芳區', 1)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.health_audit_violation_tpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('大安區', 36),
+        ('中山區', 35),
+        ('士林區', 25),
+        ('中正區', 24),
+        ('松山區', 21),
+        ('萬華區', 21),
+        ('北投區', 19),
+        ('信義區', 14),
+        ('大同區', 12),
+        ('內湖區', 12),
+        ('文山區', 8),
+        ('南港區', 4)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.health_audit_violation_ntpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('中和區', 37),
+        ('新莊區', 18),
+        ('三重區', 17),
+        ('新店區', 13),
+        ('土城區', 12),
+        ('板橋區', 10),
+        ('永和區', 9),
+        ('淡水區', 7),
+        ('樹林區', 7),
+        ('蘆洲區', 6),
+        ('汐止區', 5),
+        ('林口區', 5),
+        ('泰山區', 5),
+        ('五股區', 4),
+        ('八里區', 3),
+        ('深坑區', 3),
+        ('鶯歌區', 3),
+        ('三峽區', 2),
+        ('瑞芳區', 2),
+        ('金山區', 1),
+        ('萬里區', 1),
+        ('石碇區', 1)
 ) AS source_counts(district, row_count)
 CROSS JOIN generate_series(1, row_count);
 
