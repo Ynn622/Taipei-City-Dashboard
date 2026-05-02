@@ -7,13 +7,15 @@
 - Component index：`water_quality`
 - Component id：`306`
 - Component 名稱：淨水場水質
-- 圖表類型：`MapLegend`
-- 單位：座
+- 圖表類型：`TreemapChart`、`BarChart`
+- 單位：NTU
 - Dashboard 名稱：食安健康
   - 臺北市：`food_safety_health_tpe`
   - 雙北：`food_safety_health_metrotaipei`
 
 此組件用來在地圖上呈現臺北市與新北市淨水場的飲用水/自來水品質。主要欄位包含菌量相關的大腸桿菌群、pH、濁度、自由有效餘氯、總硬度、總溶解固體量等，可用於觀察水質安全與軟硬水差異。
+
+總覽卡片已移除原本的地圖圖例，改以矩形圖與橫向長條圖比較各淨水場濁度(NTU)。濁度也是目前地圖圓點大小的依據，適合用來做水質狀態的快速排序比較。
 
 ## 資料來源
 
@@ -175,8 +177,8 @@
   - `food_safety_health_tpe`：新增 `306`
   - `food_safety_health_metrotaipei`：新增 `306`
 - Query chart：
-  - `taipei`：掛 `207`
-  - `metrotaipei`：掛 `207,208`
+  - `taipei`：臺北市各淨水場濁度(NTU)
+  - `metrotaipei`：雙北各淨水場濁度(NTU)
 
 注意：若 Docker DB volume 已存在，修改 `dashboardmanager-demo.sql` 不會自動影響畫面。需要執行 `db-sample-data/add-water-quality-manager.sql`，或重建 manager DB volume 後重新初始化。
 
