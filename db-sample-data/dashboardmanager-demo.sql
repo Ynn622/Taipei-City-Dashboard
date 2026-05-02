@@ -39,6 +39,7 @@ food_safety_health_office	{#2F7D6D,#C2573E,#F2C94C}	{DonutChart,TreemapChart,Bar
 water_quality	{#2F7D6D,#30B68F,#1E88E5,#F5B041,#D84C73}	{BarChart}	NTU
 cdc_infectious_disease	{#4CB495,#F5C860,#ED6A45}	{ColumnChart}	人次
 food_safety_death_share	{#D84C73,#F5B041,#4A90E2,#8E63C7}	{TimelineSeparateChart}	%
+food_processing_pass_rate	{#4CB495,#F5C860,#ED6A45,#1E88E5,#8E63C7}	{TimelineSeparateChart}	%
 \.
 
 
@@ -86,6 +87,7 @@ COPY public.components (id, index, name) FROM stdin;
 501	fda_good_restaurants	優良餐廳
 502	cdc_infectious_disease	腹瀉就診數量統計
 503	food_safety_death_share	主要死因死亡占比
+505	food_processing_pass_rate	加工食品不合格率
 \.
 
 
@@ -108,8 +110,8 @@ COPY public.dashboards (id, index, name, components, icon, updated_at, created_a
 355	ltc_care_newtpe	長照關懷	{214,215,216,218}	elderly	2025-02-27 06:42:21.705931+00	2024-03-21 09:38:37.66+00
 359	map-layers-metrotaipei	圖資資訊	{217}	public	2024-05-16 03:56:12.76016+00	2024-03-21 10:04:24.928533+00
 358	practical_transportation_newtpe	務實交通	{60,212,213}	directions_car	2025-03-12 08:00:38.75842+00	2024-03-21 09:38:37.66+00
-401	food_safety_health_tpe	食安健康	{307,303,304,305,306,502,503}	restaurant	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00
-402	food_safety_health_metrotaipei	食安健康	{307,303,304,305,306,501,502,503}	restaurant	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00
+401	food_safety_health_tpe	食安健康	{307,303,304,305,306,502,503,505}	restaurant	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00
+402	food_safety_health_metrotaipei	食安健康	{307,303,304,305,306,501,502,503,505}	restaurant	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00
 1	09a25cd9cb7d	收藏組件	\N	favorite	2025-03-14 07:34:22.247753+00	2025-03-14 07:34:22.247753+00
 2	3245d9eace5f	我的新儀表板	{215,218,216,213,212,214,60,146}	star	2025-03-14 14:55:11.732116+00	2025-03-14 14:55:11.732116+00
 \.
@@ -132,7 +134,6 @@ COPY public.issues (id, title, user_name, user_id, context, description, decisio
 
 
 ALTER TABLE public.query_charts OWNER TO postgres;
-\.
 TRUNCATE TABLE public.query_charts RESTART IDENTITY CASCADE;
 COPY public.query_charts (index, history_config, map_config_ids, map_filter, time_from, time_to, update_freq, update_freq_unit, source, short_desc, long_desc, use_case, links, contributors, created_at, updated_at, query_type, query_chart, query_history, city) FROM stdin;
 aging_kpi	\N	{}	{}	static	\N	0	\N	主計處	此圖顯示雙北長照關懷各項指標。	此圖表呈現雙北長照關懷相關指標，包括 扶老比、扶幼比、扶養比 及 老化指數。扶老比代表每百名勞動人口需扶養的老年人口數，扶幼比則是需扶養的兒童人口數，而扶養比則合計這兩者，反映整體社會負擔程度。老化指數則比較老年人口與兒童人口比例，顯示人口結構的高齡化趨勢。這些數據可用於評估長照需求，並規劃資源分配與政策方向，以因應人口老化帶來的挑戰。	在制定長照政策時，政府可運用 扶老比、扶幼比、扶養比 及 老化指數 來評估未來照護需求。例如，某城市發現扶老比上升且老化指數超過 100，代表老年人口已多於兒童，預示長照需求將持續增加。政府可據此增設長照機構、強化居家照護服務，並鼓勵社區共融計畫，以減輕勞動人口的扶養壓力，確保高齡者獲得適切照顧。	{https://data.taipei/dataset/detail?id=64c8a3a0-3b9a-4f49-a13a-fb1eb2ffa4b1,https://data.ntpc.gov.tw/datasets/8308ab58-62d1-424e-8314-24b65b7ab492}	{doit,ntpc}	2023-12-20 05:56:00+00	2024-06-12 06:02:41.642+00	three_d	select y_axis,icon ,round(avg(data))data  \r\nfrom(\r\nselect '扶老比' as y_axis, percent30 as data ,'%' as icon \r\nfrom public.city_age_distribution_taipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_taipei ) and  區域別='總計' and 統計類型='計'\r\nunion all\r\nselect '扶幼比' as y_axis, percent31 as data ,'%' as icon \r\nfrom public.city_age_distribution_taipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_taipei ) and  區域別='總計' and 統計類型='計'\r\nunion all\r\nselect '扶養比' as y_axis, percent32 as data ,'%' as icon \r\nfrom public.city_age_distribution_taipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_taipei ) and  區域別='總計' and 統計類型='計'\r\nunion all\r\nselect '老化指數' as y_axis, percent33 as data ,'%' as icon \r\nfrom public.city_age_distribution_taipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_taipei ) and  區域別='總計' and 統計類型='計'\r\nunion all\r\nselect '扶老比' as y_axis, avg(percent30) as data ,'%' as icon \r\nfrom public.city_age_distribution_newtaipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_newtaipei )  and 統計類型='計'\r\nunion all\r\nselect '扶幼比' as y_axis, avg(percent31) as data ,'%' as icon \r\nfrom public.city_age_distribution_newtaipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_newtaipei ) and 統計類型='計'\r\nunion all\r\nselect '扶養比' as y_axis, avg(percent32) as data ,'%' as icon \r\nfrom public.city_age_distribution_newtaipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_newtaipei )  and 統計類型='計'\r\nunion all\r\nselect '老化指數' as y_axis, avg(percent33) as data ,'%' as icon \r\nfrom public.city_age_distribution_newtaipei \r\nwhere 年份= (select max(年份) from public.city_age_distribution_newtaipei )  and 統計類型='計'\r\n)d\r\ngroup by y_axis,icon	\N	metrotaipei
@@ -166,6 +167,8 @@ ebus_percent	\N	\N	\N	static	\N	\N	\N	交通局	顯示雙北電動公車比例	�
 ebus_percent	\N	\N	\N	static	\N	\N	\N	交通局	顯示臺北電動公車比例	此圖顯示臺北市電動公車的比例，呈現全市公車車隊中電動車所占比重，以及近年來電動公車數量的成長情形。圖表比較傳統燃油公車與電動公車的比例變化，並標示臺北市政府推動電動化政策、補助措施及其帶來的環保效益。透過這些數據，可評估臺北市電動公車的普及程度，及其在減碳與空氣品質改善上的貢獻，有助於進一步規劃更完善的公共運輸電動化策略，推動城市交通朝向低碳永續目標邁進。	可用於評估臺北市公共運輸電動化的進程，透過此圖顯示電動公車在市區公車總數中的占比及其成長趨勢。圖表呈現傳統燃油公車與電動公車的比例變化，並標示臺北市政府推動的政策措施、補助方案及相關環保效益等影響因素。透過這些數據，可分析臺北市電動公車的普及程度及其在減碳排放與空氣品質改善方面的貢獻，有助於進一步規劃更完善的公共運輸電動化策略，推動臺北朝向低碳與永續發展的城市目標邁進。	{https://tdx.transportdata.tw/api/basic/v2/Bus/Vehicle/City/Taipei?%24top=30&%24format=JSON}	{doit}	2025-02-15 05:56:00+00	2025-02-20 09:11:21.620625+00	percent	select '電動公車數量' as x_axis,y_axis,sum(data) data from \r\n(\r\nselect '電動巴士' as y_axis,count(*) as  data\r\nfrom public.bus_info_tpe\r\nwhere plate_numb like 'E%'\r\nunion all\r\nselect '非電動巴士' as y_axis,count(*) as  data\r\nfrom public.bus_info_tpe)d\r\ngroup by \r\ny_axis	\N	taipei
 youbike_availability	\N	{99}	\N	current	\N	10	minute	交通局	顯示當前雙北共享單車YouBike的使用情況。	顯示雙北地區（臺北市與新北市）當前共享單車 YouBike 的使用情況，格式為可借車輛數／全區車位數。資料來源為兩市交通局公開資料，每5分鐘更新一次，提供即時的車輛可用資訊與站點使用狀況，有助於掌握整體運行效率與民眾使用情形，亦可作為交通管理與營運調度的參考依據。	藉由顯示雙北地區 YouBike 的使用情況，以及觀察可借車輛數約為車柱總數的一半，可大致掌握目前停放於站點與使用中車輛的整體分布情形。使用者亦可透過地圖模式查詢雙北各站點的即時資訊，包括可借車輛數、可還空位數及站點位置，方便規劃路線與掌握使用狀況，提升共享單車的便利性與使用效率。	{https://tdx.transportdata.tw/api-service/swagger/basic/2cc9b888-a592-496f-99de-9ab35b7fb70d#/Bike/BikeApi_Availability_2181,https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/NewTaipei?%24top=30&%24format=JSON}	{doit,ntpc}	2023-12-20 05:56:00+00	2024-03-19 06:08:17.99+00	percent	select x_axis,y_axis,sum(data)data\r\nfrom (select '在站車輛' as x_axis, \r\nunnest(ARRAY['可借車輛', '空位']) as y_axis, \r\nunnest(ARRAY[SUM(available_rent_general_bikes), SUM(available_return_bikes)]) as data\r\nfrom tran_ubike_realtime_new_tpe\r\nunion all \r\nselect '在站車輛' as x_axis, \r\nunnest(ARRAY['可借車輛', '空位']) as y_axis, \r\nunnest(ARRAY[SUM(available_rent_general_bikes), SUM(available_return_bikes)]) as data\r\nfrom tran_ubike_realtime)d\r\ngroup by x_axis,y_axis	\N	metrotaipei
 youbike_availability	\N	{70}	\N	current	\N	10	minute	交通局	顯示當前臺北市共享單車YouBike的使用情況。	顯示臺北市當前共享單車 YouBike 的使用情況，格式為可借車輛數／全市車位數。資料來源為臺北市政府交通局公開資料，每5分鐘更新一次，反映即時的使用狀況與車輛調度情形，可作為交通監測與市民使用參考依據。	藉由臺北市 YouBike 使用情況的顯示，以及全市可借車輛數約為車柱總數的一半，可大致掌握目前停放於站點與正在使用中的車輛數量。使用者可透過地圖模式查詢臺北市各站點的即時資訊，包括可借車輛數、可還空位數及站點位置，方便即時掌握使用狀況，提升共享單車的使用效率與便利性。	{https://tdx.transportdata.tw/api-service/swagger/basic/2cc9b888-a592-496f-99de-9ab35b7fb70d#/Bike/BikeApi_Availability_2181}	{doit}	2023-12-20 05:56:00+00	2024-03-19 06:08:17.99+00	percent	select '在站車輛' as x_axis, \r\nunnest(ARRAY['可借車輛', '空位']) as y_axis, \r\nunnest(ARRAY[SUM(available_rent_general_bikes), SUM(available_return_bikes)]) as data\r\nfrom tran_ubike_realtime	\N	taipei
+food_processing_pass_rate	{"range":["max"],"color":["#4CB495","#F5C860","#ED6A45","#1E88E5","#8E63C7"],"unit":"%"}	{}	{}	static	\N	1	year	衛生福利部食品藥物管理署	顯示臺北市加工食品不合格率歷年趨勢（105-114年）。	此組件彙整衛生福利部食品衛生管理工作資料，篩選肉品、蛋品、水產、蔬果及食品添加物五大類，計算各年度不合格率並以折線圖呈現趨勢。	可用於觀察臺北市加工食品安全品質的長期變化趨勢，輔助食安政策評估與稽查資源配置。	{https://www.mohw.gov.tw/dl-38807-41ca6849-eccd-418a-95f5-20649b0c5bf9.html}	{doit}	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00	time	SELECT MAKE_DATE(year + 1911, 1, 1)::timestamp AS x_axis, category AS y_axis, ROUND((non_compliant_count::float / NULLIF(inspection_count, 0) * 100))::numeric AS data FROM public.food_processing_pass_rate WHERE county = '臺北市' ORDER BY year, category	SELECT MAKE_DATE(year + 1911, 1, 1)::timestamp AS x_axis, category AS y_axis, ROUND((non_compliant_count::float / NULLIF(inspection_count, 0) * 100))::numeric AS data FROM public.food_processing_pass_rate WHERE county = '臺北市' ORDER BY year, category	taipei
+food_processing_pass_rate	{"range":["max"],"color":["#4CB495","#F5C860","#ED6A45","#1E88E5","#8E63C7"],"unit":"%"}	{}	{}	static	\N	1	year	衛生福利部食品藥物管理署	顯示雙北加工食品不合格率歷年趨勢（105-114年）。	此組件彙整衛生福利部食品衛生管理工作資料，篩選肉品、蛋品、水產、蔬果及食品添加物五大類，計算雙北各年度不合格率並以折線圖呈現趨勢。	可用於觀察雙北加工食品安全品質的長期變化趨勢，輔助跨區食安政策評估與稽查資源配置。	{https://www.mohw.gov.tw/dl-38807-41ca6849-eccd-418a-95f5-20649b0c5bf9.html}	{doit}	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00	time	SELECT MAKE_DATE(year + 1911, 1, 1)::timestamp AS x_axis, category AS y_axis, ROUND((SUM(non_compliant_count)::float / NULLIF(SUM(inspection_count), 0) * 100))::numeric AS data FROM public.food_processing_pass_rate WHERE county IN ('臺北市', '新北市') GROUP BY year, category ORDER BY year, category	SELECT MAKE_DATE(year + 1911, 1, 1)::timestamp AS x_axis, category AS y_axis, ROUND((SUM(non_compliant_count)::float / NULLIF(SUM(inspection_count), 0) * 100))::numeric AS data FROM public.food_processing_pass_rate WHERE county IN ('臺北市', '新北市') GROUP BY year, category ORDER BY year, category	metrotaipei
 \.
 
 
@@ -201,6 +204,8 @@ SELECT pg_catalog.setval('public.groups_id_seq', (SELECT COALESCE(MAX(id), 4) FR
 
 --
 -- PostgreSQL database dump complete
+
+SET search_path = public;
 
 \ir add-post-help-agency-manager.sql
 \ir add-food-audit-violation-manager.sql

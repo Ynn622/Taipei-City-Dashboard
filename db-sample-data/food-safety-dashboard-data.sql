@@ -1,5 +1,5 @@
 --
--- Food safety dashboard sample data for components 307, 501, 502, and 503.
+-- Food safety dashboard sample data for components 307, 501, 502, 503, and 505.
 -- Included by dashboard-demo.sql during dashboard data DB initialization.
 --
 
@@ -25709,5 +25709,7 @@ COPY public.food_safety_death_cause_share (data_time, year, city, death_cause, m
 
 CREATE INDEX food_safety_death_cause_share_city_year_idx
     ON public.food_safety_death_cause_share (city, year, death_cause);
+
+\ir food-processing-pass-rate-data.sql
 
 COMMIT;

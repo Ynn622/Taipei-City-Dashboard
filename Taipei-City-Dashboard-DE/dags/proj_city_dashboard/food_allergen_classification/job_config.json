@@ -1,0 +1,44 @@
+{
+  "dag_infos": {
+    "dag_id": "food_allergen_classification",
+    "start_date": "2026-05-02",
+    "schedule_interval": "0 2 * * 1",
+    "catchup": false,
+    "tags": [
+      "mohw",
+      "食安健康",
+      "過敏原",
+      "食品衛生管理"
+    ],
+    "description": "Weekly classification of food allergens for Taipei City food ingredient platform, sampling 30 products per company.",
+    "default_args": {
+      "owner": "airflow",
+      "email": [
+        "DEFAULT_EMAIL_LIST"
+      ],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_allergen_classification",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "食安健康-食品過敏原分布",
+    "airflow_update_freq": "02:00 every Monday",
+    "source": "https://data.taipei/api/v1/dataset/29869b6f-1cd3-4ce8-8c78-eb85aeea8583?scope=resourceAquire",
+    "source_type": "Taipei Open Data API",
+    "source_dept": "臺北市政府衛生局",
+    "gis_format": "geojson",
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市食材登錄平台各專區資料，每間公司抽樣30個產品，經LLM分類過敏原後以地圖呈現。",
+    "etl_description": "從OpenData API下載全部食材資料，按公司+產品aggregate原料，每公司隨機抽30個產品，呼叫LLM批次分類過敏原，經towin API地理編碼後寫入PostGIS。",
+    "sensitivity": "public"
+  }
+}
