@@ -1,6 +1,19 @@
-# 組件1：食品廠商 FDA 食品業者登錄 API 筆記
+# 組件1：物流廠商（FDA 食品業者登錄）
 
 最後更新：2026-05-02
+
+## 組件定位
+
+- 組件1：物流廠商
+  - Component index：`food_safety_logistics_vendor`
+  - Component id：`304`
+  - 資料主題：FDA 食品業者登錄中的「物流業」業者
+  - 呈現方式：每一筆物流業者一個地圖點
+- 組件3：食物來源（魚市場、果菜市場、超市）
+  - 文件：`md/component_3.md`
+  - Component index：`food_safety_market`
+  - Component id：`303`
+  - 資料主題：公有市場與市場攤位分類資料
 
 ## 來源頁面
 
@@ -30,6 +43,15 @@ GET https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?req=getlis
 - `Size`：每頁筆數，頁面可選 10、20、30、40
 - `tp`：登錄類別，`0` 代表全部
 
+`tp` 分類：
+
+- `0`：全部
+- `1`：食品公司
+- `2`：食品工廠
+- `3`：餐飲
+- `4`：通路
+- `6`：物流業
+
 範例：
 
 ```txt
@@ -41,6 +63,100 @@ https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?req=getlist&ci
 - 臺北市列表頁顯示約 98,216 筆。
 - 這個端點資料較完整，但沒有直接提供經緯度。
 - 若要拿來上地圖，需要再用地址做地理編碼。
+
+## 本次開發：雙北物流業
+
+目前先只抓 `tp=6` 物流業，不抓全部分類。
+
+正式資料處理依照專案 DAG 架構開發，不以 CSV 作為來源。DAG 會直接呼叫 FDA 縣市列表端點，解析 HTML 表格後輸出每一筆物流業者資料。
+
+ETL DAG：
+
+- 臺北市：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/food_safety_logistics_vendor_tpe/food_safety_logistics_vendor_tpe.py`
+- 新北市：`Taipei-City-Dashboard-DE/dags/proj_new_taipei_city_dashboard/food_safety_logistics_vendor_ntpe/food_safety_logistics_vendor_ntpe.py`
+- 共用 FDA helper：`Taipei-City-Dashboard-DE/dags/utils/fda_food_vendor.py`
+
+前端地圖 GeoJSON：
+
+- 臺北市：`Taipei-City-Dashboard-FE/public/mapData/food_safety_logistics_vendor_tpe.geojson`
+- 新北市：`Taipei-City-Dashboard-FE/public/mapData/food_safety_logistics_vendor_ntpe.geojson`
+
+食安健康 tab 設定：
+
+- 新增 component：`food_safety_logistics_vendor`
+- 新增 map config：
+  - `203` / `food_safety_logistics_vendor_tpe`
+  - `204` / `food_safety_logistics_vendor_ntpe`
+- 已掛到 dashboard：
+  - `food_safety_health_tpe`
+  - `food_safety_health_metrotaipei`
+
+目前抓取筆數：
+
+- 臺北市：256 筆
+- 新北市：479 筆
+- 雙北合計：735 筆
+
+地圖呈現方式：
+
+- FDA 縣市列表端點沒有提供經緯度。
+- 目前地圖以每筆業者顯示一個點；臺北市 DAG 會先用臺北市門牌位置數值資料做門牌級定位，未命中者再嘗試專案既有 TPGOS 地址轉座標、OpenStreetMap Nominatim 道路/地名層級定位，最後才使用行政區中心點加微小偏移。
+- 臺北市門牌位置數值資料來源：`https://data.taipei/dataset/detail?id=b7c8e724-1e98-45ee-a0bd-f3840623ed97`。
+- 臺北市門牌位置數值資料欄位包含：省市縣市代碼、鄉鎮市區代碼、村里、鄰、街路段、地區、巷、弄、號、橫座標、縱座標。
+- 臺北市門牌資料座標為 TWD97，DAG 會轉成 WGS84 後輸出給 Mapbox。
+- OpenStreetMap 對台灣門牌通常無法穩定精準到號，因此物流業者多數是「道路/地名定位」，不是 FDA 原始資料提供經緯度。
+- 每一點代表一筆物流業者。
+- 臺北市 GeoJSON 目前有 256 個業者點位。
+- 新北市 GeoJSON 目前有 479 個業者點位。
+- 目前臺北市 144 筆使用臺北市門牌位置數值資料定位，112 筆使用 OpenStreetMap 道路/地名定位；新北市 477 筆使用 OpenStreetMap 道路/地名定位，2 筆保留行政區中心微偏移。
+
+目前定位順序：
+
+1. 臺北市門牌位置數值資料：只用於臺北市，能命中時可到門牌級。
+2. 專案既有 TPGOS 地址轉座標：需要 `TPGOS_GET_ADDR_XY` 設定。
+3. OpenStreetMap Nominatim：使用道路/地名層級查詢。
+4. 行政區中心微偏移：最後 fallback，避免點位完全消失。
+
+輸出欄位：
+
+- `source_row_no`
+- `city`
+- `normalized_city`
+- `district`
+- `vendor_category_code`
+- `vendor_category`
+- `registration_item`
+- `registration_no`
+- `name`
+- `address`
+- `company_registration_name`
+- `source_page`
+- `geocoding_address`
+- `location_method`
+- `osm_query`
+- `osm_display_name`
+- `taipei_house_key`：僅部分臺北市 GeoJSON 點位有此欄位，用於稽核門牌資料命中結果
+
+前端 popup 顯示欄位：
+
+- `name`：業者名稱
+- `registration_no`：食品業者登錄字號
+- `company_registration_name`：公司/商業登記名稱
+- `city`：縣市
+- `district`：行政區
+- `address`：FDA 地址
+- `vendor_category`：業者分類
+- `registration_item`：登錄項目
+
+前端 popup 已刻意隱藏的工程/追溯欄位：
+
+- `location_method` / 定位方式
+- `source_page` / 來源頁碼
+- `osm_query` / OSM 查詢
+- `osm_display_name`
+- `taipei_house_key`
+
+這些欄位仍保留在 GeoJSON 或 ETL 輸出中，方便後續資料稽核與定位問題排查，但不顯示在儀表板詳細資料。
 
 ### 2. 地圖 JSON 端點
 
@@ -117,6 +233,7 @@ ServiceType=
 
 - `search-Vendor-County-result.aspx?req=getlist` 使用 `臺北市` 可以取得列表資料。
 - `map/getData.ashx` 查臺北市時，使用 `台北市` 取得的地圖資料較完整；使用 `臺北市` 會明顯少很多。
+- 目前物流業圖層沒有使用 `map/getData.ashx`，因為實測地圖端點對物流業名稱常回傳 `NO`，物流業資料以縣市列表端點為準。
 - 地圖端點可能有查詢上限或依地圖範圍回傳資料的行為，需要用行政區分批測試後再正式 ETL。
 - 若資料要進專案的 `食安健康` tab，建議新增獨立圖層，例如：
   - `food_safety_vendor_tpe`
