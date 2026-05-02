@@ -22,14 +22,16 @@ const emits = defineEmits([
 ]);
 
 const treemapSeries = computed(() => {
+	const series = Array.isArray(props.series) ? props.series : [];
+
 	if (!props.chart_config.categories) {
-		return props.series;
+		return series.length ? series : [{ name: props.chart_config.name || "", data: [] }];
 	}
 
 	const data = props.chart_config.categories.map((category, index) => ({
 		x: category,
-		y: props.series.reduce((sum, serie) => {
-			const value = serie.data[index];
+		y: series.reduce((sum, serie) => {
+			const value = serie.data?.[index];
 			return sum + Number(value?.y ?? value ?? 0);
 		}, 0),
 	}));
@@ -108,7 +110,7 @@ const chartOptions = ref({
 
 const sum = computed(() => {
 	let sum = 0;
-	treemapSeries.value[0].data.forEach(
+	(treemapSeries.value[0]?.data || []).forEach(
 		(item) => (sum += Number(item.y ?? item ?? 0))
 	);
 	return Math.round(sum * 100) / 100;

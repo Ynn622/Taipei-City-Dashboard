@@ -254,7 +254,7 @@ BEGIN
     updated_at
   )
   SELECT
-    'food-safety-health-metrotaipei',
+    'food_safety_health_metrotaipei',
     '食安健康',
     ARRAY[v_component_id],
     'restaurant_menu',
@@ -263,7 +263,7 @@ BEGIN
   WHERE NOT EXISTS (
     SELECT 1
     FROM public.dashboards
-    WHERE "index" = 'food-safety-health-metrotaipei'
+    WHERE "index" = 'food_safety_health_metrotaipei'
   );
 
   UPDATE public.dashboards
@@ -276,11 +276,11 @@ BEGIN
     END,
     icon = 'restaurant_menu',
     updated_at = NOW()
-  WHERE "index" = 'food-safety-health-metrotaipei';
+  WHERE "index" = 'food_safety_health_metrotaipei';
 
   SELECT id INTO v_dashboard_id
   FROM public.dashboards
-  WHERE "index" = 'food-safety-health-metrotaipei';
+  WHERE "index" = 'food_safety_health_metrotaipei';
 
   SELECT id INTO v_group_id
   FROM public.groups
@@ -299,6 +299,16 @@ BEGIN
     WHERE dashboard_id = v_dashboard_id
       AND group_id = v_group_id
   );
+
+  DELETE FROM public.dashboard_groups
+  WHERE dashboard_id IN (
+    SELECT id
+    FROM public.dashboards
+    WHERE "index" = 'food-safety-health-metrotaipei'
+  );
+
+  DELETE FROM public.dashboards
+  WHERE "index" = 'food-safety-health-metrotaipei';
 END $$;
 
 COMMIT;
