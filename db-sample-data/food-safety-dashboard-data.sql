@@ -1,13 +1,23 @@
 --
--- Food safety dashboard sample data for components 501, 502, and 503.
+-- Food safety dashboard sample data for components 307, 501, 502, and 503.
 -- Included by dashboard-demo.sql during dashboard data DB initialization.
 --
 
 BEGIN;
 
+DROP TABLE IF EXISTS public.food_source_tpe;
+DROP TABLE IF EXISTS public.food_source_ntpe;
 DROP TABLE IF EXISTS public.fda_good_restaurants;
 DROP TABLE IF EXISTS public.cdc_infectious_disease;
 DROP TABLE IF EXISTS public.food_safety_death_cause_share;
+
+CREATE TABLE public.food_source_tpe (
+    district text
+);
+
+CREATE TABLE public.food_source_ntpe (
+    district text
+);
 
 CREATE TABLE public.fda_good_restaurants (
     data_time timestamp with time zone,
@@ -48,6 +58,49 @@ CREATE TABLE public.food_safety_death_cause_share (
     all_cause_value double precision,
     death_share_percent double precision
 );
+
+INSERT INTO public.food_source_tpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('內湖區', 10),
+        ('士林區', 8),
+        ('北投區', 8),
+        ('文山區', 5),
+        ('南港區', 4)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.food_source_ntpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('雙溪區', 47),
+        ('烏來區', 42),
+        ('坪林區', 38),
+        ('三峽區', 38),
+        ('石門區', 23),
+        ('八里區', 22),
+        ('淡水區', 14),
+        ('林口區', 11),
+        ('貢寮區', 9),
+        ('樹林區', 7),
+        ('金山區', 5),
+        ('土城區', 5),
+        ('鶯歌區', 5),
+        ('平溪區', 5),
+        ('五股區', 5),
+        ('新店區', 4),
+        ('三芝區', 4),
+        ('石碇區', 4),
+        ('萬里區', 3),
+        ('中和區', 2),
+        ('深坑區', 2),
+        ('瑞芳區', 1),
+        ('新莊區', 1),
+        ('汐止區', 1)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
 
 COPY public.fda_good_restaurants (data_time, city, district, award_year, restaurant_name, address, lng, lat, rating_result, wkb_geometry) FROM stdin;
 2026-05-02 00:00:00+08	新北市	林口區	114	CORNER BAKERY 63國賓麵包房-林口A9門市	新北市林口區文化三路一段2號1樓	121.361398	25.066148	優	\N
