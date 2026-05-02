@@ -39,6 +39,18 @@ const displaySeries = computed(() => (
 ));
 
 const isNtuMetric = computed(() => props.chart_config.unit === "NTU");
+const isAuditViolationMetric = computed(() =>
+	["food_audit_violation", "health_audit_violation"].includes(
+		props.chart_config.index
+	)
+);
+const auditViolationRangeColors = [
+	"#72C6A4",
+	"#F2C94C",
+	"#F2994A",
+	"#E86F51",
+	"#B8325A",
+];
 
 function getDataPointValue(item) {
 	return Number(item?.y ?? item ?? 0);
@@ -57,18 +69,31 @@ function getNtuColor(value) {
 	return colors[4] || "#D84C73";
 }
 
+function getAuditViolationColor(value) {
+	if (value <= 5) return auditViolationRangeColors[0];
+	if (value <= 10) return auditViolationRangeColors[1];
+	if (value <= 20) return auditViolationRangeColors[2];
+	if (value <= 40) return auditViolationRangeColors[3];
+	return auditViolationRangeColors[4];
+}
+
 const chartSeries = computed(() => {
-	if (!isNtuMetric.value) return displaySeries.value;
+	if (!isNtuMetric.value && !isAuditViolationMetric.value) {
+		return displaySeries.value;
+	}
 
 	return displaySeries.value.map((serie) => ({
 		...serie,
 		data: serie.data.map((item, index) => {
 			const y = getDataPointValue(item);
+			const fillColor = isNtuMetric.value
+				? getNtuColor(y)
+				: getAuditViolationColor(y);
 			return {
 				...(typeof item === "object" && item !== null ? item : {}),
 				x: getDataPointLabel(item, index),
 				y,
-				fillColor: getNtuColor(y),
+				fillColor,
 			};
 		}),
 	}));

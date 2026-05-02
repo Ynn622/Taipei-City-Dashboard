@@ -8,6 +8,8 @@
 - Maps：
   - `213 / health_audit_violation_tpe / 臺北市衛生稽核違規單位`
   - `214 / health_audit_violation_ntpe / 新北市衛生稽核違規單位`
+- 地圖標點：紫紅色系，用來和「食品稽核違規單位」橘色系區分。
+- 橫向長條圖級距：`1-5`、`6-10`、`11-20`、`21-40`、`41+` 件，依件數由綠到紅紫上色。
 - Dashboards：
   - `food_safety_health_tpe`
   - `food_safety_health_metrotaipei`

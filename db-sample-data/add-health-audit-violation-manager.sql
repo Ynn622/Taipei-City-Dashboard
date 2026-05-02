@@ -4,7 +4,7 @@ BEGIN;
 
 INSERT INTO component_charts (index, color, types, unit)
 VALUES
-('health_audit_violation', '{#D84C73,#C2573E,#F5B041,#8E63C7,#4A90E2,#30B68F,#7A8793,#2F7D6D,#F2C94C,#1E88E5,#00A6A6,#AF4137}', '{DistrictChart,TreemapChart,BarChart}', '件')
+('health_audit_violation', '{#8E44AD,#C2185B,#7E57C2,#D84C73,#5B2C6F,#F3C3D3,#A855F7,#DB2777}', '{DistrictChart,TreemapChart,BarChart}', '件')
 ON CONFLICT (index) DO UPDATE
 SET color = EXCLUDED.color,
     types = EXCLUDED.types,
@@ -12,8 +12,8 @@ SET color = EXCLUDED.color,
 
 INSERT INTO component_maps (id, index, title, type, source, size, icon, paint, property)
 VALUES
-(213, 'health_audit_violation_tpe', '臺北市衛生稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#D84C73","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.78,"circle-stroke-color":"#FFF2F6","circle-stroke-width":1.2}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"audit_date","name":"稽查日期"},{"key":"business_category","name":"業者類別"},{"key":"inspection_result","name":"稽查結果"},{"key":"violation_reason","name":"違規說明"},{"key":"phone","name":"電話"}]'),
-(214, 'health_audit_violation_ntpe', '新北市衛生稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#C2573E","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.78,"circle-stroke-color":"#FFF1EC","circle-stroke-width":1.2}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"audit_date","name":"稽查日期"},{"key":"business_category","name":"業者主業別"},{"key":"inspection_result","name":"稽查結果"},{"key":"violation_reason","name":"違規說明"}]')
+(213, 'health_audit_violation_tpe', '臺北市衛生稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#8E44AD","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.78,"circle-stroke-color":"#FAF5FF","circle-stroke-width":1.4}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"audit_date","name":"稽查日期"},{"key":"business_category","name":"業者類別"},{"key":"inspection_result","name":"稽查結果"},{"key":"violation_reason","name":"違規說明"},{"key":"phone","name":"電話"}]'),
+(214, 'health_audit_violation_ntpe', '新北市衛生稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#C2185B","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.78,"circle-stroke-color":"#FFF1F7","circle-stroke-width":1.4}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"audit_date","name":"稽查日期"},{"key":"business_category","name":"業者主業別"},{"key":"inspection_result","name":"稽查結果"},{"key":"violation_reason","name":"違規說明"}]')
 ON CONFLICT (id) DO UPDATE
 SET index = EXCLUDED.index,
     title = EXCLUDED.title,

@@ -4,7 +4,7 @@ BEGIN;
 
 INSERT INTO component_charts (index, color, types, unit)
 VALUES
-('food_audit_violation', '{#D84C73,#C2573E,#F5B041,#8E63C7,#4A90E2,#30B68F,#7A8793,#2F7D6D,#F2C94C,#1E88E5,#00A6A6,#AF4137}', '{DistrictChart,TreemapChart,BarChart}', '件')
+('food_audit_violation', '{#F59E0B,#D97706,#FBBF24,#EA580C,#92400E,#FDE68A,#B45309,#FDBA74}', '{DistrictChart,TreemapChart,BarChart}', '件')
 ON CONFLICT (index) DO UPDATE
 SET color = EXCLUDED.color,
     types = EXCLUDED.types,
@@ -12,8 +12,8 @@ SET color = EXCLUDED.color,
 
 INSERT INTO component_maps (id, index, title, type, source, size, icon, paint, property)
 VALUES
-(211, 'food_audit_violation_tpe', '臺北市食品稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#D84C73","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.76,"circle-stroke-color":"#FFF2F6","circle-stroke-width":1.2}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"sample_date","name":"抽驗日期"},{"key":"project_name","name":"專案名稱"},{"key":"product_category","name":"分類"},{"key":"sample_item","name":"檢體/檢驗項目"},{"key":"inspection_result","name":"檢驗結果"},{"key":"violation_reason","name":"不符合規定原因"}]'),
-(212, 'food_audit_violation_ntpe', '新北市食品稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#C2573E","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.76,"circle-stroke-color":"#FFF1EC","circle-stroke-width":1.2}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"sample_date","name":"抽驗日期"},{"key":"project_name","name":"專案名稱"},{"key":"sample_item","name":"檢驗項目"},{"key":"inspection_result","name":"抽驗結果"},{"key":"violation_reason","name":"違規說明"}]')
+(211, 'food_audit_violation_tpe', '臺北市食品稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#F59E0B","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.78,"circle-stroke-color":"#FFF7ED","circle-stroke-width":1.4}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"sample_date","name":"抽驗日期"},{"key":"project_name","name":"專案名稱"},{"key":"product_category","name":"分類"},{"key":"sample_item","name":"檢體/檢驗項目"},{"key":"inspection_result","name":"檢驗結果"},{"key":"violation_reason","name":"不符合規定原因"}]'),
+(212, 'food_audit_violation_ntpe', '新北市食品稽核違規單位', 'circle', 'geojson', 'big', NULL, '{"circle-color":"#D97706","circle-radius":["interpolate",["linear"],["coalesce",["to-number",["get","violation_count"]],1],1,6,3,8,6,11],"circle-opacity":0.78,"circle-stroke-color":"#FFF7ED","circle-stroke-width":1.4}', '[{"key":"name","name":"業者名稱"},{"key":"city","name":"縣市"},{"key":"district","name":"行政區"},{"key":"address","name":"地址"},{"key":"sample_date","name":"抽驗日期"},{"key":"project_name","name":"專案名稱"},{"key":"sample_item","name":"檢驗項目"},{"key":"inspection_result","name":"抽驗結果"},{"key":"violation_reason","name":"違規說明"}]')
 ON CONFLICT (id) DO UPDATE
 SET index = EXCLUDED.index,
     title = EXCLUDED.title,
