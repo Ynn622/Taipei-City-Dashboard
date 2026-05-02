@@ -75,6 +75,9 @@ const props = defineProps({
 	footer: { type: Boolean, default: true },
 	activeCity: { type: String, default: '' },
 	toggleOn: { type: Boolean, default: false },
+	districtMapSupported: { type: Boolean, default: false },
+	districtMapOn: { type: Boolean, default: false },
+	districtMapDisabled: { type: Boolean, default: false },
 });
 
 const emits = defineEmits([
@@ -88,7 +91,8 @@ const emits = defineEmits([
 	"clearByParamFilter",
 	"clearByLayerFilter",
 	"fly",
-	"changeCity"
+	"changeCity",
+	"districtMapToggle"
 ]);
 
 const activeChart = ref(props.config.chart_config.types[0]);
@@ -107,6 +111,19 @@ const toggleOn = computed({
 	set: (value) => {
 		emits("toggle", value, props.config.map_config);
 	},
+});
+const districtMapOn = computed({
+	get: () => props.districtMapOn,
+	set: (value) => {
+		emits("districtMapToggle", value, props.config);
+	},
+});
+const showDistrictMapToggle = computed(() => {
+	return (
+		props.mode.includes("map") &&
+		props.districtMapSupported &&
+		activeChart.value === "DistrictChart"
+	);
 });
 
 const mousePosition = ref({ x: null, y: null });
@@ -166,6 +183,9 @@ const tooltipPosition = computed(() => {
 });
 
 function changeActiveChart(chartName) {
+	if (chartName !== "DistrictChart" && districtMapOn.value) {
+		districtMapOn.value = false;
+	}
 	if (
 		props.mode === "map" &&
 		props.config.map_config &&
@@ -384,6 +404,18 @@ function returnChartComponent(name, svg) {
           {{ getChartTypeLabel(item) }}
         </button>
       </div>
+      <label
+        v-if="showDistrictMapToggle"
+        class="dashboardcomponent-control-district"
+        title="地圖顯示"
+      >
+        <input
+          v-model="districtMapOn"
+          type="checkbox"
+          :disabled="districtMapDisabled"
+        >
+        <span>地圖顯示</span>
+      </label>
     </div>
     <!-- Main Content -->
     <div
@@ -675,6 +707,8 @@ button:hover {
 		&-toggle {
 			min-height: var(--font-ms);
 			min-width: 2rem;
+			display: flex;
+			align-items: center;
 			margin-top: 4px;
 		}
 
@@ -709,11 +743,12 @@ button:hover {
 		padding: 8px 0;
 
 		&-group {
+			flex: 1;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			margin: 0 auto;
-			transform: translateX(-15%);
+			min-width: 0;
+			margin: 0;
 
 			&-button {
 				margin: 0 2px;
@@ -740,10 +775,36 @@ button:hover {
 		}
 
 		.selectBtn {
+			flex-shrink: 0;
 			background-color: var(--color-component-background);
 			padding: 3px;
 
 			&-disabled {
+				cursor: not-allowed;
+			}
+		}
+
+		&-district {
+			display: flex;
+			align-items: center;
+			column-gap: 4px;
+			flex-shrink: 0;
+			margin-left: auto;
+			color: var(--color-complement-text);
+			font-size: var(--font-s);
+			white-space: nowrap;
+			cursor: pointer;
+
+			input {
+				width: 0.85rem;
+				height: 0.85rem;
+				accent-color: var(--color-highlight);
+				cursor: pointer;
+			}
+
+			input:disabled,
+			input:disabled + span {
+				opacity: 0.6;
 				cursor: not-allowed;
 			}
 		}

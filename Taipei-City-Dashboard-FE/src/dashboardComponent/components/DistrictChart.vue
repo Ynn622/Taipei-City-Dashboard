@@ -3,6 +3,13 @@
 <script setup>
 import { computed, ref, nextTick } from "vue";
 import { districtCoordinates } from "../utilities/districtCoordinates";
+import {
+	districts,
+	isCityLevelDistrictChart,
+	newTaipeiDistricts,
+	parseDistrictChartData,
+	taipeiDistricts,
+} from "../utilities/districtChartData";
 
 const props = defineProps([
 	"chart_config",
@@ -39,59 +46,8 @@ const cityName = computed(() => {
 	return cities.find(city => city.value === props.activeCity)?.name
 });
 
-const districts = [
-	"北投區",
-	"士林區",
-	"內湖區",
-	"南港區",
-	"松山區",
-	"信義區",
-	"中山區",
-	"大同區",
-	"中正區",
-	"萬華區",
-	"大安區",
-	"文山區",
-	"新莊區",
-	"淡水區",
-	"汐止區",
-	"板橋區",
-	"三重區",
-	"樹林區",
-	"土城區",
-	"蘆洲區",
-	"中和區",
-	"永和區",
-	"新店區",
-	"鶯歌區",
-	"三峽區",
-	"瑞芳區",
-	"五股區",
-	"泰山區",
-	"林口區",
-	"深坑區",
-	"石碇區",
-	"坪林區",
-	"三芝區",
-	"石門區",
-	"八里區",
-	"平溪區",
-	"雙溪區",
-	"貢寮區",
-	"金山區",
-	"萬里區",
-	"烏來區",
-];
-
-const taipeiDistricts = districts.slice(0, 12);
-const newTaipeiDistricts = districts.slice(12);
-const cityCategories = ["臺北市", "新北市"];
 const isCityLevelChart = computed(() => {
-	const categories = props.chart_config?.categories || [];
-	return (
-		categories.length > 0 &&
-		categories.every((category) => cityCategories.includes(category))
-	);
+	return isCityLevelDistrictChart(props.chart_config);
 });
 const targetArea = computed(() => {
 	if (!isCityLevelChart.value) {
@@ -110,110 +66,9 @@ const targetArea = computed(() => {
 });
 
 // Parse District Data (to support 2D or 3D data)
-const districtData = computed(() => {
-	let output = {
-		北投區: 0,
-		士林區: 0,
-		內湖區: 0,
-		南港區: 0,
-		松山區: 0,
-		信義區: 0,
-		中山區: 0,
-		大同區: 0,
-		中正區: 0,
-		萬華區: 0,
-		大安區: 0,
-		文山區: 0,
-		新莊區: 0,
-		淡水區: 0,
-		汐止區: 0,
-		板橋區: 0,
-		三重區: 0,
-		樹林區: 0,
-		土城區: 0,
-		蘆洲區: 0,
-		中和區: 0,
-		永和區: 0,
-		新店區: 0,
-		鶯歌區: 0,
-		三峽區: 0,
-		瑞芳區: 0,
-		五股區: 0,
-		泰山區: 0,
-		林口區: 0,
-		深坑區: 0,
-		石碇區: 0,
-		坪林區: 0,
-		三芝區: 0,
-		石門區: 0,
-		八里區: 0,
-		平溪區: 0,
-		雙溪區: 0,
-		貢寮區: 0,
-		金山區: 0,
-		萬里區: 0,
-		烏來區: 0,
-		highest: 0,
-		sum: 0,
-	};
-	let highest = 0;
-	let sum = 0;
-	if (isCityLevelChart.value) {
-		const cityTotals = {
-			臺北市: 0,
-			新北市: 0,
-		};
-		props.series.forEach((serie) => {
-			props.chart_config.categories.forEach((category, index) => {
-				if (cityCategories.includes(category)) {
-					cityTotals[category] += Number(serie.data[index] || 0);
-				}
-			});
-		});
-		taipeiDistricts.forEach((district) => {
-			output[district] = cityTotals["臺北市"];
-		});
-		newTaipeiDistricts.forEach((district) => {
-			output[district] = cityTotals["新北市"];
-		});
-		output["臺北市"] = cityTotals["臺北市"];
-		output["新北市"] = cityTotals["新北市"];
-		highest = Math.max(...Object.values(cityTotals));
-		sum = Object.values(cityTotals).reduce(
-			(partialSum, value) => partialSum + value,
-			0
-		);
-	} else if (props.series.length === 1) {
-		props.series[0].data.forEach((item) => {
-			output[item.x] = item.y;
-			if (item.y > highest) {
-				highest = item.y;
-			}
-			sum += item.y;
-		});
-	} else {
-		props.series.forEach((serie) => {
-			for (let i = 0; i < props.chart_config.categories.length; i++) {
-				if (!output[props.chart_config.categories[i]]) {
-					output[props.chart_config.categories[i]] = 0;
-				}
-				output[props.chart_config.categories[i]] += +serie.data[i];
-			}
-		});
-		highest = Object.values(output).sort(function (a, b) {
-			return b - a;
-		})[0];
-		sum = Object.values(output).reduce(
-			(partialSum, a) => partialSum + a,
-			0
-		);
-	}
-
-	output.highest = highest;
-	output.sum = sum;
-
-	return output;
-});
+const districtData = computed(() =>
+	parseDistrictChartData(props.chart_config, props.series),
+);
 const tooltipData = computed(() => {
 	const categories = props.chart_config?.categories;
 	const series = props?.series;

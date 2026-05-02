@@ -33,14 +33,36 @@ const toggleOn = ref({
 	mapLayer: [],
 	basicLayer: [],
 });
+const districtMapOn = ref({
+	hasMap: [],
+	noMap: [],
+	mapLayer: [],
+	basicLayer: [],
+});
+
+function buildToggleState() {
+	return {
+		hasMap: new Array(parseMapLayers.value.hasMap?.length).fill(false),
+		noMap: new Array(parseMapLayers.value.noMap?.length).fill(false),
+		mapLayer: new Array(
+			contentStore.currentDashboard.components?.length,
+		).fill(false),
+		basicLayer: new Array(contentStore.mapLayers?.length).fill(false),
+	};
+}
+
+function getMapConfig(item) {
+	const mapConfig = Array.isArray(item) ? item : item?.map_config;
+	return Array.isArray(mapConfig) ? mapConfig.filter(Boolean) : [];
+}
 
 // Separate components with maps from those without
 const parseMapLayers = computed(() => {
 	const hasMap = contentStore.currentDashboard.components?.filter(
-		(item) => item.map_config[0],
+		(item) => getMapConfig(item).length > 0,
 	);
 	const noMap = contentStore.currentDashboard.components?.filter(
-		(item) => !item.map_config[0],
+		(item) => getMapConfig(item).length === 0,
 	);
 
 	return { hasMap: hasMap, noMap: noMap };
@@ -50,20 +72,8 @@ watch(
 	() => route.query.index,
 	(newIndex, oldIndex) => {
 		if (newIndex !== oldIndex) {
-			toggleOn.value = {
-				hasMap: new Array(parseMapLayers.value.hasMap?.length).fill(
-					false,
-				),
-				noMap: new Array(parseMapLayers.value.noMap?.length).fill(
-					false,
-				),
-				mapLayer: new Array(
-					contentStore.currentDashboard.components?.length,
-				).fill(false),
-				basicLayer: new Array(contentStore.mapLayers?.length).fill(
-					false,
-				),
-			};
+			toggleOn.value = buildToggleState();
+			districtMapOn.value = buildToggleState();
 		}
 	},
 );
@@ -76,9 +86,20 @@ function handleOpenSettings() {
 	dialogStore.showDialog("addEditDashboards");
 }
 
+function hasDistrictChart(item) {
+	return item?.chart_config?.types?.includes("DistrictChart");
+}
+
+function turnOffRegularMapLayer(map_config) {
+	if (map_config.length === 0) return;
+	mapStore.clearByParamFilter(map_config);
+	mapStore.turnOffMapLayerVisibility(map_config);
+}
+
 // Open and closes the component as well as communicates to the mapStore to turn on and off map layers
-function handleToggle(value, map_config) {
-	if (!map_config[0]) {
+function handleToggle(value, item, useDistrictMap = false) {
+	const map_config = getMapConfig(item);
+	if (!map_config[0] && !(useDistrictMap && hasDistrictChart(item))) {
 		if (value) {
 			dialogStore.showNotification(
 				"info",
@@ -88,10 +109,18 @@ function handleToggle(value, map_config) {
 		return;
 	}
 	if (value) {
-		mapStore.addToMapLayerList(map_config);
+		if (useDistrictMap && hasDistrictChart(item)) {
+			mapStore.turnOffMapLayerVisibility(map_config);
+			mapStore.addDistrictChartLayer(item);
+		} else {
+			mapStore.turnOffDistrictChartLayer(item);
+			mapStore.addToMapLayerList(map_config);
+		}
 	} else {
-		mapStore.clearByParamFilter(map_config);
-		mapStore.turnOffMapLayerVisibility(map_config);
+		if (!useDistrictMap) {
+			turnOffRegularMapLayer(map_config);
+		}
+		mapStore.turnOffDistrictChartLayer(item);
 	}
 }
 
@@ -99,8 +128,33 @@ function toggleSwitchBtn(value, Btn, BtnIndex) {
 	toggleOn.value[Btn][BtnIndex] = value;
 }
 
+function toggleDistrictMapBtn(value, Btn, BtnIndex) {
+	districtMapOn.value[Btn][BtnIndex] = value;
+}
+
+function handleDistrictMapToggle(value, item, Btn, BtnIndex) {
+	toggleDistrictMapBtn(value, Btn, BtnIndex);
+	if (!toggleOn.value[Btn]?.[BtnIndex]) return;
+
+	const map_config = getMapConfig(item);
+	if (value) {
+		mapStore.turnOffMapLayerVisibility(map_config);
+		mapStore.addDistrictChartLayer(item);
+	} else {
+		mapStore.turnOffDistrictChartLayer(item);
+		if (map_config[0]) {
+			mapStore.addToMapLayerList(map_config);
+		} else {
+			dialogStore.showNotification(
+				"info",
+				"本組件沒有空間資料，不會渲染地圖",
+			);
+		}
+	}
+}
+
 function shouldDisable(map_config) {
-	const allMapLayerIds = map_config.map(
+	const allMapLayerIds = getMapConfig(map_config).map(
 		(el) => `${el.index}-${el.type}-${el.city}`,
 	);
 	if (mapStore.isPreloading === true) {
@@ -174,6 +228,8 @@ function popularBasicLayerGA(map_config) {
           "
           :toggle-disable="shouldDisable(item.map_config)"
           :toggle-on="toggleOn.mapLayer[arrayIdx]"
+          :district-map-supported="hasDistrictChart(item)"
+          :district-map-on="districtMapOn.mapLayer[arrayIdx]"
           @info="
             (item) => {
               dialogStore.showMoreInfo(item);
@@ -181,9 +237,14 @@ function popularBasicLayerGA(map_config) {
           "
           @toggle="
             (value, map_config) => {
-              handleToggle(value, map_config);
+              handleToggle(value, item, districtMapOn.mapLayer[arrayIdx]);
               toggleSwitchBtn(value, 'mapLayer', arrayIdx);
               popularThematicLayerGA(map_config);
+            }
+          "
+          @district-map-toggle="
+            (value) => {
+              handleDistrictMapToggle(value, item, 'mapLayer', arrayIdx);
             }
           "
           @filter-by-param="
@@ -227,22 +288,27 @@ function popularBasicLayerGA(map_config) {
 
               const componentIndex =
                 contentStore.currentDashboard.components.findIndex(
-                  (item) => item.id === selectedData.id,
+                  (item) => item.id === selectedData?.id,
                 );
 
               if (selectedData) {
-                mapStore.clearByParamFilter(item.map_config);
-                mapStore.turnOffMapLayerVisibility(
-                  item.map_config,
-                );
-                mapStore.addToMapLayerList(
-                  selectedData.map_config,
-                );
+                if (districtMapOn.mapLayer[arrayIdx]) {
+                  mapStore.turnOffDistrictChartLayer(item);
+                  mapStore.turnOffMapLayerVisibility(getMapConfig(item));
+                  mapStore.addDistrictChartLayer(selectedData);
+                } else {
+                  turnOffRegularMapLayer(getMapConfig(item));
+                  mapStore.addToMapLayerList(
+                    getMapConfig(selectedData),
+                  );
+                }
 
-                contentStore.setComponentData(
-                  componentIndex,
-                  selectedData,
-                );
+                if (componentIndex !== -1) {
+                  contentStore.setComponentData(
+                    componentIndex,
+                    selectedData,
+                  );
+                }
               }
             }
           "
@@ -289,6 +355,8 @@ function popularBasicLayerGA(map_config) {
           "
           :toggle-disable="shouldDisable(item.map_config)"
           :toggle-on="toggleOn.hasMap[arrayIdx]"
+          :district-map-supported="hasDistrictChart(item)"
+          :district-map-on="districtMapOn.hasMap[arrayIdx]"
           @info="
             (item) => {
               dialogStore.showMoreInfo(item);
@@ -296,9 +364,14 @@ function popularBasicLayerGA(map_config) {
           "
           @toggle="
             (value, map_config) => {
-              handleToggle(value, map_config);
+              handleToggle(value, item, districtMapOn.hasMap[arrayIdx]);
               toggleSwitchBtn(value, 'hasMap', arrayIdx);
               popularThematicLayerGA(map_config);
+            }
+          "
+          @district-map-toggle="
+            (value) => {
+              handleDistrictMapToggle(value, item, 'hasMap', arrayIdx);
             }
           "
           @filter-by-param="
@@ -347,22 +420,27 @@ function popularBasicLayerGA(map_config) {
 
               const componentIndex =
                 contentStore.currentDashboard.components.findIndex(
-                  (item) => item.id === selectedData.id,
+                  (item) => item.id === selectedData?.id,
                 );
 
               if (selectedData) {
-                mapStore.clearByParamFilter(item.map_config);
-                mapStore.turnOffMapLayerVisibility(
-                  item.map_config,
-                );
-                mapStore.addToMapLayerList(
-                  selectedData.map_config,
-                );
+                if (districtMapOn.hasMap[arrayIdx]) {
+                  mapStore.turnOffDistrictChartLayer(item);
+                  mapStore.turnOffMapLayerVisibility(getMapConfig(item));
+                  mapStore.addDistrictChartLayer(selectedData);
+                } else {
+                  turnOffRegularMapLayer(getMapConfig(item));
+                  mapStore.addToMapLayerList(
+                    getMapConfig(selectedData),
+                  );
+                }
 
-                contentStore.setComponentData(
-                  componentIndex,
-                  selectedData,
-                );
+                if (componentIndex !== -1) {
+                  contentStore.setComponentData(
+                    componentIndex,
+                    selectedData,
+                  );
+                }
               }
             }
           "
@@ -395,6 +473,8 @@ function popularBasicLayerGA(map_config) {
           "
           :toggle-disable="shouldDisable(item.map_config)"
           :toggle-on="toggleOn.basicLayer[arrayIdx]"
+          :district-map-supported="hasDistrictChart(item)"
+          :district-map-on="districtMapOn.basicLayer[arrayIdx]"
           @info="
             (item) => {
               dialogStore.showMoreInfo(item);
@@ -402,9 +482,14 @@ function popularBasicLayerGA(map_config) {
           "
           @toggle="
             (value, map_config) => {
-              handleToggle(value, map_config);
+              handleToggle(value, item, districtMapOn.basicLayer[arrayIdx]);
               toggleSwitchBtn(value, 'basicLayer', arrayIdx);
               popularBasicLayerGA(map_config);
+            }
+          "
+          @district-map-toggle="
+            (value) => {
+              handleDistrictMapToggle(value, item, 'basicLayer', arrayIdx);
             }
           "
           @filter-by-param="
@@ -446,13 +531,16 @@ function popularBasicLayerGA(map_config) {
               );
 
               if (selectedData) {
-                mapStore.clearByParamFilter(item.map_config);
-                mapStore.turnOffMapLayerVisibility(
-                  item.map_config,
-                );
-                mapStore.addToMapLayerList(
-                  selectedData.map_config,
-                );
+                if (districtMapOn.basicLayer[arrayIdx]) {
+                  mapStore.turnOffDistrictChartLayer(item);
+                  mapStore.turnOffMapLayerVisibility(getMapConfig(item));
+                  mapStore.addDistrictChartLayer(selectedData);
+                } else {
+                  turnOffRegularMapLayer(getMapConfig(item));
+                  mapStore.addToMapLayerList(
+                    getMapConfig(selectedData),
+                  );
+                }
 
                 contentStore.setMapLayerData(
                   arrayIdx,
@@ -498,6 +586,8 @@ function popularBasicLayerGA(map_config) {
               : contentStore.cityManager.getTagList(item.city)
           "
           :toggle-on="toggleOn.noMap[arrayIdx]"
+          :district-map-supported="hasDistrictChart(item)"
+          :district-map-on="districtMapOn.noMap[arrayIdx]"
           @info="
             (item) => {
               dialogStore.showMoreInfo(item);
@@ -505,8 +595,13 @@ function popularBasicLayerGA(map_config) {
           "
           @toggle="
             (value, map_config) => {
-              handleToggle(value, map_config);
+              handleToggle(value, item, districtMapOn.noMap[arrayIdx]);
               toggleSwitchBtn(value, 'noMap', arrayIdx);
+            }
+          "
+          @district-map-toggle="
+            (value) => {
+              handleDistrictMapToggle(value, item, 'noMap', arrayIdx);
             }
           "
           @change-city="
@@ -529,6 +624,10 @@ function popularBasicLayerGA(map_config) {
                     data.city === item.city,
                 );
               if (selectedData && componentIndex !== -1) {
+                if (districtMapOn.noMap[arrayIdx]) {
+                  mapStore.turnOffDistrictChartLayer(item);
+                  mapStore.addDistrictChartLayer(selectedData);
+                }
                 contentStore.setComponentData(
                   componentIndex,
                   selectedData,
