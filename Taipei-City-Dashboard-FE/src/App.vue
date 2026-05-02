@@ -256,6 +256,18 @@ onBeforeUnmount(() => {
         <RouterView />
       </div>
     </div>
+    <!-- /value-added layouts -->
+    <div
+      v-else-if="authStore.currentPath === 'ValueAdded'"
+      class="app-content"
+    >
+      <div
+        class="app-content-main"
+        style="overflow-y: auto;"
+      >
+        <RouterView />
+      </div>
+    </div>
     <div v-else>
       <router-view />
     </div>

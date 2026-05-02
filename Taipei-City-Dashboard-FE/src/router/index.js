@@ -40,6 +40,11 @@ const routes = [
 		component: MapView,
 	},
 	{
+		path: "/value-added",
+		name: "ValueAdded",
+		component: () => import("../views/ValueAddedView.vue"),
+	},
+	{
 		path: "/component",
 		name: "component",
 		component: ComponentView,
@@ -121,7 +126,7 @@ router.beforeEach((to) => {
 	const authStore = useAuthStore();
 	if (authStore.isMobileDevice && authStore.isNarrowDevice) {
 		if (
-			!["dashboard", "component-info", "callback", "embed", "mapview"].includes(
+			!["dashboard", "component-info", "callback", "embed", "mapview", "ValueAdded"].includes(
 				to.name
 			)
 		) {

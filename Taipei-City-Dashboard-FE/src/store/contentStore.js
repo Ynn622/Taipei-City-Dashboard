@@ -88,6 +88,7 @@ export const useContentStore = defineStore("content", {
 		// 1. Check the current path and execute actions based on the current path
 		setRouteParams(mode, index, city) {
 			this.currentDashboard.mode = mode;
+			const hasIndex = typeof index === "string" && index.length > 0;
 			// 1-1. Don't do anything if the path is the same
 			if (
 				this.currentDashboard.index === index &&
@@ -95,6 +96,7 @@ export const useContentStore = defineStore("content", {
 			) {
 				if (
 					this.currentDashboard.mode === "/mapview" &&
+					hasIndex &&
 					!index.includes("map-layers")
 				) {
 					this.setMapLayers(city);
