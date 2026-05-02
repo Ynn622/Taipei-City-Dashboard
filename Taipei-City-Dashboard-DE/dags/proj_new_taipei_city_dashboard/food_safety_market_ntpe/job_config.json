@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "food_safety_market_ntpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "market",
+      "data.ntpc",
+      "新北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of New Taipei public market list with address geocoding and point geometry.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_safety_market_ntpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "新北市公有市場名冊",
+    "airflow_update_freq": "@monthly",
+    "source": "https://data.ntpc.gov.tw/datasets/785be91a-caaf-4e1c-91d6-f7d616d31a45",
+    "source_type": "data.ntpc API",
+    "source_dept": "新北市政府市場處",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "新北市公有市場名冊，含市場名稱、行政區、地址、電話及市場型態。",
+    "etl_description": "retrieve all API pages, standardize fields, geocode addresses, standardize geometry",
+    "sensitivity": "public"
+  }
+}

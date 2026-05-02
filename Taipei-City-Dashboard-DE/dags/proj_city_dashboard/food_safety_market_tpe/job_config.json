@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "food_safety_market_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "market",
+      "data.taipei",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of Taipei public retail market stall counts with geocoded point geometry.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_safety_market_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "臺北市各區公有零售市(商)場攤位數",
+    "airflow_update_freq": "@monthly",
+    "source": "https://data.taipei/dataset/detail?id=f490476d-d156-4492-a463-cf3405de3b55",
+    "source_type": "data.taipei API",
+    "source_dept": "臺北市市場處",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市各區公有零售市(商)場攤位數量。",
+    "etl_description": "resolve latest resource id, standardize market stall columns, geocode market names, standardize geometry",
+    "sensitivity": "public"
+  }
+}
