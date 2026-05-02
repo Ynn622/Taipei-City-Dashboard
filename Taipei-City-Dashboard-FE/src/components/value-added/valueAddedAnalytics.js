@@ -68,16 +68,48 @@ export const COMPONENT_GEOJSON_FALLBACKS = {
 
 export function unwrapRows(payload) {
 	if (!payload) return [];
-	if (Array.isArray(payload)) return payload;
-	if (Array.isArray(payload.data)) return payload.data;
-	if (Array.isArray(payload.rows)) return payload.rows;
-	if (payload.data && Array.isArray(payload.data.data)) return payload.data.data;
+	if (Array.isArray(payload.categories) && Array.isArray(payload.data)) {
+		const categoryRows = rowsFromCategorySeries(payload);
+		if (categoryRows.length > 0) return categoryRows;
+	}
+	if (Array.isArray(payload)) return flattenChartRows(payload);
+	if (Array.isArray(payload.data)) return flattenChartRows(payload.data);
+	if (Array.isArray(payload.rows)) return flattenChartRows(payload.rows);
+	if (payload.data && Array.isArray(payload.data.data)) return flattenChartRows(payload.data.data);
 	return [];
+}
+
+function rowsFromCategorySeries(payload) {
+	const seriesList = payload.data.filter((series) => Array.isArray(series?.data));
+	if (seriesList.length === 0) return [];
+	return payload.categories.map((label, index) => {
+		const data = seriesList.reduce((sum, series) => {
+			const value = Number(series.data[index] ?? 0);
+			return sum + (Number.isFinite(value) ? value : 0);
+		}, 0);
+		return { x_axis: label, data };
+	});
+}
+
+function flattenChartRows(rows) {
+	if (!Array.isArray(rows)) return [];
+	if (
+		rows.some((row) => Array.isArray(row?.data)) &&
+		rows.some((row) => Array.isArray(row?.data) && row.data.some((item) => isRowObject(item)))
+	) {
+		return rows.flatMap((row) => row.data.filter((item) => isRowObject(item)));
+	}
+	return rows;
+}
+
+function isRowObject(item) {
+	return item && typeof item === "object" && !Array.isArray(item);
 }
 
 export function rowLabel(row) {
 	return (
 		row?.x_axis ||
+		row?.x ||
 		row?.name ||
 		row?.district ||
 		row?.agency_type ||
@@ -93,6 +125,7 @@ export function rowGroup(row) {
 export function rowValue(row) {
 	const value = Number(
 		row?.data ??
+			row?.y ??
 			row?.value ??
 			row?.count ??
 			row?.total ??

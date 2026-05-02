@@ -9,7 +9,7 @@ const loading = ref(true);
 const rows = ref([]);
 const featureKey = "operations-improve";
 
-async function generate() {
+async function generate(options = {}) {
 	loading.value = true;
 	rows.value = rows.value?.length
 		? rows.value
@@ -19,12 +19,12 @@ async function generate() {
 			topItems: topRows(rows.value, 5),
 			task: "營運管理改善建議",
 		},
-	});
+	}, options);
 	loading.value = false;
 }
 
 onMounted(generate);
-watch(() => store.profileVersion, generate);
+watch(() => store.profileVersion, () => generate({ force: true }));
 
 const result = computed(() => store.llmResult.get(featureKey));
 </script>
@@ -39,7 +39,7 @@ const result = computed(() => store.llmResult.get(featureKey));
     <template #action>
       <button
         class="action-btn"
-        @click="generate"
+        @click="generate({ force: true })"
       >
         重新產生
       </button>
