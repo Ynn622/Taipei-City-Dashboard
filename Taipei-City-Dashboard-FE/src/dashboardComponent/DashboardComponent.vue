@@ -186,6 +186,8 @@ function returnChartComponent(name, svg) {
 	switch (name) {
 	case "DistrictChart":
 		return svg ? DistrictChartSvg : DistrictChart;
+	case "RankListChart":
+		return svg ? BarChartSvg : BarChart;
 	case "BarChart":
 		return svg ? BarChartSvg : BarChart;
 	case "MapLegend":

@@ -20,6 +20,24 @@ const emits = defineEmits([
 	"fly"
 ]);
 
+const rankedSeries = computed(() => {
+	const categories = props.chart_config.categories || [];
+	const rankedData = categories.map((category, index) => ({
+		x: category,
+		y: props.series.reduce((sum, serie) => {
+			const value = serie.data[index];
+			return sum + Number(value?.y ?? value ?? 0);
+		}, 0),
+	}));
+
+	rankedData.sort((a, b) => b.y - a.y);
+	return [{ name: "優良餐廳", data: rankedData }];
+});
+
+const displaySeries = computed(() => (
+	props.activeChart === "RankListChart" ? rankedSeries.value : props.series
+));
+
 const chartOptions = ref({
 	chart: {
 		offsetY: 15,
@@ -86,6 +104,9 @@ const chartOptions = ref({
 		labels: {
 			show: false,
 		},
+		categories: props.chart_config.categories
+			? props.chart_config.categories
+			: [],
 		type: "category",
 	},
 	yaxis: {
@@ -98,7 +119,7 @@ const chartOptions = ref({
 });
 
 const chartHeight = computed(() => {
-	return `${40 + props.series[0].data.length * 30}`;
+	return `${40 + displaySeries.value[0].data.length * 30}`;
 });
 
 const selectedIndex = ref(null);
@@ -141,13 +162,13 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div v-if="activeChart === 'BarChart'">
+  <div v-if="activeChart === 'BarChart' || activeChart === 'RankListChart'">
     <VueApexCharts
       width="100%"
       :height="chartHeight"
       type="bar"
       :options="chartOptions"
-      :series="series"
+      :series="displaySeries"
       @data-point-selection="handleDataSelection"
     />
   </div>

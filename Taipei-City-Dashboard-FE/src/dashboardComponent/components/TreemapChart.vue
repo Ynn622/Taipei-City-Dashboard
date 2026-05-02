@@ -21,6 +21,25 @@ const emits = defineEmits([
 	"fly"
 ]);
 
+const treemapSeries = computed(() => {
+	const series = Array.isArray(props.series) ? props.series : [];
+
+	if (!props.chart_config.categories) {
+		return series.length ? series : [{ name: props.chart_config.name || "", data: [] }];
+	}
+
+	const data = props.chart_config.categories.map((category, index) => ({
+		x: category,
+		y: series.reduce((sum, serie) => {
+			const value = serie.data?.[index];
+			return sum + Number(value?.y ?? value ?? 0);
+		}, 0),
+	}));
+
+	data.sort((a, b) => b.y - a.y);
+	return [{ name: "優良餐廳", data }];
+});
+
 const chartOptions = ref({
 	chart: {
 		borderRadius: 5,
@@ -91,8 +110,8 @@ const chartOptions = ref({
 
 const sum = computed(() => {
 	let sum = 0;
-	props.series[0].data.forEach(
-		(item) => (sum += item.y)
+	(treemapSeries.value[0]?.data || []).forEach(
+		(item) => (sum += Number(item.y ?? item ?? 0))
 	);
 	return Math.round(sum * 100) / 100;
 });
@@ -149,7 +168,7 @@ function handleDataSelection(_e, _chartContext, config) {
       width="100%"
       type="treemap"
       :options="chartOptions"
-      :series="series"
+      :series="treemapSeries"
       @data-point-selection="handleDataSelection"
     />
   </div>
