@@ -1,13 +1,53 @@
 --
--- Food safety dashboard sample data for components 501, 502, and 503.
+-- Food safety dashboard sample data for components 307, 501, 502, and 503.
 -- Included by dashboard-demo.sql during dashboard data DB initialization.
 --
 
 BEGIN;
 
+DROP TABLE IF EXISTS public.food_source_tpe;
+DROP TABLE IF EXISTS public.food_source_ntpe;
+DROP TABLE IF EXISTS public.food_audit_violation_tpe;
+DROP TABLE IF EXISTS public.food_audit_violation_ntpe;
+DROP TABLE IF EXISTS public.health_audit_violation_tpe;
+DROP TABLE IF EXISTS public.health_audit_violation_ntpe;
+DROP TABLE IF EXISTS public.post_help_agency_tpe;
+DROP TABLE IF EXISTS public.post_help_agency_ntpe;
 DROP TABLE IF EXISTS public.fda_good_restaurants;
 DROP TABLE IF EXISTS public.cdc_infectious_disease;
 DROP TABLE IF EXISTS public.food_safety_death_cause_share;
+
+CREATE TABLE public.food_source_tpe (
+    district text
+);
+
+CREATE TABLE public.food_source_ntpe (
+    district text
+);
+
+CREATE TABLE public.food_audit_violation_tpe (
+    district text
+);
+
+CREATE TABLE public.food_audit_violation_ntpe (
+    district text
+);
+
+CREATE TABLE public.health_audit_violation_tpe (
+    district text
+);
+
+CREATE TABLE public.health_audit_violation_ntpe (
+    district text
+);
+
+CREATE TABLE public.post_help_agency_tpe (
+    agency_type text
+);
+
+CREATE TABLE public.post_help_agency_ntpe (
+    agency_type text
+);
 
 CREATE TABLE public.fda_good_restaurants (
     data_time timestamp with time zone,
@@ -48,6 +88,180 @@ CREATE TABLE public.food_safety_death_cause_share (
     all_cause_value double precision,
     death_share_percent double precision
 );
+
+INSERT INTO public.food_source_tpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('內湖區', 10),
+        ('士林區', 8),
+        ('北投區', 8),
+        ('文山區', 5),
+        ('南港區', 4)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.food_source_ntpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('雙溪區', 47),
+        ('烏來區', 42),
+        ('坪林區', 38),
+        ('三峽區', 38),
+        ('石門區', 23),
+        ('八里區', 22),
+        ('淡水區', 14),
+        ('林口區', 11),
+        ('貢寮區', 9),
+        ('樹林區', 7),
+        ('金山區', 5),
+        ('土城區', 5),
+        ('鶯歌區', 5),
+        ('平溪區', 5),
+        ('五股區', 5),
+        ('新店區', 4),
+        ('三芝區', 4),
+        ('石碇區', 4),
+        ('萬里區', 3),
+        ('中和區', 2),
+        ('深坑區', 2),
+        ('瑞芳區', 1),
+        ('新莊區', 1),
+        ('汐止區', 1)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.food_audit_violation_tpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('中山區', 102),
+        ('萬華區', 85),
+        ('大安區', 77),
+        ('士林區', 70),
+        ('內湖區', 55),
+        ('松山區', 49),
+        ('信義區', 48),
+        ('北投區', 40),
+        ('中正區', 36),
+        ('南港區', 30),
+        ('大同區', 23),
+        ('文山區', 11)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.food_audit_violation_ntpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('板橋區', 29),
+        ('新店區', 13),
+        ('新莊區', 12),
+        ('中和區', 11),
+        ('蘆洲區', 10),
+        ('三重區', 9),
+        ('永和區', 6),
+        ('樹林區', 5),
+        ('土城區', 4),
+        ('深坑區', 4),
+        ('淡水區', 3),
+        ('五股區', 3),
+        ('汐止區', 2),
+        ('林口區', 2),
+        ('泰山區', 2),
+        ('鶯歌區', 2),
+        ('八里區', 1),
+        ('瑞芳區', 1)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.health_audit_violation_tpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('大安區', 36),
+        ('中山區', 35),
+        ('士林區', 25),
+        ('中正區', 24),
+        ('松山區', 21),
+        ('萬華區', 21),
+        ('北投區', 19),
+        ('信義區', 14),
+        ('大同區', 12),
+        ('內湖區', 12),
+        ('文山區', 8),
+        ('南港區', 4)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.health_audit_violation_ntpe (district)
+SELECT district
+FROM (
+    VALUES
+        ('中和區', 37),
+        ('新莊區', 18),
+        ('三重區', 17),
+        ('新店區', 13),
+        ('土城區', 12),
+        ('板橋區', 10),
+        ('永和區', 9),
+        ('淡水區', 7),
+        ('樹林區', 7),
+        ('蘆洲區', 6),
+        ('汐止區', 5),
+        ('林口區', 5),
+        ('泰山區', 5),
+        ('五股區', 4),
+        ('八里區', 3),
+        ('深坑區', 3),
+        ('鶯歌區', 3),
+        ('三峽區', 2),
+        ('瑞芳區', 2),
+        ('金山區', 1),
+        ('萬里區', 1),
+        ('石碇區', 1)
+) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.post_help_agency_tpe (agency_type)
+SELECT agency_type
+FROM (
+    VALUES
+        ('藥局', 907),
+        ('西醫一般科', 641),
+        ('內科', 180),
+        ('家庭醫學科', 151),
+        ('內科、家庭醫學科', 30),
+        ('急診醫學科', 15),
+        ('西醫一般科、內科、家庭醫學科', 7),
+        ('西醫一般科、內科、家庭醫學科、急診醫學科', 3),
+        ('西醫一般科、家庭醫學科', 3),
+        ('內科、家庭醫學科、急診醫學科', 3),
+        ('西醫一般科、內科', 2),
+        ('家庭醫學科、急診醫學科', 1),
+        ('消保會', 1),
+        ('消費者服務中心', 1),
+        ('消基會', 1)
+) AS source_counts(agency_type, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.post_help_agency_ntpe (agency_type)
+SELECT agency_type
+FROM (
+    VALUES
+        ('藥局', 1282),
+        ('西醫一般科', 423),
+        ('家庭醫學科', 203),
+        ('內科', 174),
+        ('內科、家庭醫學科', 38),
+        ('內科、家庭醫學科、急診醫學科', 8),
+        ('西醫一般科、內科、家庭醫學科、急診醫學科', 4),
+        ('急診醫學科', 2),
+        ('內科、急診醫學科', 1),
+        ('消費者服務中心', 1)
+) AS source_counts(agency_type, row_count)
+CROSS JOIN generate_series(1, row_count);
 
 COPY public.fda_good_restaurants (data_time, city, district, award_year, restaurant_name, address, lng, lat, rating_result, wkb_geometry) FROM stdin;
 2026-05-02 00:00:00+08	新北市	林口區	114	CORNER BAKERY 63國賓麵包房-林口A9門市	新北市林口區文化三路一段2號1樓	121.361398	25.066148	優	\N

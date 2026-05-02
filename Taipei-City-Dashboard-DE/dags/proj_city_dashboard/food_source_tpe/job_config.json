@@ -1,0 +1,44 @@
+{
+  "dag_infos": {
+    "dag_id": "food_source_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "food_source",
+      "organic_farm",
+      "data.taipei",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of Taipei organic farms with geocoded point geometry.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_source_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "臺北市有機農場",
+    "airflow_update_freq": "@monthly",
+    "source": "https://data.taipei/dataset/detail?id=32aea2da-14a7-47b6-a687-57e29c1ad4a7",
+    "source_type": "data.taipei API",
+    "source_dept": "臺北市政府產業發展局",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市取得有機驗證之有機農場資料，含農場名稱、農友姓名、地址、認證字號與面積。",
+    "etl_description": "resolve latest resource id, standardize organic farm columns, geocode addresses, fallback to district centroid, standardize geometry",
+    "sensitivity": "public"
+  }
+}
