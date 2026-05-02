@@ -76,10 +76,14 @@ def _food_allergen_classification(**kwargs):
             data = resp.json()
             if data.get("results") and len(data["results"]) > 0:
                 result = data["results"][0]
-                return result.get("lat"), result.get("lon")
+                county = result.get("county") or result.get("city")
+                if county:
+                    if "台北" in county or "臺北" in county: county = "臺北市"
+                    elif "新北" in county: county = "新北市"
+                return result.get("lat"), result.get("lon"), county
         except Exception as e:
             print(f"Geocode error for {brand_name}: {e}")
-        return None, None
+        return None, None, None
 
     def classify_allergens_llm(products_batch, api_url, api_key, model):
         system_prompt = """你是一位營養師與食品安全專家。請根據提供的產品名稱與原料清單，判斷是否含有以下特殊過敏原：
@@ -191,8 +195,8 @@ def _food_allergen_classification(**kwargs):
     for company, prods in company_groups.items():
         brand = prods[0]["brand_name"] if prods else company
         if brand not in brand_coords:
-            lat, lon = geocode_brand(brand)
-            brand_coords[brand] = (lat, lon)
+            lat, lon, county = geocode_brand(brand)
+            brand_coords[brand] = (lat, lon, county)
             time.sleep(0.1)
 
     print(f"  Brands geocoded: {len(brand_coords)}")
@@ -239,13 +243,24 @@ def _food_allergen_classification(**kwargs):
 
     for product, result in zip(sampled_products, flat_results):
         brand = product["brand_name"]
-        lat, lon = brand_coords.get(brand, (None, None))
+        lat, lon, county = brand_coords.get(brand, (None, None, None))
+
+        if county not in ["臺北市", "新北市"]:
+            if not lat or not lon:
+                continue
+            if 25.00 <= lat <= 25.22 and 121.45 <= lon <= 121.67:
+                county = "臺北市"
+            elif 24.67 <= lat <= 25.30 and 121.28 <= lon <= 122.01:
+                county = "新北市"
+            else:
+                continue
 
         allergens = result.get("allergens", [])
         has_allergens = result.get("has_allergens", False)
 
         final_records.append(
             {
+                "county": county,
                 "company_name": product["company_name"],
                 "brand_name": product["brand_name"],
                 "product_name": product["product_name"],
