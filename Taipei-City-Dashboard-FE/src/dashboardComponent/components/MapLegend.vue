@@ -60,9 +60,16 @@ function returnIcon(name) {
 }
 
 const selectedIndex = ref(null);
-const mapLegendSeries = computed(() =>
-	props.series?.filter((item) => item.type !== "donut") || []
-);
+
+const legendSeries = computed(() => {
+	return props.series.filter((item) => item.type !== "donut");
+});
+
+function getLegendColor(item, index) {
+	if (item.name === "有過敏原") return "#ED6A45";
+	if (item.name === "無過敏原") return "#4CB495";
+	return props.chart_config.color[index];
+}
 
 function handleDataSelection(index) {
 	if (!props.map_filter || !props.map_filter_on) {
@@ -75,17 +82,13 @@ function handleDataSelection(index) {
 				"filterByParam",
 				props.map_filter,
 				props.map_config,
-				mapLegendSeries.value[index].name,
+				legendSeries.value[index].name,
 				null
 			);
 		}
 		// Supports filtering by xAxis
 		else if (props.map_filter.mode === "byLayer") {
-			emits(
-				"filterByLayer",
-				props.map_config,
-				mapLegendSeries.value[index].name
-			);
+			emits("filterByLayer", props.map_config, legendSeries.value[index].name);
 		}
 		selectedIndex.value = index;
 	} else {
@@ -106,7 +109,7 @@ function handleDataSelection(index) {
   >
     <div class="maplegend-legend">
       <button
-        v-for="(item, index) in mapLegendSeries"
+        v-for="(item, index) in legendSeries"
         :key="item.name"
         :class="{
           'maplegend-legend-item': true,
@@ -120,7 +123,7 @@ function handleDataSelection(index) {
         <div
           v-if="item.type !== 'symbol'"
           :style="{
-            backgroundColor: `${chart_config.color[index]}`,
+            backgroundColor: getLegendColor(item, index),
             height: item.type === 'line' ? '0.4rem' : '1rem',
             borderRadius: item.type === 'circle' ? '50%' : '2px',
           }"

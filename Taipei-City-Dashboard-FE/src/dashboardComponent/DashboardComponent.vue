@@ -144,6 +144,13 @@ const updateFreq = computed(() => {
 	}
 });
 
+function getChartTypeLabel(type) {
+	if (props.config.index === "food_allergen_classification") {
+		if (type === "MapLegend") return "類別數量";
+	}
+	return chartTypes[type];
+}
+
 // The style for the tag tooltip
 const tooltipPosition = computed(() => {
 	if (!mousePosition.value.x || !mousePosition.value.y) {
@@ -374,7 +381,7 @@ function returnChartComponent(name, svg) {
           }"
           @click="changeActiveChart(item)"
         >
-          {{ chartTypes[item] }}
+          {{ getChartTypeLabel(item) }}
         </button>
       </div>
     </div>
