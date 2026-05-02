@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "food_audit_violation_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@yearly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "food_audit_violation",
+      "data.taipei",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Yearly update of Taipei food sampling non-compliant units with geocoded point geometry.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_audit_violation_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "臺北市衛生局食品抽驗不合格清冊",
+    "airflow_update_freq": "@yearly",
+    "source": "https://data.taipei/dataset/detail?id=09a917a0-0fb5-47e1-957c-5f1268fba517",
+    "source_type": "data.taipei CSV resources",
+    "source_dept": "臺北市政府衛生局",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市食品抽驗不合格清冊，包含專案名稱、抽驗日期、分類、檢體名稱、抽驗地點、檢驗結果與不符合規定原因。",
+    "etl_description": "discover CSV resources from data.taipei dataset page, standardize violation columns, geocode addresses, fallback to district centroid, standardize geometry",
+    "sensitivity": "public"
+  }
+}
