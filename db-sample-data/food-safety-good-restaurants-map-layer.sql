@@ -21,13 +21,20 @@ SELECT
     "circle-color": [
       "match",
       ["get", "rating_result"],
-      "優", "#5FB878",
-      "良", "#F2B84B",
+      "優", "#8FD9A8",
+      "良", "#F6D982",
       "#9E9E9E"
     ],
-    "circle-radius": 6,
+    "circle-radius": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      9, 2,
+      12, 3,
+      15, 5
+    ],
     "circle-stroke-color": "#ffffff",
-    "circle-stroke-width": 1
+    "circle-stroke-width": 0.5
   }'::json,
   '[
     {"key": "restaurant_name", "name": "店名"},
@@ -49,13 +56,20 @@ SET
     "circle-color": [
       "match",
       ["get", "rating_result"],
-      "優", "#5FB878",
-      "良", "#F2B84B",
+      "優", "#8FD9A8",
+      "良", "#F6D982",
       "#9E9E9E"
     ],
-    "circle-radius": 6,
+    "circle-radius": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      9, 2,
+      12, 3,
+      15, 5
+    ],
     "circle-stroke-color": "#ffffff",
-    "circle-stroke-width": 1
+    "circle-stroke-width": 0.5
   }'::json,
   property = '[
     {"key": "restaurant_name", "name": "店名"},
@@ -78,7 +92,7 @@ WHERE "index" = 'fda_good_restaurants';
 INSERT INTO public.component_charts ("index", color, types, unit)
 SELECT
   'fda_good_restaurants',
-  ARRAY['#5FB878', '#F2B84B'],
+  ARRAY['#8FD9A8', '#F6D982'],
   ARRAY['DistrictChart', 'RankListChart', 'TreemapChart'],
   '家'
 WHERE NOT EXISTS (
@@ -87,7 +101,7 @@ WHERE NOT EXISTS (
 
 UPDATE public.component_charts
 SET
-  color = ARRAY['#5FB878', '#F2B84B'],
+  color = ARRAY['#8FD9A8', '#F6D982'],
   types = ARRAY['DistrictChart', 'RankListChart', 'TreemapChart'],
   unit = '家'
 WHERE "index" = 'fda_good_restaurants';
