@@ -1,0 +1,995 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4000901,
+          25.1466207
+        ]
+      },
+      "properties": {
+        "source_row_no": 1,
+        "office_id": 2331230018,
+        "name": "八里區衛生所",
+        "city": "新北市",
+        "district": "八里區",
+        "agency_type": "衛生所",
+        "address": "新北市八里區舊城路16號",
+        "phone": "(02)26101902",
+        "extension": "",
+        "zipcode": 249,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市八里區舊城路16號",
+        "osm_lng": 121.4000901,
+        "osm_lat": 25.1466207,
+        "osm_query": "新北市八里區舊城路",
+        "osm_display_name": "舊城路, 舊城里, 八里區, 下罟子, 新北市, 249002, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.500961,
+          25.2572198
+        ]
+      },
+      "properties": {
+        "source_row_no": 2,
+        "office_id": 2331210016,
+        "name": "三芝區衛生所",
+        "city": "新北市",
+        "district": "三芝區",
+        "agency_type": "衛生所",
+        "address": "新北市三芝區中山路一段12號",
+        "phone": "(02)26364850",
+        "extension": "",
+        "zipcode": 252,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市三芝區中山路一段12號",
+        "osm_lng": 121.500961,
+        "osm_lat": 25.2572198,
+        "osm_query": "新北市三芝區中山路一段",
+        "osm_display_name": "中山路一段, 埔頭里, 三芝區, 芝柏山莊, 新北市, 252204, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4851038,
+          25.0615732
+        ]
+      },
+      "properties": {
+        "source_row_no": 3,
+        "office_id": 2331020012,
+        "name": "三重區衛生所",
+        "city": "新北市",
+        "district": "三重區",
+        "agency_type": "衛生所",
+        "address": "新北市三重區新北大道一段1號",
+        "phone": "(02)29825233",
+        "extension": "",
+        "zipcode": 241,
+        "open_time": "週一至週五8:00~18:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市三重區新北大道一段1號",
+        "osm_lng": 121.4851038,
+        "osm_lat": 25.0615732,
+        "osm_query": "新北市三重區新北大道一段",
+        "osm_display_name": "新北大道一段, 田安里, 三重區, 新北市, 24161, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.3734124,
+          24.9309661
+        ]
+      },
+      "properties": {
+        "source_row_no": 4,
+        "office_id": 2331090014,
+        "name": "三峽區衛生所",
+        "city": "新北市",
+        "district": "三峽區",
+        "agency_type": "衛生所",
+        "address": "新北市三峽區光明路71號3樓",
+        "phone": "(02)26711592",
+        "extension": "",
+        "zipcode": 237,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市三峽區光明路71號3樓",
+        "osm_lng": 121.3734124,
+        "osm_lat": 24.9309661,
+        "osm_query": "新北市三峽區光明路",
+        "osm_display_name": "光明路, 礁溪里, 三峽區, 北大特區, 新北市, 237016, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.447212,
+          24.9701535
+        ]
+      },
+      "properties": {
+        "source_row_no": 5,
+        "office_id": 2331130013,
+        "name": "土城區衛生所",
+        "city": "新北市",
+        "district": "土城區",
+        "agency_type": "衛生所",
+        "address": "新北市土城區和平路26號2樓",
+        "phone": "(02)22603181",
+        "extension": "",
+        "zipcode": 236,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市土城區和平路26號2樓",
+        "osm_lng": 121.447212,
+        "osm_lat": 24.9701535,
+        "osm_query": "新北市土城區和平路",
+        "osm_display_name": "和平路, 埤塘里, 土城區, 清水, 新北市, 236017, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5020578,
+          24.9989109
+        ]
+      },
+      "properties": {
+        "source_row_no": 6,
+        "office_id": 2331040014,
+        "name": "中和區衛生所",
+        "city": "新北市",
+        "district": "中和區",
+        "agency_type": "衛生所",
+        "address": "新北市中和區南山路4巷3號",
+        "phone": "(02)22491936",
+        "extension": "",
+        "zipcode": 235,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市中和區南山路4巷3號",
+        "osm_lng": 121.5020578,
+        "osm_lat": 24.9989109,
+        "osm_query": "新北市中和區南山路",
+        "osm_display_name": "南山路, 漳和里, 中和區, 枋寮, 新北市, 235068, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4481287,
+          25.0935135
+        ]
+      },
+      "properties": {
+        "source_row_no": 7,
+        "office_id": 2331150015,
+        "name": "五股區衛生所",
+        "city": "新北市",
+        "district": "五股區",
+        "agency_type": "衛生所",
+        "address": "新北市五股區新城三路11號3樓",
+        "phone": "(02)22917717",
+        "extension": "",
+        "zipcode": 248,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市五股區新城三路11號3樓",
+        "osm_lng": 121.4481287,
+        "osm_lat": 25.0935135,
+        "osm_query": "新北市五股區新城三路",
+        "osm_display_name": "新城三路, 洲子洋重劃區, 成功里, 五股區, 新北市, 24841, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.7357413,
+          25.0248548
+        ]
+      },
+      "properties": {
+        "source_row_no": 8,
+        "office_id": 2331240014,
+        "name": "平溪區衛生所",
+        "city": "新北市",
+        "district": "平溪區",
+        "agency_type": "衛生所",
+        "address": "新北市平溪區公園街17號",
+        "phone": "(02)24951015",
+        "extension": "",
+        "zipcode": 226,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市平溪區公園街17號",
+        "osm_lng": 121.7357413,
+        "osm_lat": 25.0248548,
+        "osm_query": "新北市平溪區公園街",
+        "osm_display_name": "公園街, 石底里, 平溪區, 新北市, 226, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5162013,
+          25.0047057
+        ]
+      },
+      "properties": {
+        "source_row_no": 9,
+        "office_id": 2331030018,
+        "name": "永和區衛生所",
+        "city": "新北市",
+        "district": "永和區",
+        "agency_type": "衛生所",
+        "address": "新北市永和區秀朗路一段137號",
+        "phone": "(02)32332780",
+        "extension": "",
+        "zipcode": 234,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市永和區秀朗路一段137號",
+        "osm_lng": 121.5162013,
+        "osm_lat": 25.0047057,
+        "osm_query": "新北市永和區秀朗路一段",
+        "osm_display_name": "秀朗路一段, 店街里, 永和區, 秀朗, 新北市, 23455, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5662698,
+          25.290139
+        ]
+      },
+      "properties": {
+        "source_row_no": 10,
+        "office_id": 2331220012,
+        "name": "石門區衛生所",
+        "city": "新北市",
+        "district": "石門區",
+        "agency_type": "衛生所",
+        "address": "新北市石門區中山路28-1號",
+        "phone": "(02)26381007",
+        "extension": "",
+        "zipcode": 253,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市石門區中山路28-1號",
+        "osm_lng": 121.5662698,
+        "osm_lat": 25.290139,
+        "osm_query": "新北市石門區中山路",
+        "osm_display_name": "中山路, 石門里, 石門區, 尖鹿村, 新北市, 25343, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6517779,
+          25.0054209
+        ]
+      },
+      "properties": {
+        "source_row_no": 11,
+        "office_id": 2331190019,
+        "name": "石碇區衛生所",
+        "city": "新北市",
+        "district": "石碇區",
+        "agency_type": "衛生所",
+        "address": "新北市石碇區碇坪路一段82號",
+        "phone": "(02)26631325",
+        "extension": "",
+        "zipcode": 223,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市石碇區碇坪路一段82號",
+        "osm_lng": 121.6517779,
+        "osm_lat": 25.0054209,
+        "osm_query": "新北市石碇區碇坪路一段",
+        "osm_display_name": "碇坪路一段, 隆盛里, 石碇區, 新北市, 223002, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6553962,
+          25.0627451
+        ]
+      },
+      "properties": {
+        "source_row_no": 12,
+        "office_id": 2331110011,
+        "name": "汐止區衛生所",
+        "city": "新北市",
+        "district": "汐止區",
+        "agency_type": "衛生所",
+        "address": "新北市汐止區新台五路一段266號",
+        "phone": "(02)26412030",
+        "extension": "",
+        "zipcode": 221,
+        "open_time": "週一至週五8:00~17:30(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市汐止區新台五路一段266號",
+        "osm_lng": 121.6553962,
+        "osm_lat": 25.0627451,
+        "osm_query": "新北市汐止區新台五路一段",
+        "osm_display_name": "台北新視窗社區, 新台五路一段, 自強里, 汐止區, 新北市, 22167, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.712085,
+          24.9357314
+        ]
+      },
+      "properties": {
+        "source_row_no": 13,
+        "office_id": 2331200010,
+        "name": "坪林區衛生所",
+        "city": "新北市",
+        "district": "坪林區",
+        "agency_type": "衛生所",
+        "address": "新北市坪林區坪林街104號",
+        "phone": "(02)26656272",
+        "extension": "",
+        "zipcode": 232,
+        "open_time": "週一至週五9:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市坪林區坪林街104號",
+        "osm_lng": 121.712085,
+        "osm_lat": 24.9357314,
+        "osm_query": "新北市坪林區坪林街",
+        "osm_display_name": "坪林街, 坪林里, 坪林區, 新北市, 232001, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4594425,
+          25.0238847
+        ]
+      },
+      "properties": {
+        "source_row_no": 14,
+        "office_id": 2331010016,
+        "name": "板橋區衛生所",
+        "city": "新北市",
+        "district": "板橋區",
+        "agency_type": "衛生所",
+        "address": "新北市板橋區英士路192號",
+        "phone": "(02)22586606",
+        "extension": "",
+        "zipcode": 220,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市板橋區英士路192號",
+        "osm_lng": 121.4594425,
+        "osm_lat": 25.0238847,
+        "osm_query": "新北市板橋區英士路",
+        "osm_display_name": "英士路, 新海里, 板橋區, 社後, 新北市, 220015, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.365448,
+          25.0692123
+        ]
+      },
+      "properties": {
+        "source_row_no": 15,
+        "office_id": 2331170017,
+        "name": "林口區衛生所",
+        "city": "新北市",
+        "district": "林口區",
+        "agency_type": "衛生所",
+        "address": "新北市林口區忠孝二路55號1樓",
+        "phone": "(02)26068760",
+        "extension": "",
+        "zipcode": 244,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市林口區忠孝二路55號1樓",
+        "osm_lng": 121.365448,
+        "osm_lat": 25.0692123,
+        "osm_query": "新北市林口區忠孝二路",
+        "osm_display_name": "忠孝二路, 南勢里, 林口區, 新北市, 24448, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.647183,
+          25.2232905
+        ]
+      },
+      "properties": {
+        "source_row_no": 16,
+        "office_id": 2331270012,
+        "name": "金山區衛生所",
+        "city": "新北市",
+        "district": "金山區",
+        "agency_type": "衛生所",
+        "address": "新北市金山區民生路59號",
+        "phone": "(02)24984807",
+        "extension": "",
+        "zipcode": 208,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市金山區民生路59號",
+        "osm_lng": 121.647183,
+        "osm_lat": 25.2232905,
+        "osm_query": "新北市金山區民生路",
+        "osm_display_name": "民生路, 豐漁里, 金山區, 中角, 新北市, 208463, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4345009,
+          25.0553744
+        ]
+      },
+      "properties": {
+        "source_row_no": 17,
+        "office_id": 2331160011,
+        "name": "泰山區衛生所",
+        "city": "新北市",
+        "district": "泰山區",
+        "agency_type": "衛生所",
+        "address": "新北市泰山區全興路212號3樓",
+        "phone": "(02)29099921",
+        "extension": "",
+        "zipcode": 243,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市泰山區全興路212號3樓",
+        "osm_lng": 121.4345009,
+        "osm_lat": 25.0553744,
+        "osm_query": "新北市泰山區全興路",
+        "osm_display_name": "全興路, 福興里, 泰山區, 新北市, 24341, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5466704,
+          24.8750126
+        ]
+      },
+      "properties": {
+        "source_row_no": 18,
+        "office_id": 2331290014,
+        "name": "烏來區衛生所",
+        "city": "新北市",
+        "district": "烏來區",
+        "agency_type": "衛生所",
+        "address": "新北市烏來區新烏路5段109號",
+        "phone": "(02)26617200",
+        "extension": "",
+        "zipcode": 233,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市烏來區新烏路5段109號",
+        "osm_lng": 121.5466704,
+        "osm_lat": 24.8750126,
+        "osm_query": "新北市烏來區新烏路5段",
+        "osm_display_name": "新烏路五段, 忠治里, 烏來區, 桶壁, 新北市, 233, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.9241355,
+          25.0533176
+        ]
+      },
+      "properties": {
+        "source_row_no": 19,
+        "office_id": 2331260016,
+        "name": "貢寮區衛生所",
+        "city": "新北市",
+        "district": "貢寮區",
+        "agency_type": "衛生所",
+        "address": "新北市貢寮區仁愛路128號",
+        "phone": "(02)24901431",
+        "extension": "",
+        "zipcode": 228,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市貢寮區仁愛路128號",
+        "osm_lng": 121.9241355,
+        "osm_lat": 25.0533176,
+        "osm_query": "新北市貢寮區仁愛路",
+        "osm_display_name": "仁愛路, 仁里里, 貢寮區, 澳底, 新北市, 22844, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4409471,
+          25.1734634
+        ]
+      },
+      "properties": {
+        "source_row_no": 20,
+        "office_id": 2331100015,
+        "name": "淡水區衛生所",
+        "city": "新北市",
+        "district": "淡水區",
+        "agency_type": "衛生所",
+        "address": "新北市淡水區中山路158號",
+        "phone": "(02)26215620",
+        "extension": "",
+        "zipcode": 251,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市淡水區中山路158號",
+        "osm_lng": 121.4409471,
+        "osm_lat": 25.1734634,
+        "osm_query": "新北市淡水區中山路",
+        "osm_display_name": "中山路, 協元里, 淡水區, 滬尾, 新北市, 251011, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6141942,
+          25.0014919
+        ]
+      },
+      "properties": {
+        "source_row_no": 21,
+        "office_id": 2331180013,
+        "name": "深坑區衛生所",
+        "city": "新北市",
+        "district": "深坑區",
+        "agency_type": "衛生所",
+        "address": "新北市深坑區深坑街165號",
+        "phone": "(02)26621567",
+        "extension": "",
+        "zipcode": 222,
+        "open_time": "週一至週五8:00~16:30(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市深坑區深坑街165號",
+        "osm_lng": 121.6141942,
+        "osm_lat": 25.0014919,
+        "osm_query": "新北市深坑區深坑街",
+        "osm_display_name": "深坑街, 深坑老街, 深坑里, 深坑區, 萬順, 新北市, 22242, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5417569,
+          24.9673784
+        ]
+      },
+      "properties": {
+        "source_row_no": 22,
+        "office_id": 2331050010,
+        "name": "新店區衛生所",
+        "city": "新北市",
+        "district": "新店區",
+        "agency_type": "衛生所",
+        "address": "新北市新店區北新路一段86號12樓",
+        "phone": "(02)29113984",
+        "extension": "",
+        "zipcode": 231,
+        "open_time": "週一至週五8:30~17:30(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市新店區北新路一段86號12樓",
+        "osm_lng": 121.5417569,
+        "osm_lat": 24.9673784,
+        "osm_query": "新北市新店區北新路一段",
+        "osm_display_name": "新店戶政事務所, 86, 北新路一段, 中興里, 新店區, 大坪林, 新北市, 231003, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.452042,
+          25.0381206
+        ]
+      },
+      "properties": {
+        "source_row_no": 23,
+        "office_id": 2331060016,
+        "name": "新莊區衛生所",
+        "city": "新北市",
+        "district": "新莊區",
+        "agency_type": "衛生所",
+        "address": "新北市新莊區中華路一段2號",
+        "phone": "(02)29967123",
+        "extension": "",
+        "zipcode": 242,
+        "open_time": "週一至週五8:00~17:30(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市新莊區中華路一段2號",
+        "osm_lng": 121.452042,
+        "osm_lat": 25.0381206,
+        "osm_query": "新北市新莊區中華路一段",
+        "osm_display_name": "中華路一段, 榮和里, 新莊區, 新庄(海山口), 新北市, 24202, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.8079961,
+          25.1079853
+        ]
+      },
+      "properties": {
+        "source_row_no": 24,
+        "office_id": 2331120017,
+        "name": "瑞芳區衛生所",
+        "city": "新北市",
+        "district": "瑞芳區",
+        "agency_type": "衛生所",
+        "address": "新北市瑞芳區明燈路三段1號",
+        "phone": "(02)24972132",
+        "extension": "",
+        "zipcode": 224,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市瑞芳區明燈路三段1號",
+        "osm_lng": 121.8079961,
+        "osm_lat": 25.1079853,
+        "osm_query": "新北市瑞芳區明燈路三段",
+        "osm_display_name": "新北市瑞芳區地政事務所, 32, 明燈路三段, 龍潭里, 瑞芳區, 龍潭堵, 新北市, 224, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.6874463,
+          25.1754346
+        ]
+      },
+      "properties": {
+        "source_row_no": 25,
+        "office_id": 2331280018,
+        "name": "萬里區衛生所",
+        "city": "新北市",
+        "district": "萬里區",
+        "agency_type": "衛生所",
+        "address": "新北市萬里區瑪鋉路157號",
+        "phone": "(02)24921117",
+        "extension": "",
+        "zipcode": 207,
+        "open_time": "週一至週五8:30~16:30(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市萬里區瑪鋉路157號",
+        "osm_lng": 121.6874463,
+        "osm_lat": 25.1754346,
+        "osm_query": "新北市萬里區瑪鋉路",
+        "osm_display_name": "瑪鋉路, 萬里里, 萬里區, 新北市, 207003, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4287108,
+          24.9966896
+        ]
+      },
+      "properties": {
+        "source_row_no": 26,
+        "office_id": 2331070012,
+        "name": "樹林區衛生所",
+        "city": "新北市",
+        "district": "樹林區",
+        "agency_type": "衛生所",
+        "address": "新北市樹林區樹新路40-7號",
+        "phone": "(02)26812134",
+        "extension": "",
+        "zipcode": 238,
+        "open_time": "週一至週五8:00~17:30(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市樹林區樹新路40-7號",
+        "osm_lng": 121.4287108,
+        "osm_lat": 24.9966896,
+        "osm_query": "新北市樹林區樹新路",
+        "osm_display_name": "樹新路, 保安里, 樹林區, 歡仔園, 新北市, 23847, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.8662321,
+          25.0381613
+        ]
+      },
+      "properties": {
+        "source_row_no": 27,
+        "office_id": 2331250010,
+        "name": "雙溪區衛生所",
+        "city": "新北市",
+        "district": "雙溪區",
+        "agency_type": "衛生所",
+        "address": "新北市雙溪區新基南街18號",
+        "phone": "(02)24931210",
+        "extension": "",
+        "zipcode": 227,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市雙溪區新基南街18號",
+        "osm_lng": 121.8662321,
+        "osm_lat": 25.0381613,
+        "osm_query": "新北市雙溪區新基南街",
+        "osm_display_name": "新基南街, 新基里, 雙溪區, 新北市, 22744, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4732704,
+          25.0837265
+        ]
+      },
+      "properties": {
+        "source_row_no": 28,
+        "office_id": 2331140019,
+        "name": "蘆洲區衛生所",
+        "city": "新北市",
+        "district": "蘆洲區",
+        "agency_type": "衛生所",
+        "address": "新北市蘆洲區中央路58號",
+        "phone": "(02)22812011",
+        "extension": "",
+        "zipcode": 247,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市蘆洲區中央路58號",
+        "osm_lng": 121.4732704,
+        "osm_lat": 25.0837265,
+        "osm_query": "新北市蘆洲區中央路",
+        "osm_display_name": "中央路, 保和里, 蘆洲區, 新北市, 247015, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.353973,
+          24.9533587
+        ]
+      },
+      "properties": {
+        "source_row_no": 29,
+        "office_id": 2331080018,
+        "name": "鶯歌區衛生所",
+        "city": "新北市",
+        "district": "鶯歌區",
+        "agency_type": "衛生所",
+        "address": "新北市鶯歌區文化路389號3樓",
+        "phone": "(02)26702304",
+        "extension": "",
+        "zipcode": 239,
+        "open_time": "週一至週五8:00~17:00(中午12:00~13:00休息)",
+        "website": "",
+        "source_dataset": "新北市各區衛生所",
+        "source_url": "https://data.gov.tw/dataset/125693",
+        "geocoding_address": "新北市鶯歌區文化路389號3樓",
+        "osm_lng": 121.353973,
+        "osm_lat": 24.9533587,
+        "osm_query": "新北市鶯歌區文化路",
+        "osm_display_name": "文化路, 中鶯里, 鶯歌區, 二橋, 新北市, 80284, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.4594425,
+          25.0238847
+        ]
+      },
+      "properties": {
+        "source_row_no": 30,
+        "office_id": "",
+        "name": "新北市政府衛生局",
+        "city": "新北市",
+        "district": "板橋區",
+        "agency_type": "衛生局",
+        "address": "新北市板橋區英士路192-1號",
+        "phone": "(02)22577155",
+        "extension": "",
+        "zipcode": "220",
+        "open_time": "",
+        "website": "https://www.health.ntpc.gov.tw/",
+        "source_dataset": "新北市政府衛生局",
+        "source_url": "https://www.health.ntpc.gov.tw/",
+        "geocoding_address": "新北市板橋區英士路192-1號",
+        "osm_lng": 121.4594425,
+        "osm_lat": 25.0238847,
+        "osm_query": "新北市板橋區英士路192-1號",
+        "osm_display_name": "新北市政府衛生局，板橋區英士路192-1號",
+        "osm_location_method": "同址衛生所定位",
+        "location_method": "同址衛生所定位"
+      }
+    }
+  ]
+}
