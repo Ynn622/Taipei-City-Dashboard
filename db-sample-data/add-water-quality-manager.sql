@@ -1,7 +1,7 @@
 BEGIN;
 
 INSERT INTO public.component_charts (index, color, types, unit) VALUES
-('water_quality', '{#1E88E5,#00A6A6,#4A90E2,#30B68F,#F5B041,#8E63C7,#D84C73,#7A8793,#2F7D6D,#C2573E,#AF4137}', '{TreemapChart,BarChart}', 'NTU')
+('water_quality', '{#2F7D6D,#30B68F,#1E88E5,#F5B041,#D84C73}', '{BarChart}', 'NTU')
 ON CONFLICT (index) DO UPDATE SET
   color = EXCLUDED.color,
   types = EXCLUDED.types,
@@ -49,8 +49,8 @@ INSERT INTO public.query_charts (
   links, contributors, created_at, updated_at, query_type, query_chart,
   query_history, city
 ) VALUES
-('water_quality', NULL, '{207,208}', '{}', 'static', NULL, NULL, NULL, '臺北市政府主計處、臺灣自來水股份有限公司', '顯示雙北淨水場濁度比較。', '顯示臺北自來水淨水場清水水質年度統計，以及臺灣自來水公司平均水質中關鍵字為新北市的淨水場最新測值；總覽以矩形圖與橫向長條圖比較各淨水場濁度(NTU)，並在地圖點位中提供 pH、濁度、自由有效餘氯、總硬度、總溶解固體量與大腸桿菌群等欄位。', '可用於掌握飲用水供應節點水質狀態，與市場、食品物流、衛生服務據點套疊，支援食安健康監測、跨區供水風險盤點與公共衛生應變。', '{https://data.taipei/dataset/detail?id=9626c65d-8fe7-45bb-bbe2-7439bed81010,https://www.water.gov.tw/ch/WaterQuality?nodeId=4631}', '{doit,ntpc}', NOW(), NOW(), 'two_d', 'SELECT unnest(array[''林莊淨水場'',''員山淨水場'',''雙溪淨水場'',''老梅淨水場'',''貢寮淨水場'',''陽明淨水場'',''坪林淨水場'',''板新淨水場'',''長興淨水場'',''公館淨水場'',''直潭淨水場'']) as x_axis, unnest(array[0.55,0.5,0.48,0.45,0.4,0.32,0.25,0.2,0.2,0.1,0.1]) as data', NULL, 'metrotaipei'),
-('water_quality', NULL, '{207}', '{}', 'static', NULL, NULL, NULL, '臺北市政府主計處', '顯示臺北市淨水場濁度比較。', '顯示臺北自來水淨水場清水水質年度統計；總覽以矩形圖與橫向長條圖比較各淨水場濁度(NTU)，並在地圖點位中提供 pH、濁度、自由有效餘氯、總硬度、總溶解固體量與大腸桿菌群等欄位。', '可用於掌握臺北飲用水供應節點水質狀態，與市場、食品物流、衛生服務據點套疊，支援食安健康監測與公共衛生應變。', '{https://data.taipei/dataset/detail?id=9626c65d-8fe7-45bb-bbe2-7439bed81010}', '{doit}', NOW(), NOW(), 'two_d', 'SELECT unnest(array[''雙溪淨水場'',''陽明淨水場'',''長興淨水場'',''公館淨水場'',''直潭淨水場'']) as x_axis, unnest(array[0.48,0.32,0.2,0.1,0.1]) as data', NULL, 'taipei');
+('water_quality', NULL, '{207,208}', '{}', 'static', NULL, NULL, NULL, '臺北市政府主計處、臺灣自來水股份有限公司', '顯示雙北淨水場濁度比較。', '顯示臺北自來水淨水場清水水質年度統計，以及臺灣自來水公司平均水質中關鍵字為新北市的淨水場最新測值；總覽以橫向長條圖比較各淨水場濁度(NTU)，並在地圖點位中提供 pH、濁度、自由有效餘氯、總硬度、總溶解固體量與大腸桿菌群等欄位。', '可用於掌握飲用水供應節點水質狀態，與市場、食品物流、衛生服務據點套疊，支援食安健康監測、跨區供水風險盤點與公共衛生應變。', '{https://data.taipei/dataset/detail?id=9626c65d-8fe7-45bb-bbe2-7439bed81010,https://www.water.gov.tw/ch/WaterQuality?nodeId=4631}', '{doit,ntpc}', NOW(), NOW(), 'two_d', 'SELECT unnest(array[''林莊淨水場'',''員山淨水場'',''雙溪淨水場'',''老梅淨水場'',''貢寮淨水場'',''陽明淨水場'',''坪林淨水場'',''板新淨水場'',''長興淨水場'',''公館淨水場'',''直潭淨水場'']) as x_axis, unnest(array[0.55,0.5,0.48,0.45,0.4,0.32,0.25,0.2,0.2,0.1,0.1]) as data', NULL, 'metrotaipei'),
+('water_quality', NULL, '{207}', '{}', 'static', NULL, NULL, NULL, '臺北市政府主計處', '顯示臺北市淨水場濁度比較。', '顯示臺北自來水淨水場清水水質年度統計；總覽以橫向長條圖比較各淨水場濁度(NTU)，並在地圖點位中提供 pH、濁度、自由有效餘氯、總硬度、總溶解固體量與大腸桿菌群等欄位。', '可用於掌握臺北飲用水供應節點水質狀態，與市場、食品物流、衛生服務據點套疊，支援食安健康監測與公共衛生應變。', '{https://data.taipei/dataset/detail?id=9626c65d-8fe7-45bb-bbe2-7439bed81010}', '{doit}', NOW(), NOW(), 'two_d', 'SELECT unnest(array[''雙溪淨水場'',''陽明淨水場'',''長興淨水場'',''公館淨水場'',''直潭淨水場'']) as x_axis, unnest(array[0.48,0.32,0.2,0.1,0.1]) as data', NULL, 'taipei');
 
 SELECT setval('public.components_id_seq', (SELECT COALESCE(MAX(id), 0) FROM public.components), true);
 SELECT setval('public.component_maps_id_seq', (SELECT COALESCE(MAX(id), 0) FROM public.component_maps), true);

@@ -38,6 +38,42 @@ const displaySeries = computed(() => (
 	props.activeChart === "RankListChart" ? rankedSeries.value : props.series
 ));
 
+const isNtuMetric = computed(() => props.chart_config.unit === "NTU");
+
+function getDataPointValue(item) {
+	return Number(item?.y ?? item ?? 0);
+}
+
+function getDataPointLabel(item, index) {
+	return item?.x ?? props.chart_config.categories?.[index] ?? "";
+}
+
+function getNtuColor(value) {
+	const colors = props.chart_config.color || [];
+	if (value < 0.1) return colors[0] || "#2F7D6D";
+	if (value <= 0.3) return colors[1] || "#30B68F";
+	if (value <= 0.5) return colors[2] || "#1E88E5";
+	if (value <= 2) return colors[3] || "#F5B041";
+	return colors[4] || "#D84C73";
+}
+
+const chartSeries = computed(() => {
+	if (!isNtuMetric.value) return displaySeries.value;
+
+	return displaySeries.value.map((serie) => ({
+		...serie,
+		data: serie.data.map((item, index) => {
+			const y = getDataPointValue(item);
+			return {
+				...(typeof item === "object" && item !== null ? item : {}),
+				x: getDataPointLabel(item, index),
+				y,
+				fillColor: getNtuColor(y),
+			};
+		}),
+	}));
+});
+
 const chartOptions = ref({
 	chart: {
 		offsetY: 15,
@@ -119,7 +155,7 @@ const chartOptions = ref({
 });
 
 const chartHeight = computed(() => {
-	return `${40 + displaySeries.value[0].data.length * 30}`;
+	return `${40 + chartSeries.value[0].data.length * 30}`;
 });
 
 const selectedIndex = ref(null);
@@ -168,7 +204,7 @@ function handleDataSelection(_e, _chartContext, config) {
       :height="chartHeight"
       type="bar"
       :options="chartOptions"
-      :series="displaySeries"
+      :series="chartSeries"
       @data-point-selection="handleDataSelection"
     />
   </div>
