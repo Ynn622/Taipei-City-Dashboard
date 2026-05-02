@@ -11,6 +11,10 @@ import MobileLayerTab from "../utilities/miscellaneous/MobileLayerTab.vue";
 const dialogStore = useDialogStore();
 const contentStore = useContentStore();
 
+const isMapLayersDashboard = computed(() => {
+	return contentStore?.currentDashboard?.index?.includes("map-layers");
+});
+
 // Filter out components without maps
 const filteredMapLayers = computed(() => {
 	if (!contentStore.currentDashboard.components) {
@@ -39,9 +43,7 @@ const filteredMapLayers = computed(() => {
         <div class="mobilelayers">
           <!-- Map Layers Dashboard -->
           <div
-            v-if="
-              contentStore?.currentDashboard.index.includes('map-layers')
-            "
+            v-if="isMapLayersDashboard"
           >
             <MobileLayerTab
               v-for="item in contentStore?.currentDashboard
