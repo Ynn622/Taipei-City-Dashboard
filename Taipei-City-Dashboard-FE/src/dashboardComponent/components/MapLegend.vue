@@ -1,7 +1,7 @@
 <!-- Developed by Taipei Urban Intelligence Center 2023-2024-->
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import bus from "../assets/map/bus.png";
 import metro from "../assets/map/metro.png";
 import triangle_green from "../assets/map/triangle_green.png";
@@ -16,6 +16,7 @@ import live from "../assets/map/live.png";
 
 const props = defineProps([
 	"chart_config",
+	"activeChart",
 	"series",
 	"map_config",
 	"map_filter",
@@ -59,6 +60,9 @@ function returnIcon(name) {
 }
 
 const selectedIndex = ref(null);
+const mapLegendSeries = computed(() =>
+	props.series?.filter((item) => item.type !== "donut") || []
+);
 
 function handleDataSelection(index) {
 	if (!props.map_filter || !props.map_filter_on) {
@@ -71,13 +75,17 @@ function handleDataSelection(index) {
 				"filterByParam",
 				props.map_filter,
 				props.map_config,
-				props.series[index].name,
+				mapLegendSeries.value[index].name,
 				null
 			);
 		}
 		// Supports filtering by xAxis
 		else if (props.map_filter.mode === "byLayer") {
-			emits("filterByLayer", props.map_config, props.series[index].name);
+			emits(
+				"filterByLayer",
+				props.map_config,
+				mapLegendSeries.value[index].name
+			);
 		}
 		selectedIndex.value = index;
 	} else {
@@ -92,10 +100,13 @@ function handleDataSelection(index) {
 </script>
 
 <template>
-  <div class="maplegend">
+  <div
+    v-if="activeChart === 'MapLegend'"
+    class="maplegend"
+  >
     <div class="maplegend-legend">
       <button
-        v-for="(item, index) in series"
+        v-for="(item, index) in mapLegendSeries"
         :key="item.name"
         :class="{
           'maplegend-legend-item': true,

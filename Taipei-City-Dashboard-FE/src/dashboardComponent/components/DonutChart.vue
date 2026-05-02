@@ -23,11 +23,28 @@ const emits = defineEmits([
 
 // How many data points to show before summing all remaining points into "other"
 const steps = ref(100);
+const parsedDonutItems = computed(() => {
+	if (props.series?.some((item) => item.type === "donut")) {
+		return props.series
+			.filter((item) => item.type === "donut")
+			.map((item) => ({
+				x: item.name,
+				y: item.value,
+				unit: item.icon || props.chart_config.unit,
+			}));
+	}
+	return props.series[0]?.data || [];
+});
+const displayUnit = computed(
+	() =>
+		parsedDonutItems.value.find((item) => item.unit)?.unit ||
+		props.chart_config.unit
+);
 
 // Donut charts in apexcharts uses a slightly different data format from other chart types
 // As such, the following parsing functions are required
 const parsedSeries = computed(() => {
-	const toParse = [...props.series[0].data];
+	const toParse = [...parsedDonutItems.value];
 	if (toParse.length <= steps.value) {
 		return toParse.map((item) => item.y);
 	}
@@ -42,7 +59,7 @@ const parsedSeries = computed(() => {
 	return output;
 });
 const parsedLabels = computed(() => {
-	const toParse = [...props.series[0].data];
+	const toParse = [...parsedDonutItems.value];
 	if (toParse.length <= steps.value) {
 		return toParse.map((item) => item.x);
 	}
@@ -54,7 +71,9 @@ const parsedLabels = computed(() => {
 	return output;
 });
 const sum = computed(() => {
-	return Math.round(parsedSeries.value.reduce((a, b) => a + b) * 100) / 100;
+	return (
+		Math.round(parsedSeries.value.reduce((a, b) => a + b, 0) * 100) / 100
+	);
 });
 
 // chartOptions needs to be in the bottom since it uses computed data
@@ -109,7 +128,7 @@ const chartOptions = ref({
 				"</h6>" +
 				"<span>" +
 				series[seriesIndex] +
-				` ${props.chart_config.unit}` +
+				` ${displayUnit.value}` +
 				"</span>" +
 				"</div>"
 			);
