@@ -1,0 +1,519 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5182324,
+          25.0323362
+        ]
+      },
+      "properties": {
+        "source_row_no": 1,
+        "name": "中正區健康服務中心",
+        "city": "臺北市",
+        "district": "中正區",
+        "district_code": "63000050",
+        "agency_type": "健康服務中心",
+        "address": "臺北市中正區羅斯福路1段8號4樓",
+        "phone": "(02)23215158",
+        "website": "https://www.zzhc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市中正區羅斯福路1段8號4樓",
+        "taipei_house_key": [
+          "中正區",
+          "羅斯福路一段號",
+          "",
+          "",
+          "8號"
+        ],
+        "taipei_house_lng": null,
+        "taipei_house_lat": null,
+        "taipei_house_location_method": "",
+        "osm_lng": 121.5182324,
+        "osm_lat": 25.0323362,
+        "osm_query": "臺北市中正區羅斯福路1段",
+        "osm_display_name": "南門市場, 8, 羅斯福路一段, 龍福里, 中正區, 龍匣口, 臺北市, 100, 臺灣",
+        "osm_location_method": "OpenStreetMap道路/地名定位",
+        "location_method": "OpenStreetMap道路/地名定位"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.54429893555435,
+          25.021574647951574
+        ]
+      },
+      "properties": {
+        "source_row_no": 2,
+        "name": "大安區健康服務中心",
+        "city": "臺北市",
+        "district": "大安區",
+        "district_code": "63000030",
+        "agency_type": "健康服務中心",
+        "address": "臺北市大安區辛亥路三段15號",
+        "phone": "(02)27335831",
+        "website": "https://www.dahc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市大安區辛亥路三段15號",
+        "taipei_house_key": [
+          "大安區",
+          "辛亥路三段",
+          "",
+          "",
+          "15號"
+        ],
+        "taipei_house_lng": 121.54429893555435,
+        "taipei_house_lat": 25.021574647951574,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.58197289937743,
+          25.037726179921044
+        ]
+      },
+      "properties": {
+        "source_row_no": 3,
+        "name": "信義區健康服務中心",
+        "city": "臺北市",
+        "district": "信義區",
+        "district_code": "63000020",
+        "agency_type": "健康服務中心",
+        "address": "臺北市信義區福德街86號11樓",
+        "phone": "(02)27234598",
+        "website": "https://www.xyhc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市信義區福德街86號11樓",
+        "taipei_house_key": [
+          "信義區",
+          "福德街",
+          "",
+          "",
+          "86號"
+        ],
+        "taipei_house_lng": 121.58197289937743,
+        "taipei_house_lat": 25.037726179921044,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.60675799383918,
+          25.054529439826368
+        ]
+      },
+      "properties": {
+        "source_row_no": 4,
+        "name": "南港區健康服務中心",
+        "city": "臺北市",
+        "district": "南港區",
+        "district_code": "63000090",
+        "agency_type": "健康服務中心",
+        "address": "臺北市南港區南港路一段360號7樓",
+        "phone": "(02)27825220 　",
+        "website": "https://www.nghc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市南港區南港路一段360號7樓",
+        "taipei_house_key": [
+          "南港區",
+          "南港路一段",
+          "",
+          "",
+          "360號"
+        ],
+        "taipei_house_lng": 121.60675799383918,
+        "taipei_house_lat": 25.054529439826368,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5889230020969,
+          25.06922576742729
+        ]
+      },
+      "properties": {
+        "source_row_no": 5,
+        "name": "內湖區健康服務中心",
+        "city": "臺北市",
+        "district": "內湖區",
+        "district_code": "63000100",
+        "agency_type": "健康服務中心",
+        "address": "臺北市內湖區民權東路六段99號2樓之1",
+        "phone": "(02)27911162",
+        "website": "https://www.nhhc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市內湖區民權東路六段99號2樓之1",
+        "taipei_house_key": [
+          "內湖區",
+          "民權東路六段",
+          "",
+          "",
+          "99號"
+        ],
+        "taipei_house_lng": 121.5889230020969,
+        "taipei_house_lat": 25.06922576742729,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5172809028357,
+          25.118111688066897
+        ]
+      },
+      "properties": {
+        "source_row_no": 6,
+        "name": "北投區健康服務中心",
+        "city": "臺北市",
+        "district": "北投區",
+        "district_code": "63000120",
+        "agency_type": "健康服務中心",
+        "address": "臺北市北投區石牌路二段111號",
+        "phone": "(02)28261026",
+        "website": "https://www.bthc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市北投區石牌路二段111號",
+        "taipei_house_key": [
+          "北投區",
+          "石牌路二段",
+          "",
+          "",
+          "111號"
+        ],
+        "taipei_house_lng": 121.5172809028357,
+        "taipei_house_lat": 25.118111688066897,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.51969756051243,
+          25.09284539820423
+        ]
+      },
+      "properties": {
+        "source_row_no": 7,
+        "name": "士林區健康服務中心",
+        "city": "臺北市",
+        "district": "士林區",
+        "district_code": "63000110",
+        "agency_type": "健康服務中心",
+        "address": "臺北市士林區中正路439號2樓",
+        "phone": "(02)28813039　",
+        "website": "https://www.slhc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市士林區中正路439號2樓",
+        "taipei_house_key": [
+          "士林區",
+          "中正路",
+          "",
+          "",
+          "439號"
+        ],
+        "taipei_house_lng": 121.51969756051243,
+        "taipei_house_lat": 25.09284539820423,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.57725073846723,
+          25.049863174850508
+        ]
+      },
+      "properties": {
+        "source_row_no": 8,
+        "name": "松山區健康服務中心",
+        "city": "臺北市",
+        "district": "松山區",
+        "district_code": "63000010",
+        "agency_type": "健康服務中心",
+        "address": "臺北市松山區八德路四段692號2樓",
+        "phone": "(02)27671757",
+        "website": "https://www.sshc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市松山區八德路四段692號2樓",
+        "taipei_house_key": [
+          "松山區",
+          "八德路四段",
+          "",
+          "",
+          "692號"
+        ],
+        "taipei_house_lng": 121.57725073846723,
+        "taipei_house_lat": 25.049863174850508,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5163406164648,
+          25.065815416379674
+        ]
+      },
+      "properties": {
+        "source_row_no": 9,
+        "name": "大同區健康服務中心",
+        "city": "臺北市",
+        "district": "大同區",
+        "district_code": "63000060",
+        "agency_type": "健康服務中心",
+        "address": "臺北市大同區昌吉街52號",
+        "phone": "(02)25853227 　",
+        "website": "https://www.dthc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市大同區昌吉街52號",
+        "taipei_house_key": [
+          "大同區",
+          "昌吉街",
+          "",
+          "",
+          "52號"
+        ],
+        "taipei_house_lng": 121.5163406164648,
+        "taipei_house_lat": 25.065815416379674,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.49761330535523,
+          25.02317625261128
+        ]
+      },
+      "properties": {
+        "source_row_no": 10,
+        "name": "萬華區健康服務中心",
+        "city": "臺北市",
+        "district": "萬華區",
+        "district_code": "63000070",
+        "agency_type": "健康服務中心",
+        "address": "臺北市萬華區東園街152號2樓",
+        "phone": "(02)23033092",
+        "website": "https://www.whhc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市萬華區東園街152號2樓",
+        "taipei_house_key": [
+          "萬華區",
+          "東園街",
+          "",
+          "",
+          "152號"
+        ],
+        "taipei_house_lng": 121.49761330535523,
+        "taipei_house_lat": 25.02317625261128,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.57008680086709,
+          24.989603653972875
+        ]
+      },
+      "properties": {
+        "source_row_no": 11,
+        "name": "文山區健康服務中心",
+        "city": "臺北市",
+        "district": "文山區",
+        "district_code": "63000080",
+        "agency_type": "健康服務中心",
+        "address": "臺北市文山區木柵路三段220號3樓",
+        "phone": "(02)22343501",
+        "website": "https://www.wshc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市文山區木柵路三段220號3樓",
+        "taipei_house_key": [
+          "文山區",
+          "木柵路三段",
+          "",
+          "",
+          "220號"
+        ],
+        "taipei_house_lng": 121.57008680086709,
+        "taipei_house_lat": 24.989603653972875,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.53350009421378,
+          25.064271788611336
+        ]
+      },
+      "properties": {
+        "source_row_no": 12,
+        "name": "中山區健康服務中心",
+        "city": "臺北市",
+        "district": "中山區",
+        "district_code": "63000040",
+        "agency_type": "健康服務中心",
+        "address": "臺北市中山區松江路367號7樓",
+        "phone": "(02)25014616　",
+        "website": "https://www.zshc.gov.taipei/",
+        "source_dataset": "臺北市健康服務中心",
+        "source_url": "https://data.gov.tw/dataset/121146",
+        "geocoding_address": "臺北市中山區松江路367號7樓",
+        "taipei_house_key": [
+          "中山區",
+          "松江路",
+          "",
+          "",
+          "367號"
+        ],
+        "taipei_house_lng": 121.53350009421378,
+        "taipei_house_lat": 25.064271788611336,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": null,
+        "osm_display_name": null,
+        "osm_location_method": null,
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.563784,
+          25.037523
+        ]
+      },
+      "properties": {
+        "source_row_no": 13,
+        "name": "臺北市政府衛生局",
+        "city": "臺北市",
+        "district": "信義區",
+        "district_code": "63000020",
+        "agency_type": "衛生局",
+        "address": "臺北市信義區市府路1號",
+        "phone": "(02)27208889",
+        "website": "https://health.gov.taipei/",
+        "source_dataset": "臺北市政府衛生局",
+        "source_url": "https://health.gov.taipei/",
+        "geocoding_address": "臺北市信義區市府路1號",
+        "taipei_house_key": "(信義區, 市府路, , , 1號)",
+        "taipei_house_lng": 121.563784,
+        "taipei_house_lat": 25.037523,
+        "taipei_house_location_method": "臺北市門牌位置數值資料",
+        "osm_lng": null,
+        "osm_lat": null,
+        "osm_query": "",
+        "osm_display_name": "",
+        "osm_location_method": "",
+        "location_method": "臺北市門牌位置數值資料"
+      }
+    }
+  ]
+}

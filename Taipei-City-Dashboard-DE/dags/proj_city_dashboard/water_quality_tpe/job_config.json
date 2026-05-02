@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "water_quality_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "water_quality",
+      "data.taipei",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of Taipei drinking water quality by purification plant.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "water_quality_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "臺北自來水水質檢驗(淨水場清水水質)",
+    "airflow_update_freq": "@monthly",
+    "source": "https://data.taipei/dataset/detail?id=9626c65d-8fe7-45bb-bbe2-7439bed81010",
+    "source_type": "CSV",
+    "source_dept": "臺北市政府主計處",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北自來水淨水場清水水質年度統計資料。",
+    "etl_description": "download CSV, keep latest period, aggregate by purification plant, add fixed plant coordinates",
+    "sensitivity": "public"
+  }
+}

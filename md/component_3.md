@@ -13,8 +13,8 @@
 - Component index：`food_safety_market`
 - Component id：`303`
 - Component 名稱：公有市場圖資
-- 圖表類型：`MapLegend`
-- 單位：處
+- 圖表類型：`DonutChart`、`TreemapChart`、`BarChart`
+- 單位：攤
 
 ## 目前完成狀態
 
@@ -24,6 +24,8 @@
 - 已把臺北市與新北市公有市場做成 Mapbox circle 圖層。
 - 圈圈大小依各市場 `stall_total` 總攤位數決定。
 - 點擊市場後會顯示該市場的基本資料與攤位細項。
+- 總覽卡片已移除「地圖圖例」，改以圓餅圖、矩形圖與橫向長條圖呈現攤位類型統計。
+- 攤位類型會合併為蔬果、肉禽、水產、糧食雜貨、飲食、百貨花卉、其他與空攤；臺北市單城版本不顯示空攤。
 - 地圖座標由 OpenStreetMap Nominatim 查詢產生，並先存成前端可讀取的 GeoJSON 靜態檔。
 
 ## 地圖圖層
@@ -126,7 +128,10 @@
 - Dashboard：`food_safety_health_tpe`、`food_safety_health_metrotaipei`
 - Component：`food_safety_market`
 - Map config：`food_safety_market_tpe`、`food_safety_market_ntpe`
-- Query chart legend：臺北市 45 筆、新北市 43 筆
+- Map layer counts：臺北市 45 筆、新北市 43 筆
+- Query chart stall ratio：
+  - 臺北市：百貨花卉 1876、蔬果 1305、糧食雜貨 1067、肉禽 951、飲食 663、水產 621、其他 592
+  - 雙北：百貨花卉 2205、蔬果 1659、糧食雜貨 1463、肉禽 1381、飲食 1086、水產 851、其他 848、空攤 144
 - Circle paint：
   - 臺北市：綠色系，半徑依 `stall_total` 插值
   - 新北市：橘色系，半徑依 `stall_total` 插值，缺值 fallback 為 80
@@ -146,4 +151,5 @@
 
 - 若前端已開著但看不到新欄位，先用瀏覽器硬重新整理。
 - 若 dashboard/tab 資料沒有更新，確認 manager DB 是否已套用 `db-sample-data/dashboardmanager-demo.sql` 中的新增設定，或對 running DB 執行對應 upsert。
+- 若只要把既有 manager DB 的公有市場總覽圖表改成攤位類型統計，可執行 `db-sample-data/update-market-stall-charts-manager.sql`。
 - 若只有 GeoJSON 內容變更，通常不需要重啟 Docker；重新整理前端即可重新讀取 `/mapData/*.geojson`。

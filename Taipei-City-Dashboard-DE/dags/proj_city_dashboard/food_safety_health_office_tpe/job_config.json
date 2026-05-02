@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "food_safety_health_office_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "health_office",
+      "data.gov.tw",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of Taipei health service centers with point geometry.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_safety_health_office_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "臺北市健康服務中心",
+    "airflow_update_freq": "@monthly",
+    "source": "https://data.gov.tw/dataset/121146",
+    "source_type": "CSV",
+    "source_dept": "臺北市政府衛生局",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市各區健康服務中心基本資料。",
+    "etl_description": "download CSV, standardize fields, geocode addresses with Taipei house number position data and fallback services, standardize geometry",
+    "sensitivity": "public"
+  }
+}
