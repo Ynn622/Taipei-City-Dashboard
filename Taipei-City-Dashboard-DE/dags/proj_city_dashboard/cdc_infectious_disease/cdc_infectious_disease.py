@@ -140,6 +140,9 @@ def _cdc_infectious_disease(**kwargs):
     weekly_data["total_nhi_patient_visit"] = weekly_data[
         "total_nhi_patient_visit"
     ].astype("Int64")
+    weekly_data["diarrhea_visit_rate"] = (
+        weekly_data["patient_visit"] / weekly_data["total_nhi_patient_visit"] * 100
+    ).where(weekly_data["total_nhi_patient_visit"].notna())
     weekly_data["data_time"] = convert_str_to_time_format(weekly_data["data_time"])
 
     ready_data = weekly_data[
@@ -157,6 +160,7 @@ def _cdc_infectious_disease(**kwargs):
             "county_code",
             "patient_visit",
             "total_nhi_patient_visit",
+            "diarrhea_visit_rate",
         ]
     ].sort_values(
         [

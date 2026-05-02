@@ -1,5 +1,5 @@
 # 組件4：食安健康-腹瀉就診數量統計
-最後更新：2026-05-02
+最後更新：2026-05-03
 
 ## 基本設定
 
@@ -10,8 +10,8 @@
 - Component index：`cdc_infectious_disease`
 - Component id：`502`
 - Component 名稱：腹瀉就診數量統計
-- 圖表類型：`ColumnChart`
-- 單位：人次
+- 圖表類型：`ColumnLineChart`
+- 單位：人次；折線序列為 `%`
 
 ## 資料整理
 
@@ -44,10 +44,17 @@
 - `county_code`
 - `patient_visit`
 - `total_nhi_patient_visit`
+- `diarrhea_visit_rate`
 
 其中 `county` 已將「台」統一為「臺」，方便 dashboard query 用 `臺北市`、`新北市` 過濾。
 
 `patient_visit` 與 `total_nhi_patient_visit` 已依 ISO week 加總；`data_time` 使用 ISO week 週一日期。
+
+`diarrhea_visit_rate` 計算公式：
+
+```text
+腹瀉就診率 = 腹瀉健保就診人次 / 健保就診總人次 * 100
+```
 
 ## ETL DAG
 
@@ -76,8 +83,9 @@ Dashboard query 設定：
 
 - 臺北市：`county = '臺北市'`
 - 雙北：`county IN ('臺北市', '新北市')`
-- 主圖顯示近 12 週資料，圖表為 `ColumnChart` 縱向長條圖
-- 主圖 Series：`門診`、`住院`、`急診`
+- 主圖顯示近 12 週資料，圖表為 `ColumnLineChart` 長條折線圖
+- 主圖長條 Series：`門診`、`住院`、`急診`，以堆疊直條呈現，數值為原始人次
+- 主圖折線 Series：`腹瀉就診率`
 - 點開組件後的歷史圖以年為單位加總，顯示 2016 至 2026 年年度趨勢
 - 歷史圖 Series：`門診`、`住院`、`急診`
 

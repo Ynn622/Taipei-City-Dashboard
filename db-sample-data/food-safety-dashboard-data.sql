@@ -75,7 +75,8 @@ CREATE TABLE public.cdc_infectious_disease (
     county text,
     county_code integer,
     patient_visit integer,
-    total_nhi_patient_visit integer
+    total_nhi_patient_visit integer,
+    diarrhea_visit_rate double precision
 );
 
 CREATE TABLE public.food_safety_death_cause_share (
