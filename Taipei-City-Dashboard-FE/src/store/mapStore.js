@@ -57,6 +57,7 @@ import {
 	getCrowdColor,
 	mrtLineColor,
 } from "../assets/utilityFunctions/getThematicColor.js";
+import { parseDistrictChartData } from "../dashboardComponent/utilities/districtChartData.js";
 
 export const useMapStore = defineStore("map", {
 	state: () => ({
@@ -451,6 +452,155 @@ export const useMapStore = defineStore("map", {
 					this.addRasterSource(appendLayer);
 				}
 			});
+		},
+		getDistrictChartLayerId(component) {
+			return `${component.index}-district-chart-${component.city || "metrotaipei"}`;
+		},
+		getDistrictChartBoundaryData(component, boundaryData) {
+			const districtData = parseDistrictChartData(
+				component.chart_config,
+				component.chart_data || [],
+			);
+			const cityFilter = {
+				taipei: "臺北市",
+				newtaipei: "新北市",
+				newTaipei: "新北市",
+			}[component.city];
+			const unit = component.chart_config?.unit || "";
+			const highest = districtData.highest || 0;
+
+			return {
+				type: "FeatureCollection",
+				features: boundaryData.features
+					.filter(
+						(feature) =>
+							!cityFilter ||
+							feature.properties?.PNAME === cityFilter,
+					)
+					.map((feature) => {
+						const district = feature.properties?.TNAME;
+						const value = Number(districtData[district] || 0);
+						const opacity =
+							value === 0 && highest === 0
+								? 0.12
+								: Math.max(0.12, value / highest);
+
+						return {
+							...feature,
+							properties: {
+								...feature.properties,
+								district_name: district,
+								district_value: value,
+								district_unit: unit,
+								district_opacity: opacity,
+							},
+						};
+					}),
+			};
+		},
+		async addDistrictChartLayer(component) {
+			if (!this.map || !component?.chart_config?.types?.includes("DistrictChart")) {
+				return;
+			}
+
+			const layerId = this.getDistrictChartLayerId(component);
+			const sourceId = `${layerId}-source`;
+			const layerColor = component.chart_config?.color?.[0] || "#30B68F";
+			this.loadingLayers.push(layerId);
+
+			try {
+				const response = await axios.get(
+					"/mapData/metrotaipei_town.geojson",
+				);
+				const data = this.getDistrictChartBoundaryData(
+					component,
+					response.data,
+				);
+
+				if (this.map.getSource(sourceId)) {
+					this.map.getSource(sourceId).setData(data);
+				} else {
+					this.map.addSource(sourceId, {
+						type: "geojson",
+						data,
+					});
+				}
+
+				if (this.map.getLayer(layerId)) {
+					this.map.setPaintProperty(
+						layerId,
+						"fill-color",
+						layerColor,
+					);
+					this.map.setLayoutProperty(
+						layerId,
+						"visibility",
+						"visible",
+					);
+				} else {
+					this.map.addLayer({
+						id: layerId,
+						type: "fill",
+						source: sourceId,
+						paint: {
+							"fill-color": layerColor,
+							"fill-opacity": [
+								"coalesce",
+								["get", "district_opacity"],
+								0.12,
+							],
+							"fill-outline-color": "#ffffff",
+						},
+						layout: {
+							visibility: "visible",
+						},
+					});
+					this.currentLayers.push(layerId);
+				}
+
+				this.mapConfigs[layerId] = {
+					id: layerId,
+					index: layerId,
+					layerId,
+					title: `${component.name}行政區圖`,
+					type: "fill",
+					source: "district-chart",
+					city: component.city,
+					property: [
+						{ key: "district_name", name: "行政區" },
+						{
+							key: "district_value",
+							name: component.chart_config?.unit
+								? `數量(${component.chart_config.unit})`
+								: "數量",
+						},
+					],
+				};
+
+				if (!this.currentVisibleLayers.includes(layerId)) {
+					this.currentVisibleLayers.push(layerId);
+				}
+			} catch (error) {
+				console.error("Failed to add district chart layer:", error);
+			} finally {
+				this.loadingLayers = this.loadingLayers.filter(
+					(element) => element !== layerId,
+				);
+			}
+		},
+		turnOffDistrictChartLayer(component) {
+			if (!this.map || !component) return;
+			const layerId = this.getDistrictChartLayerId(component);
+			this.loadingLayers = this.loadingLayers.filter(
+				(element) => element !== layerId,
+			);
+			if (this.map.getLayer(layerId)) {
+				this.map.setLayoutProperty(layerId, "visibility", "none");
+			}
+			this.currentVisibleLayers = this.currentVisibleLayers.filter(
+				(element) => element !== layerId,
+			);
+			this.removePopup();
 		},
 		// 2. Call an API to get the layer data
 		fetchLocalGeoJson(map_config) {
