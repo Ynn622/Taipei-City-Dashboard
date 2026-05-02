@@ -68,16 +68,48 @@ export const COMPONENT_GEOJSON_FALLBACKS = {
 
 export function unwrapRows(payload) {
 	if (!payload) return [];
-	if (Array.isArray(payload)) return payload;
-	if (Array.isArray(payload.data)) return payload.data;
-	if (Array.isArray(payload.rows)) return payload.rows;
-	if (payload.data && Array.isArray(payload.data.data)) return payload.data.data;
+	if (Array.isArray(payload.categories) && Array.isArray(payload.data)) {
+		const categoryRows = rowsFromCategorySeries(payload);
+		if (categoryRows.length > 0) return categoryRows;
+	}
+	if (Array.isArray(payload)) return flattenChartRows(payload);
+	if (Array.isArray(payload.data)) return flattenChartRows(payload.data);
+	if (Array.isArray(payload.rows)) return flattenChartRows(payload.rows);
+	if (payload.data && Array.isArray(payload.data.data)) return flattenChartRows(payload.data.data);
 	return [];
+}
+
+function rowsFromCategorySeries(payload) {
+	const seriesList = payload.data.filter((series) => Array.isArray(series?.data));
+	if (seriesList.length === 0) return [];
+	return payload.categories.map((label, index) => {
+		const data = seriesList.reduce((sum, series) => {
+			const value = Number(series.data[index] ?? 0);
+			return sum + (Number.isFinite(value) ? value : 0);
+		}, 0);
+		return { x_axis: label, data };
+	});
+}
+
+function flattenChartRows(rows) {
+	if (!Array.isArray(rows)) return [];
+	if (
+		rows.some((row) => Array.isArray(row?.data)) &&
+		rows.some((row) => Array.isArray(row?.data) && row.data.some((item) => isRowObject(item)))
+	) {
+		return rows.flatMap((row) => row.data.filter((item) => isRowObject(item)));
+	}
+	return rows;
+}
+
+function isRowObject(item) {
+	return item && typeof item === "object" && !Array.isArray(item);
 }
 
 export function rowLabel(row) {
 	return (
 		row?.x_axis ||
+		row?.x ||
 		row?.name ||
 		row?.district ||
 		row?.agency_type ||
@@ -93,6 +125,7 @@ export function rowGroup(row) {
 export function rowValue(row) {
 	const value = Number(
 		row?.data ??
+			row?.y ??
 			row?.value ??
 			row?.count ??
 			row?.total ??
@@ -198,21 +231,28 @@ export function trendSummary(rows) {
 export function metricComparison(payload, options = {}) {
 	const unit = options.unit || "";
 	const mode = options.mode || "count";
+	const emptyText = options.emptyText || "無資料";
 	if (options.static) {
 		const rawRows = rawRowsForComparison(payload);
+		if (rawRows.length === 0) {
+			return emptyComparison(emptyText);
+		}
 		const current = mode === "length" ? rawRows.length : sumRows(payload);
 		return {
 			current,
 			previous: null,
 			delta: null,
+			hasData: true,
 			canCompare: false,
+			currentLabelText: "名冊",
+			previousLabelText: "比較",
 			currentText: formatNumber(current, unit),
 			previousText: "靜態名冊",
 			deltaText: "無法比較",
 		};
 	}
 
-	const trend = getTimeSeriesPoints(payload);
+	const trend = getTimeSeriesPoints(payload, options);
 
 	if (trend.length >= 2) {
 		const previous = trend[trend.length - 2].value;
@@ -223,7 +263,10 @@ export function metricComparison(payload, options = {}) {
 			delta: current - previous,
 			currentLabel: trend[trend.length - 1].label,
 			previousLabel: trend[trend.length - 2].label,
+			hasData: true,
 			canCompare: true,
+			currentLabelText: "最新週",
+			previousLabelText: "前一週",
 			currentText: formatNumber(current, unit),
 			previousText: formatNumber(previous, unit),
 			deltaText: formatDelta(current - previous, unit),
@@ -231,6 +274,9 @@ export function metricComparison(payload, options = {}) {
 	}
 
 	const rawRows = rawRowsForComparison(payload);
+	if (rawRows.length === 0) {
+		return emptyComparison(emptyText);
+	}
 	const datedRows = rawRows
 		.map((row) => ({ row, date: parseMetricDate(row) }))
 		.filter((item) => item.date);
@@ -241,7 +287,10 @@ export function metricComparison(payload, options = {}) {
 			current,
 			previous: null,
 			delta: null,
+			hasData: true,
 			canCompare: false,
+			currentLabelText: "總計",
+			previousLabelText: "比較",
 			currentText: formatNumber(current, unit),
 			previousText: "無分週資料",
 			deltaText: "無法比較",
@@ -269,26 +318,38 @@ export function metricComparison(payload, options = {}) {
 		delta: current - previous,
 		currentLabel: `${formatDate(currentStart)}-${formatDate(currentEnd)}`,
 		previousLabel: `${formatDate(previousStart)}-${formatDate(previousEnd)}`,
+		hasData: true,
 		canCompare: true,
+		currentLabelText: "最新週",
+		previousLabelText: "前一週",
 		currentText: formatNumber(current, unit),
 		previousText: formatNumber(previous, unit),
 		deltaText: formatDelta(current - previous, unit),
 	};
 }
 
-export function highRiskAreaComparison(rows, threshold = 1) {
+export function highRiskAreaComparison(rows, options = {}) {
+	const threshold = typeof options === "number" ? options : options.threshold || 1;
+	const groupKey = typeof options === "object" ? options.groupKey : "";
 	const rawRows = rawRowsForComparison(rows);
+	if (rawRows.length === 0) {
+		return emptyComparison("無資料");
+	}
 	const datedRows = rawRows
 		.map((row) => ({ row, date: parseMetricDate(row) }))
 		.filter((item) => item.date);
 
 	if (datedRows.length === 0) {
-		const current = topRows(rows, 99).filter((item) => item.value >= threshold).length;
+		const current = aggregateRowsByMetricLabel(rawRows, groupKey)
+			.filter((item) => item.value >= threshold).length;
 		return {
 			current,
 			previous: null,
 			delta: null,
+			hasData: true,
 			canCompare: false,
+			currentLabelText: "總計",
+			previousLabelText: "比較",
 			currentText: formatNumber(current, " 區"),
 			previousText: "無分週資料",
 			deltaText: "無法比較",
@@ -300,14 +361,17 @@ export function highRiskAreaComparison(rows, threshold = 1) {
 	const currentStart = addDays(currentEnd, -6);
 	const previousEnd = addDays(currentStart, -1);
 	const previousStart = addDays(previousEnd, -6);
-	const current = countHighRiskAreas(datedRows, currentStart, currentEnd, threshold);
-	const previous = countHighRiskAreas(datedRows, previousStart, previousEnd, threshold);
+	const current = countHighRiskAreas(datedRows, currentStart, currentEnd, threshold, groupKey);
+	const previous = countHighRiskAreas(datedRows, previousStart, previousEnd, threshold, groupKey);
 
 	return {
 		current,
 		previous,
 		delta: current - previous,
+		hasData: true,
 		canCompare: true,
+		currentLabelText: "最新週",
+		previousLabelText: "前一週",
 		currentText: formatNumber(current, " 區"),
 		previousText: formatNumber(previous, " 區"),
 		deltaText: formatDelta(current - previous, " 區"),
@@ -319,18 +383,41 @@ export function aggregateByX(rows) {
 }
 
 function getTrendPoints(rows) {
+	return trendPoints(rows);
+}
+
+function trendPoints(rows, options = {}) {
 	if (
 		Array.isArray(rows?.categories) &&
 		Array.isArray(rows?.data) &&
 		rows.data.some((series) => Array.isArray(series?.data))
 	) {
+		const seriesList = rows.data.filter((series) => shouldIncludeSeries(series, options));
 		return rows.categories.map((label, index) => {
-			const value = rows.data.reduce((sum, series) => {
+			const value = seriesList.reduce((sum, series) => {
 				const point = Number(series?.data?.[index] ?? 0);
 				return sum + (Number.isFinite(point) ? point : 0);
 			}, 0);
 			return { label, value };
 		});
+	}
+
+	if (
+		Array.isArray(rows?.data) &&
+		rows.data.some((series) => Array.isArray(series?.data) && series.data.some((point) => point?.x))
+	) {
+		const totals = new Map();
+		rows.data
+			.filter((series) => shouldIncludeSeries(series, options))
+			.forEach((series) => {
+				series.data.forEach((point) => {
+					const label = point?.x;
+					const value = Number(point?.y ?? 0);
+					if (!label || !Number.isFinite(value)) return;
+					totals.set(label, (totals.get(label) || 0) + value);
+				});
+			});
+		return [...totals.entries()].map(([label, value]) => ({ label, value }));
 	}
 
 	const totals = new Map();
@@ -341,20 +428,27 @@ function getTrendPoints(rows) {
 	return [...totals.entries()].map(([label, value]) => ({ label, value }));
 }
 
-function getTimeSeriesPoints(payload) {
+function getTimeSeriesPoints(payload, options = {}) {
 	if (
 		Array.isArray(payload?.categories) &&
 		Array.isArray(payload?.data) &&
 		payload.data.some((series) => Array.isArray(series?.data))
 	) {
-		return getTrendPoints(payload);
+		return trendPoints(payload, options);
+	}
+
+	if (
+		Array.isArray(payload?.data) &&
+		payload.data.some((series) => Array.isArray(series?.data) && series.data.some((point) => point?.x))
+	) {
+		return trendPoints(payload, options);
 	}
 
 	const rows = unwrapRows(payload);
 	if (!rows.some((row) => parseMetricDate({ x_axis: row?.x_axis }))) {
 		return [];
 	}
-	return getTrendPoints(payload);
+	return trendPoints(payload, options);
 }
 
 function rawRowsForComparison(payload) {
@@ -362,19 +456,57 @@ function rawRowsForComparison(payload) {
 	return unwrapRows(payload);
 }
 
+function emptyComparison(text) {
+	return {
+		current: null,
+		previous: null,
+		delta: null,
+		hasData: false,
+		canCompare: false,
+		currentLabelText: "狀態",
+		previousLabelText: "比較",
+		currentText: text,
+		previousText: "未取得資料",
+		deltaText: "無法比較",
+	};
+}
+
+function shouldIncludeSeries(series, options = {}) {
+	if (Array.isArray(options.seriesNames) && options.seriesNames.length > 0) {
+		return options.seriesNames.includes(series?.name);
+	}
+	if (Array.isArray(options.excludeSeriesNames) && options.excludeSeriesNames.length > 0) {
+		return !options.excludeSeriesNames.includes(series?.name);
+	}
+	return true;
+}
+
 function metricRowsValue(rows, mode) {
 	if (mode === "length") return rows.length;
 	return rows.reduce((sum, row) => sum + rowValue(row), 0);
 }
 
-function countHighRiskAreas(datedRows, start, end, threshold) {
+function countHighRiskAreas(datedRows, start, end, threshold, groupKey = "") {
 	const totals = new Map();
 	datedRows.forEach((item) => {
 		if (item.date < start || item.date > end) return;
-		const label = rowLabel(item.row);
+		const label = metricLabel(item.row, groupKey);
 		totals.set(label, (totals.get(label) || 0) + rowValue(item.row));
 	});
 	return [...totals.values()].filter((value) => value >= threshold).length;
+}
+
+function aggregateRowsByMetricLabel(rows, groupKey = "") {
+	const totals = new Map();
+	unwrapRows(rows).forEach((row) => {
+		const label = metricLabel(row, groupKey);
+		totals.set(label, (totals.get(label) || 0) + rowValue(row));
+	});
+	return [...totals.entries()].map(([label, value]) => ({ label, value }));
+}
+
+function metricLabel(row, groupKey = "") {
+	return (groupKey && row?.[groupKey]) || rowLabel(row);
 }
 
 function parseMetricDate(row) {

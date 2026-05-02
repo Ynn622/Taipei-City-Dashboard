@@ -53,5 +53,5 @@ const chartSeries = computed(() => [
       :options="chartOptions"
       :series="chartSeries"
     />
-  </valueaddedcard>
+  </ValueAddedCard>
 </template>

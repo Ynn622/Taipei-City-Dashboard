@@ -82,9 +82,10 @@ const close = () => {
           </div>
           <button
             class="icon-btn"
+            aria-label="關閉"
             @click="close"
           >
-            ×
+            close
           </button>
         </div>
 
@@ -156,21 +157,13 @@ const close = () => {
   .profile-modal-panel {
     width: min(760px, 100%);
     border-radius: 8px;
-    border: solid 1px rgba(255, 255, 255, 0.1);
+    border: solid 1px rgba(255, 255, 255, 0.12);
     background: var(--color-component-background);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 18px 54px rgba(0, 0, 0, 0.46);
     padding: var(--font-m);
     color: var(--color-normal-text);
     position: relative;
     overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    }
 
     .modal-head {
       display: flex;
@@ -182,9 +175,9 @@ const close = () => {
       .eyebrow {
         margin: 0 0 0.4rem;
         font-size: 0.75rem;
-        letter-spacing: 0.2em;
+        letter-spacing: 0;
         font-weight: 600;
-        color: var(--color-highlight);
+        color: var(--color-complement-text);
       }
 
       h3 {
@@ -192,7 +185,7 @@ const close = () => {
         font-size: 1.25rem;
         font-weight: 800;
         color: var(--color-normal-text);
-        letter-spacing: 0.02em;
+        letter-spacing: 0;
       }
 
       .icon-btn {
@@ -202,7 +195,8 @@ const close = () => {
         border: solid 1px transparent;
         background: rgba(255, 255, 255, 0.05);
         color: var(--color-complement-text);
-        font-size: 1.2rem;
+        font-family: var(--font-icon);
+        font-size: 1.15rem;
         cursor: pointer;
         display: grid;
         place-items: center;
@@ -220,7 +214,7 @@ const close = () => {
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 1.2rem;
+    gap: 1rem;
 
     .form-group {
       flex: 1 1 calc(50% - 0.6rem);
@@ -236,15 +230,15 @@ const close = () => {
         font-weight: 600;
         font-size: 0.85rem;
         color: var(--color-complement-text);
-        letter-spacing: 0.02em;
+        letter-spacing: 0;
       }
 
       input,
       textarea {
-        padding: 0.75rem 0.85rem;
-        border: solid 1px rgba(255, 255, 255, 0.1);
-        border-radius: 6px;
-        background: rgba(0, 0, 0, 0.2);
+        padding: 0.78rem 0.85rem;
+        border: solid 1px rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        background: rgba(9, 9, 9, 0.35);
         color: var(--color-normal-text);
         outline: none;
         transition: all 0.3s ease;
@@ -254,10 +248,15 @@ const close = () => {
         }
 
         &:focus {
-          border-color: var(--color-highlight);
-          background: rgba(0, 0, 0, 0.3);
-          box-shadow: 0 0 0 3px rgba(90, 156, 248, 0.15);
+          border-color: rgba(255, 255, 255, 0.22);
+          background: rgba(9, 9, 9, 0.48);
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
         }
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
       }
     }
   }
@@ -291,14 +290,14 @@ const close = () => {
     }
 
     .save-btn {
-      border-color: var(--color-highlight);
-      background: rgba(90, 156, 248, 0.1);
+      border-color: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
       color: var(--color-normal-text);
-      box-shadow: 0 4px 12px rgba(90, 156, 248, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 
       &:hover {
-        background: rgba(90, 156, 248, 0.2);
-        box-shadow: 0 4px 15px rgba(90, 156, 248, 0.2);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.08);
         transform: translateY(-1px);
       }
     }

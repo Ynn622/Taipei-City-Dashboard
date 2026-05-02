@@ -39,7 +39,10 @@ const metrics = computed(() => {
 		{ rawRows: violationRows },
 		{ unit: " 件", mode: "length" }
 	);
-	const highRiskAreas = highRiskAreaComparison({ rawRows: violationRows }, 1);
+	const highRiskAreas = highRiskAreaComparison(
+		{ rawRows: violationRows },
+		{ threshold: 1, groupKey: "district" }
+	);
 	const suppliers = metricComparison(datasets.value.foodSource, {
 		unit: " 處",
 		mode: "length",
@@ -47,27 +50,33 @@ const metrics = computed(() => {
 	});
 	const diarrhea = metricComparison(datasets.value.infectious, {
 		unit: " 人次",
+		seriesNames: ["門診", "住院", "急診"],
+		emptyText: "無資料",
 	});
 
 	return [
 		{
 			label: "雙北違規總數",
 			id: "violation-total",
+			icon: "warning",
 			...violations,
 		},
 		{
 			label: "高風險區域數",
 			id: "high-risk-areas",
+			icon: "location_on",
 			...highRiskAreas,
 		},
 		{
 			label: "優良農場供應商數",
 			id: "good-farms",
+			icon: "verified",
 			...suppliers,
 		},
 		{
 			label: "近期腹瀉就診趨勢",
 			id: "diarrhea-trend",
+			icon: "show_chart",
 			...diarrhea,
 		},
 	];
@@ -82,7 +91,7 @@ function filterRowsByProfile(rows) {
 		? store.userProfile.focusDistricts.filter(Boolean)
 		: [];
 	if (districts.length === 0) return rows;
-	return rows.filter((row) => districts.includes(rowLabel(row)));
+	return rows.filter((row) => districts.includes(row?.district || rowLabel(row)));
 }
 </script>
 
@@ -93,8 +102,11 @@ function filterRowsByProfile(rows) {
       :key="metric.id"
       class="metric-card"
     >
-      <div class="metric-label">
-        {{ metric.label }}
+      <div class="metric-topline">
+        <span class="metric-icon">{{ metric.icon }}</span>
+        <div class="metric-label">
+          {{ metric.label }}
+        </div>
       </div>
       <div
         v-if="loading"
@@ -107,23 +119,25 @@ function filterRowsByProfile(rows) {
         class="metric-comparison"
       >
         <div class="comparison-row primary">
-          <span>本週</span>
           <strong>{{ metric.currentText }}</strong>
+          <span>{{ metric.currentLabelText || "最新" }}</span>
         </div>
-        <div class="comparison-row">
-          <span>上週</span>
-          <strong>{{ metric.previousText }}</strong>
-        </div>
-        <div
-          class="comparison-row delta"
-          :class="{
-            up: metric.delta > 0,
-            down: metric.delta < 0,
-            muted: !metric.canCompare,
-          }"
-        >
-          <span>差異</span>
-          <strong>{{ metric.deltaText }}</strong>
+        <div class="metric-footer">
+          <div class="comparison-row previous">
+            <span>{{ metric.previousLabelText || "比較" }}</span>
+            <strong>{{ metric.previousText }}</strong>
+          </div>
+          <div
+            class="comparison-row delta"
+            :class="{
+              up: metric.delta > 0,
+              down: metric.delta < 0,
+              muted: !metric.canCompare,
+            }"
+          >
+            <span>差異</span>
+            <strong>{{ metric.deltaText }}</strong>
+          </div>
         </div>
       </div>
     </div>
@@ -134,32 +148,51 @@ function filterRowsByProfile(rows) {
 .metrics-bar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.8rem;
   height: 100%;
 
   .metric-card {
+    position: relative;
     min-width: 0;
-    min-height: 112px;
+    min-height: 128px;
+    overflow: hidden;
     background: var(--color-component-background);
-    border: solid 1px var(--color-border);
-    padding: 0.82rem;
-    border-radius: 5px;
+    border: solid 1px rgba(255, 255, 255, 0.09);
+    padding: 0.88rem;
+    border-radius: 8px;
     text-align: left;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    border-left: solid 3px var(--card-theme, var(--color-highlight));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
-    &:nth-child(1) { --card-theme: #E86F51; }
-    &:nth-child(2) { --card-theme: #F5B041; }
-    &:nth-child(3) { --card-theme: #30B68F; }
-    &:nth-child(4) { --card-theme: #1E88E5; }
+    .metric-topline {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+
+    .metric-icon {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--color-normal-text);
+      font-family: var(--font-icon);
+      font-size: 1.05rem;
+    }
 
     .metric-label {
+      min-width: 0;
       font-size: 0.78rem;
       font-weight: 600;
       color: var(--color-complement-text);
-      margin-bottom: 0.35rem;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
     .metric-loading {
@@ -173,44 +206,86 @@ function filterRowsByProfile(rows) {
     .metric-comparison {
       display: flex;
       flex-direction: column;
-      gap: 0.26rem;
+      gap: 0.68rem;
+    }
+
+    .metric-footer {
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(120px, 1.22fr);
+      gap: 0.55rem;
+      align-items: stretch;
     }
 
     .comparison-row {
       display: flex;
-      justify-content: space-between;
-      gap: 0.75rem;
-      align-items: baseline;
+      flex-direction: column;
+      gap: 0.08rem;
+      min-width: 0;
       color: var(--color-complement-text);
       font-size: 0.74rem;
 
       strong {
         min-width: 0;
         color: var(--color-normal-text);
-        font-size: 0.88rem;
-        text-align: right;
+        font-size: 0.86rem;
+        text-align: left;
         overflow-wrap: anywhere;
       }
 
       &.primary {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.7rem;
+
         strong {
-          font-size: 1.18rem;
+          font-size: 1.38rem;
           font-weight: 700;
-          color: var(--card-theme);
+          color: var(--color-normal-text);
+          line-height: 1.08;
         }
       }
 
+      &.previous {
+        justify-content: center;
+        padding: 0.42rem 0.5rem;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
       &.delta {
-        margin-top: 0.15rem;
-        padding-top: 0.32rem;
-        border-top: solid 1px rgba(255, 255, 255, 0.06);
+        justify-content: center;
+        min-height: 48px;
+        padding: 0.48rem 0.62rem;
+        border: solid 1px rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.055);
+
+        span {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: var(--color-normal-text);
+        }
 
         strong {
           color: var(--color-complement-text);
-          font-weight: 600;
+          font-size: 1.28rem;
+          font-weight: 800;
+          line-height: 1.05;
         }
         &.up strong { color: #E86F51; }
         &.down strong { color: #30B68F; }
+
+        &.muted {
+          span {
+            color: var(--color-complement-text);
+          }
+
+          strong {
+            color: var(--color-complement-text);
+            font-size: 1.08rem;
+          }
+        }
       }
     }
   }
@@ -219,6 +294,14 @@ function filterRowsByProfile(rows) {
 @media (max-width: 640px) {
   .metrics-bar {
     grid-template-columns: 1fr;
+
+    .metric-card {
+      min-height: 128px;
+    }
+
+    .metric-card .metric-footer {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>

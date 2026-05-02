@@ -8,26 +8,64 @@ import PolImproveSuggestion from "./pol/PolImproveSuggestion.vue";
 </script>
 <template>
   <div class="tab-view">
-    <PolRiskHeatmap />
-    <PolRootCauseAnalysis />
-    <PolAuditPriority />
-    <PolTrendAnalysis />
-    <PolEventScope />
-    <PolImproveSuggestion />
+    <div class="tab-main">
+      <div class="tab-column">
+        <PolRiskHeatmap />
+        <PolAuditPriority />
+      </div>
+      <div class="tab-column balanced-column">
+        <PolRootCauseAnalysis />
+        <PolEventScope />
+        <PolTrendAnalysis />
+      </div>
+    </div>
+    <div class="tab-full">
+      <PolImproveSuggestion />
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .tab-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tab-main {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-  align-items: start;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.tab-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.balanced-column {
+  height: 100%;
+
+  :deep(.value-card) {
+    flex: 1 1 0;
+  }
 }
 
 @media (max-width: 860px) {
-  .tab-view {
+  .tab-main {
     grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .balanced-column {
+    height: auto;
+
+    :deep(.value-card) {
+      flex: 0 1 auto;
+    }
   }
 }
 </style>
