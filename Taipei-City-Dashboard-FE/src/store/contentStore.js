@@ -330,6 +330,11 @@ export const useContentStore = defineStore("content", {
 						component.history_config.range
 					) {
 						for (let i in component.history_config.range) {
+							if (i === "0") {
+								this.cityDashboard.components[
+									index
+								].history_data = [];
+							}
 							try {
 								const response = await http.get(
 									`/component/${component.id}/history`,
@@ -347,11 +352,6 @@ export const useContentStore = defineStore("content", {
 									},
 								);
 
-								if (i === "0") {
-									this.cityDashboard.components[
-										index
-									].history_data = [];
-								}
 								this.cityDashboard.components[
 									index
 								].history_data.push(response.data.data);
