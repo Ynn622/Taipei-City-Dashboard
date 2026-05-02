@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "food_safety_logistics_vendor_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "fda",
+      "logistics",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of Taipei FDA registered food logistics vendors as individual map points.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_safety_logistics_vendor_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "FDA 食品業者登錄：臺北市物流業",
+    "airflow_update_freq": "@monthly",
+    "source": "https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx",
+    "source_type": "FDA HTML endpoint",
+    "source_dept": "衛生福利部食品藥物管理署",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市食品業者登錄中分類為物流業之業者資料，每筆業者顯示一個點。",
+    "etl_description": "fetch FDA tp=6 logistics vendor list, standardize registration fields, geocode Taipei addresses with Taipei house number position data first, use TPGOS and OpenStreetMap road/place geocoding as fallback, and only then fall back to district centroid jittered geometry",
+    "sensitivity": "public"
+  }
+}
