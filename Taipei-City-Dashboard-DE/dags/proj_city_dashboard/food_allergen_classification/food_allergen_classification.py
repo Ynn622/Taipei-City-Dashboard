@@ -1,5 +1,7 @@
 from operators.common_pipeline import CommonDag
 from airflow.models import Variable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 import random
 import json
 import urllib.parse
@@ -11,16 +13,7 @@ OPEN_DATA_URL = "https://data.taipei/api/v1/dataset/29869b6f-1cd3-4ce8-8c78-eb85
 TOWIN_API_URL = "http://localhost:3011/search"
 SAMPLE_SIZE_PER_COMPANY = 30
 LLM_BATCH_SIZE = 35
-
-# Allergen categories reference
-ALLERGEN_CATEGORIES = {
-    "海鮮類": ["蝦", "蟹", "龍蝦", "貝", "螺", "章魚", "鮭魚", "鯖魚", "魚"],
-    "乳製品": ["牛奶", "起司", "乳", "奶"],
-    "花生": ["花生"],
-    "麩質穀物": ["小麥", "麵粉", "麩質"],
-    "蠶豆": ["蠶豆"],
-    "酒精": ["酒精", "酒"],
-}
+MAX_CONCURRENT = 10
 
 
 def _food_allergen_classification(**kwargs):
@@ -83,10 +76,14 @@ def _food_allergen_classification(**kwargs):
             data = resp.json()
             if data.get("results") and len(data["results"]) > 0:
                 result = data["results"][0]
-                return result.get("lat"), result.get("lon")
+                county = result.get("county") or result.get("city")
+                if county:
+                    if "台北" in county or "臺北" in county: county = "臺北市"
+                    elif "新北" in county: county = "新北市"
+                return result.get("lat"), result.get("lon"), county
         except Exception as e:
             print(f"Geocode error for {brand_name}: {e}")
-        return None, None
+        return None, None, None
 
     def classify_allergens_llm(products_batch, api_url, api_key, model):
         system_prompt = """你是一位營養師與食品安全專家。請根據提供的產品名稱與原料清單，判斷是否含有以下特殊過敏原：
@@ -129,32 +126,36 @@ def _food_allergen_classification(**kwargs):
             "messages": messages,
             "parameters": {
                 "temperature": 0.1,
-                "max_new_tokens": 2000,
+                "max_new_tokens": 5000,
             },
         }
 
-        try:
-            resp = requests.post(url, headers=headers, json=body, timeout=60)
-            resp.raise_for_status()
-            data = resp.json()
-
-            content = ""
-            if "choices" in data and len(data["choices"]) > 0:
-                content = data["choices"][0].get("message", {}).get("content", "")
-            elif "generated_text" in data:
-                content = data["generated_text"]
-
+        for attempt in range(3):
             try:
-                result = json.loads(content)
-                if "results" in result:
-                    return result["results"]
-            except Exception:
-                pass
+                resp = requests.post(url, headers=headers, json=body, timeout=180)
+                resp.raise_for_status()
+                data = resp.json()
 
-            return [{"has_allergens": False, "allergens": []} for _ in products_batch]
-        except Exception as e:
-            print(f"LLM classification error: {e}")
-            return [{"has_allergens": False, "allergens": []} for _ in products_batch]
+                content = ""
+                if "choices" in data and len(data["choices"]) > 0:
+                    content = data["choices"][0].get("message", {}).get("content", "")
+                elif "generated_text" in data:
+                    content = data["generated_text"]
+
+                try:
+                    result = json.loads(content)
+                    if "results" in result:
+                        return result["results"]
+                except Exception:
+                    pass
+            except Exception as e:
+                if attempt < 2:
+                    print(f"  Retry batch after error: {e}")
+                    time.sleep(5)
+                    continue
+                print(f"  Batch failed after 3 attempts: {e}")
+
+        return [{"has_allergens": False, "allergens": []} for _ in products_batch]
 
     def chunk_list(lst, chunk_size):
         for i in range(0, len(lst), chunk_size):
@@ -194,40 +195,72 @@ def _food_allergen_classification(**kwargs):
     for company, prods in company_groups.items():
         brand = prods[0]["brand_name"] if prods else company
         if brand not in brand_coords:
-            lat, lon = geocode_brand(brand)
-            brand_coords[brand] = (lat, lon)
+            lat, lon, county = geocode_brand(brand)
+            brand_coords[brand] = (lat, lon, county)
             time.sleep(0.1)
 
     print(f"  Brands geocoded: {len(brand_coords)}")
 
-    # 4. Classify with LLM
-    print("Step 4: Classifying allergens with LLM...")
+    # 4. Classify with LLM (concurrent, max 10 workers)
+    print("Step 4: Classifying allergens with LLM (concurrent)...")
     api_url = Variable.get("TWCC_API_URL", default_var="https://api-ams.twcc.ai/api")
     api_key = Variable.get("TWCC_API_KEY", default_var="")
     model = Variable.get("TWCC_MODEL", default_var="llama3.3-ffm-70b-16k-chat")
 
-    llm_results = []
     batches = list(chunk_list(sampled_products, LLM_BATCH_SIZE))
-    print(f"  Total batches: {len(batches)}")
+    print(f"  Total batches: {len(batches)}, Workers: {MAX_CONCURRENT}")
 
-    for i, batch in enumerate(batches):
-        print(f"  Processing batch {i+1}/{len(batches)}...")
-        results = classify_allergens_llm(batch, api_url, api_key, model)
-        llm_results.extend(results)
-        time.sleep(2)
+    llm_results = [None] * len(batches)
+    lock = Lock()
+
+    def process_batch(idx_batch):
+        idx, batch = idx_batch
+        result = classify_allergens_llm(batch, api_url, api_key, model)
+        with lock:
+            llm_results[idx] = result
+        return idx
+
+    start = time.time()
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT) as executor:
+        futures = {executor.submit(process_batch, (i, b)): i for i, b in enumerate(batches)}
+        completed = 0
+        for future in as_completed(futures):
+            idx = future.result()
+            completed += 1
+            if completed % 10 == 0 or completed == len(batches):
+                elapsed = time.time() - start
+                print(f"  Completed {completed}/{len(batches)} batches ({elapsed:.0f}s)")
+
+    llm_time = time.time() - start
+    print(f"  LLM total time: {llm_time:.1f}s ({llm_time/60:.1f} min)")
 
     # 5. Merge results
     print("Step 5: Preparing final data...")
     final_records = []
-    for product, result in zip(sampled_products, llm_results):
+    flat_results = []
+    for r in llm_results:
+        flat_results.extend(r)
+
+    for product, result in zip(sampled_products, flat_results):
         brand = product["brand_name"]
-        lat, lon = brand_coords.get(brand, (None, None))
+        lat, lon, county = brand_coords.get(brand, (None, None, None))
+
+        if county not in ["臺北市", "新北市"]:
+            if not lat or not lon:
+                continue
+            if 25.00 <= lat <= 25.22 and 121.45 <= lon <= 121.67:
+                county = "臺北市"
+            elif 24.67 <= lat <= 25.30 and 121.28 <= lon <= 122.01:
+                county = "新北市"
+            else:
+                continue
 
         allergens = result.get("allergens", [])
         has_allergens = result.get("has_allergens", False)
 
         final_records.append(
             {
+                "county": county,
                 "company_name": product["company_name"],
                 "brand_name": product["brand_name"],
                 "product_name": product["product_name"],
