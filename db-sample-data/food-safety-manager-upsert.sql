@@ -153,7 +153,7 @@ SELECT
     "circle-opacity": 0.72,
     "circle-stroke-color": "#F5F9FF",
     "circle-stroke-width": 1,
-    "circle-radius": 6
+    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 8]
   }'::json,
   '[
     {"key":"name","name":"業者名稱"},
@@ -181,7 +181,7 @@ SET
     "circle-opacity": 0.72,
     "circle-stroke-color": "#F5F9FF",
     "circle-stroke-width": 1,
-    "circle-radius": 6
+    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 8]
   }'::json,
   property = '[
     {"key":"name","name":"業者名稱"},
@@ -208,7 +208,7 @@ SELECT
     "circle-opacity": 0.72,
     "circle-stroke-color": "#F7F3FF",
     "circle-stroke-width": 1,
-    "circle-radius": 6
+    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 8]
   }'::json,
   '[
     {"key":"name","name":"業者名稱"},
@@ -236,7 +236,7 @@ SET
     "circle-opacity": 0.72,
     "circle-stroke-color": "#F7F3FF",
     "circle-stroke-width": 1,
-    "circle-radius": 6
+    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 8]
   }'::json,
   property = '[
     {"key":"name","name":"業者名稱"},
