@@ -130,7 +130,6 @@
 - 食農教育體驗：`food_education`
 - 飼養蜜蜂：`beekeeping`
 - 飼養雞隻：`chicken_raising`
-- 定位方式：`location_method`
 
 ### 食物來源：新北市有機農場
 
@@ -143,7 +142,6 @@
 - 有效日期：`certification_valid_until`
 - 驗證狀態：`certification_status`
 - 面積(公頃)：`area_ha`
-- 定位方式：`location_method`
 
 ## 公開資料來源
 
