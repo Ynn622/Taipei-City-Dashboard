@@ -114,16 +114,17 @@ manager DB 會載入 `MANAGER_SAMPLE_FILE`，預設是 `dashboardmanager-demo.sq
 docker compose -f docker-compose-init.yaml run --rm dashboard-be-init-manager
 ```
 
-dashboard data DB 會載入 `DASHBOARD_SAMPLE_FILE`，預設是 `dashboard-demo.sql`。`dashboard-demo.sql` 會再 include `food-safety-dashboard-data.sql`，用來初始化食安健康頁面 501/502 需要的 demo 資料表。
+dashboard data DB 會載入 `DASHBOARD_SAMPLE_FILE`，預設是 `dashboard-demo.sql`。`dashboard-demo.sql` 會再 include `food-safety-dashboard-data.sql`，用來初始化食安健康頁面 501/502/503 需要的 demo 資料表。
 
 ```bash
 docker compose -f docker-compose-init.yaml run --rm dashboard-be-init-dashboard
 ```
 
-注意：`food-safety-dashboard-data.sql` 目前納入以下 DE pipeline 產出的 demo 資料，刪除 volume 後不需要先跑 DAG 才能顯示 501/502：
+注意：`food-safety-dashboard-data.sql` 目前納入以下 DE pipeline 產出的 demo 資料，刪除 volume 後不需要先跑 DAG 才能顯示 501/502/503：
 
 - `public.fda_good_restaurants`：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/fda_good_restaurants`
 - `public.cdc_infectious_disease`：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/cdc_infectious_disease`
+- `public.food_safety_death_cause_share`：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/food_safety_death_share`
 
 若之後新增其他只存在於 DE pipeline、但沒有納入 sample dump 的 component，仍需要執行對應 DAG 或匯入該 DAG 產出的資料，否則 manager DB 雖然有 component/query 設定，BE 執行 chart SQL 時會因為 dashboard DB 缺少資料表而回 500。
 

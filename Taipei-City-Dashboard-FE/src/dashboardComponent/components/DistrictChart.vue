@@ -83,6 +83,32 @@ const districts = [
 	"烏來區",
 ];
 
+const taipeiDistricts = districts.slice(0, 12);
+const newTaipeiDistricts = districts.slice(12);
+const cityCategories = ["臺北市", "新北市"];
+const isCityLevelChart = computed(() => {
+	const categories = props.chart_config?.categories || [];
+	return (
+		categories.length > 0 &&
+		categories.every((category) => cityCategories.includes(category))
+	);
+});
+const targetArea = computed(() => {
+	if (!isCityLevelChart.value) {
+		return targetDistrict.value;
+	}
+	if (targetDistrict.value === "臺北市" || targetDistrict.value === "新北市") {
+		return targetDistrict.value;
+	}
+	if (taipeiDistricts.includes(targetDistrict.value)) {
+		return "臺北市";
+	}
+	if (newTaipeiDistricts.includes(targetDistrict.value)) {
+		return "新北市";
+	}
+	return targetDistrict.value;
+});
+
 // Parse District Data (to support 2D or 3D data)
 const districtData = computed(() => {
 	let output = {
@@ -132,7 +158,32 @@ const districtData = computed(() => {
 	};
 	let highest = 0;
 	let sum = 0;
-	if (props.series.length === 1) {
+	if (isCityLevelChart.value) {
+		const cityTotals = {
+			臺北市: 0,
+			新北市: 0,
+		};
+		props.series.forEach((serie) => {
+			props.chart_config.categories.forEach((category, index) => {
+				if (cityCategories.includes(category)) {
+					cityTotals[category] += Number(serie.data[index] || 0);
+				}
+			});
+		});
+		taipeiDistricts.forEach((district) => {
+			output[district] = cityTotals["臺北市"];
+		});
+		newTaipeiDistricts.forEach((district) => {
+			output[district] = cityTotals["新北市"];
+		});
+		output["臺北市"] = cityTotals["臺北市"];
+		output["新北市"] = cityTotals["新北市"];
+		highest = Math.max(...Object.values(cityTotals));
+		sum = Object.values(cityTotals).reduce(
+			(partialSum, value) => partialSum + value,
+			0
+		);
+	} else if (props.series.length === 1) {
 		props.series[0].data.forEach((item) => {
 			output[item.x] = item.y;
 			if (item.y > highest) {
@@ -179,6 +230,11 @@ const tooltipData = computed(() => {
 			}
 		};
 	})
+});
+const targetTooltipData = computed(() => {
+	return tooltipData.value?.find((item) => item[targetArea.value])?.[
+		targetArea.value
+	];
 });
 const tooltipPosition = computed(() => {
 	if (!mousePosition.value.x || !mousePosition.value.y) {
@@ -233,7 +289,9 @@ const tooltipPosition = computed(() => {
 });
 
 function toggleActive(e) {
-	targetDistrict.value = e.target.dataset.name;
+	targetDistrict.value = isCityLevelChart.value
+		? e.target.dataset.city || e.target.dataset.name
+		: e.target.dataset.name;
 }
 function toggleActiveToNull() {
 	targetDistrict.value = null;
@@ -242,13 +300,31 @@ function updateMouseLocation(e) {
 	mousePosition.value.x = e.pageX;
 	mousePosition.value.y = e.pageY;
 }
+function formatTooltipValue(value) {
+	const numberValue = Number(value);
+	if (!Number.isFinite(numberValue)) {
+		return value ?? "-";
+	}
+	return Number.isInteger(numberValue)
+		? numberValue
+		: numberValue.toFixed(2);
+}
 
 function handleDataSelection(index) {
 	if (!props.map_filter || !props.map_filter_on) {
 		return;
 	}
 
-	if (index !== selectedIndex.value) {
+	const targetSelection = isCityLevelChart.value
+		? taipeiDistricts.includes(districts[index])
+			? "臺北市"
+			: "新北市"
+		: index;
+	const filterValue = isCityLevelChart.value
+		? targetSelection
+		: districts[index];
+
+	if (targetSelection !== selectedIndex.value) {
 		// Supports filtering by xAxis
 		emits("fly", districtCoordinates[index]);
 		if (props.map_filter.mode === "byParam") {
@@ -256,15 +332,15 @@ function handleDataSelection(index) {
 				"filterByParam",
 				props.map_filter,
 				props.map_config,
-				districts[index],
+				filterValue,
 				null
 			);
 		}
 		// Supports filtering by xAxis
 		else if (props.map_filter.mode === "byLayer") {
-			emits("filterByLayer", props.map_config, districts[index]);
+			emits("filterByLayer", props.map_config, filterValue);
 		}
-		selectedIndex.value = index;
+		selectedIndex.value = targetSelection;
 	} else {
 		if (props.map_filter.mode === "byParam") {
 			emits("clearByParamFilter", props.map_config);
@@ -296,7 +372,10 @@ function handleDataSelection(index) {
     <div class="districtchart-chart">
       <svg
         v-if="cityName === '新北市' || cityName === '雙北市'"
-        class="districtchart-chart-metrotaipei"
+        :class="[
+          'districtchart-chart-metrotaipei',
+          { 'city-level-chart': isCityLevelChart },
+        ]"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 970 611"
       >
@@ -1008,7 +1087,10 @@ function handleDataSelection(index) {
       </svg>
       <svg
         v-if="cityName === '臺北市'"
-        class="districtchart-chart-taipei"
+        :class="[
+          'districtchart-chart-taipei',
+          { 'city-level-chart': isCityLevelChart },
+        ]"
         viewBox="0 0 413 550"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -1213,23 +1295,20 @@ function handleDataSelection(index) {
           class="districtchart-chart-info chart-tooltip"
           :style="tooltipPosition"
         >
-          <h6>{{ targetDistrict }}</h6>
-          <span>
-            {{ districtData[targetDistrict] }}
+          <h6>{{ targetArea }}</h6>
+          <span v-if="!isCityLevelChart">
+            {{ formatTooltipValue(districtData[targetArea]) }}
             {{ chart_config.unit }}
           </span>
 
-          <template v-if="tooltipData">
+          <template v-if="targetTooltipData">
             <div
-              v-for="item in tooltipData"
-              :key="item"
+              v-for="series in targetTooltipData.seriesGroups"
+              :key="series?.name"
             >
-              <template
-                v-for="series in item[targetDistrict]?.seriesGroups"
-                :key="series?.name"
-              >
-                <div>{{ series.name }}: {{ series.value }} {{ chart_config.unit }}</div>
-              </template>
+              {{ series.name }}:
+              {{ formatTooltipValue(series.value) }}
+              {{ chart_config.unit }}
             </div>
           </template>
         </div>
@@ -1316,6 +1395,20 @@ function handleDataSelection(index) {
 				transition: transform 0.2s;
 				// opacity: 0;
 			}
+
+			&.city-level-chart {
+				path {
+					stroke: v-bind(districtColor);
+					stroke-linecap: round;
+					stroke-linejoin: round;
+					stroke-width: 3px;
+					vector-effect: non-scaling-stroke;
+				}
+
+				.active-district {
+					transform: none;
+				}
+			}
 		}
 
 		&-taipei {
@@ -1361,4 +1454,3 @@ function handleDataSelection(index) {
 	}
 }
 </style>
-
