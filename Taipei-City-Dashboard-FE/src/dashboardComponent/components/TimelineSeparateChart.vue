@@ -18,6 +18,16 @@ const props = defineProps(["chart_config", "activeChart", "series"]);
 // 原始資料拷貝避免更改原始資料
 const localSeries = ref(JSON.parse(JSON.stringify(props.series)));
 
+function formatValue(value, unit) {
+	const number = Number(value);
+	if (!Number.isFinite(number)) return value;
+
+	const maximumFractionDigits = unit === "%" ? 2 : 2;
+	return new Intl.NumberFormat("zh-TW", {
+		maximumFractionDigits,
+	}).format(number);
+}
+
 const chartOptions = ref({
 	chart: {
 		toolbar: {
@@ -67,7 +77,10 @@ const chartOptions = ref({
 				` - ${w.globals.seriesNames[seriesIndex]}` +
 				"</h6>" +
 				"<span>" +
-				series[seriesIndex][dataPointIndex] +
+				formatValue(
+					series[seriesIndex][dataPointIndex],
+					props.chart_config.unit
+				) +
 				` ${props.chart_config.unit}` +
 				"</span>" +
 				"</div>"
@@ -97,7 +110,9 @@ const chartOptions = ref({
 		min: 0,
 		labels: {
 			formatter: function (value) {
-				return props.chart_config.unit === "%" ? `${value}%` : value;
+				return props.chart_config.unit === "%"
+					? `${formatValue(value, props.chart_config.unit)}%`
+					: formatValue(value, props.chart_config.unit);
 			},
 		},
 	},
