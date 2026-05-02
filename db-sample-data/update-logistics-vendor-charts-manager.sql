@@ -3,6 +3,10 @@
 
 BEGIN;
 
+UPDATE public.components
+SET name = '食品物流業者'
+WHERE index = 'food_safety_logistics_vendor';
+
 UPDATE public.component_charts
 SET color = '{#4A90E2,#D84C73,#30B68F,#F5B041,#8E63C7,#F2C94C,#7A8793,#2F7D6D,#C2573E,#1E88E5,#00A6A6,#AF4137}',
     types = '{DistrictChart,TreemapChart,BarChart}',

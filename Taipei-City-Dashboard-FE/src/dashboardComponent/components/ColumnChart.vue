@@ -69,7 +69,7 @@ function formatWeekCategory(category) {
 	const yearStart = new Date(Date.UTC(weekYear, 0, 1));
 	const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
 
-	return `${weekYear} 第${week}週`;
+	return `${weekYear} w${week}`;
 }
 
 function getRawCategory(index) {

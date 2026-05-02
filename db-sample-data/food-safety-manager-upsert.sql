@@ -143,7 +143,7 @@ WHERE "index" = 'food_safety_market_ntpe';
 INSERT INTO public.component_maps ("index", title, type, source, size, icon, paint, property)
 SELECT
   'food_safety_logistics_vendor_tpe',
-  '臺北市物流業者',
+  '臺北市食品物流業者',
   'circle',
   'geojson',
   'small',
@@ -171,7 +171,7 @@ WHERE NOT EXISTS (
 
 UPDATE public.component_maps
 SET
-  title = '臺北市物流業者',
+  title = '臺北市食品物流業者',
   type = 'circle',
   source = 'geojson',
   size = 'small',
@@ -198,7 +198,7 @@ WHERE "index" = 'food_safety_logistics_vendor_tpe';
 INSERT INTO public.component_maps ("index", title, type, source, size, icon, paint, property)
 SELECT
   'food_safety_logistics_vendor_ntpe',
-  '新北市物流業者',
+  '新北市食品物流業者',
   'circle',
   'geojson',
   'small',
@@ -226,7 +226,7 @@ WHERE NOT EXISTS (
 
 UPDATE public.component_maps
 SET
-  title = '新北市物流業者',
+  title = '新北市食品物流業者',
   type = 'circle',
   source = 'geojson',
   size = 'small',
@@ -278,13 +278,13 @@ SET
 WHERE "index" = 'food_safety_market';
 
 INSERT INTO public.components ("index", name)
-SELECT 'food_safety_logistics_vendor', '物流業者'
+SELECT 'food_safety_logistics_vendor', '食品物流業者'
 WHERE NOT EXISTS (
   SELECT 1 FROM public.components WHERE "index" = 'food_safety_logistics_vendor'
 );
 
 UPDATE public.components
-SET name = '物流業者'
+SET name = '食品物流業者'
 WHERE "index" = 'food_safety_logistics_vendor';
 
 INSERT INTO public.component_charts ("index", color, types, unit)
@@ -414,12 +414,12 @@ BEGIN
   )
   SELECT
     'food_safety_logistics_vendor', NULL, ARRAY[v_logistics_tpe_map_id], '{}'::json, 'static', NULL,
-    NULL, NULL, '衛生局', '顯示臺北市食品物流業者分布。',
+    NULL, NULL, '衛生監管機構', '顯示臺北市食品物流業者分布。',
     '顯示臺北市 FDA 食品業者登錄中物流業者的地理分布。',
     '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
     ARRAY['https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?city=臺北市'],
     ARRAY['doit'], NOW(), NOW(), 'map_legend',
-    $q$SELECT unnest(array['臺北市物流業者']) as name, unnest(array['circle']) as type, unnest(array[256]) as value$q$,
+    $q$SELECT unnest(array['臺北市食品物流業者']) as name, unnest(array['circle']) as type, unnest(array[256]) as value$q$,
     NULL, 'taipei'
   WHERE NOT EXISTS (
     SELECT 1 FROM public.query_charts WHERE "index" = 'food_safety_logistics_vendor' AND city = 'taipei'
@@ -430,7 +430,7 @@ BEGIN
     map_config_ids = ARRAY[v_logistics_tpe_map_id],
     map_filter = '{}'::json,
     time_from = 'static',
-    source = '衛生局',
+    source = '衛生監管機構',
     short_desc = '顯示臺北市食品物流業者分布。',
     long_desc = '顯示臺北市 FDA 食品業者登錄中物流業者的地理分布。',
     use_case = '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
@@ -438,7 +438,7 @@ BEGIN
     contributors = ARRAY['doit'],
     updated_at = NOW(),
     query_type = 'map_legend',
-    query_chart = $q$SELECT unnest(array['臺北市物流業者']) as name, unnest(array['circle']) as type, unnest(array[256]) as value$q$,
+    query_chart = $q$SELECT unnest(array['臺北市食品物流業者']) as name, unnest(array['circle']) as type, unnest(array[256]) as value$q$,
     city = 'taipei'
   WHERE "index" = 'food_safety_logistics_vendor' AND city = 'taipei';
 
@@ -449,7 +449,7 @@ BEGIN
   )
   SELECT
     'food_safety_logistics_vendor', NULL, ARRAY[v_logistics_tpe_map_id, v_logistics_ntpe_map_id], '{}'::json, 'static', NULL,
-    NULL, NULL, '衛生局', '顯示雙北食品物流業者分布。',
+    NULL, NULL, '衛生監管機構', '顯示雙北食品物流業者分布。',
     '顯示雙北 FDA 食品業者登錄中物流業者的地理分布。',
     '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
     ARRAY[
@@ -457,7 +457,7 @@ BEGIN
       'https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?city=新北市'
     ],
     ARRAY['doit', 'ntpc'], NOW(), NOW(), 'map_legend',
-    $q$SELECT unnest(array['臺北市物流業者','新北市物流業者']) as name,
+    $q$SELECT unnest(array['臺北市食品物流業者','新北市食品物流業者']) as name,
              unnest(array['circle','circle']) as type,
              unnest(array[256,479]) as value$q$,
     NULL, 'metrotaipei'
@@ -470,7 +470,7 @@ BEGIN
     map_config_ids = ARRAY[v_logistics_tpe_map_id, v_logistics_ntpe_map_id],
     map_filter = '{}'::json,
     time_from = 'static',
-    source = '衛生局',
+    source = '衛生監管機構',
     short_desc = '顯示雙北食品物流業者分布。',
     long_desc = '顯示雙北 FDA 食品業者登錄中物流業者的地理分布。',
     use_case = '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
@@ -481,7 +481,7 @@ BEGIN
     contributors = ARRAY['doit', 'ntpc'],
     updated_at = NOW(),
     query_type = 'map_legend',
-    query_chart = $q$SELECT unnest(array['臺北市物流業者','新北市物流業者']) as name,
+    query_chart = $q$SELECT unnest(array['臺北市食品物流業者','新北市食品物流業者']) as name,
                           unnest(array['circle','circle']) as type,
                           unnest(array[256,479]) as value$q$,
     city = 'metrotaipei'

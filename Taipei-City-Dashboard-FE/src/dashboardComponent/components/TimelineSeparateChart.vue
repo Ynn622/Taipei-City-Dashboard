@@ -95,6 +95,11 @@ const chartOptions = ref({
 	},
 	yaxis: {
 		min: 0,
+		labels: {
+			formatter: function (value) {
+				return props.chart_config.unit === "%" ? `${value}%` : value;
+			},
+		},
 	},
 });
 
@@ -156,4 +161,3 @@ watch(
     />
   </div>
 </template>
-
