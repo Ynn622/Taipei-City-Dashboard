@@ -60,7 +60,7 @@ SELECT
     "circle-opacity": 0.75,
     "circle-stroke-color": "#ffffff",
     "circle-stroke-width": 1,
-    "circle-radius": 5
+    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 2, 12, 4, 15, 7]
   }'::json,
   '[
     {"key":"county","name":"縣市"},
@@ -86,7 +86,7 @@ SET
     "circle-opacity": 0.75,
     "circle-stroke-color": "#ffffff",
     "circle-stroke-width": 1,
-    "circle-radius": 5
+    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 2, 12, 4, 15, 7]
   }'::json,
   property = '[
     {"key":"county","name":"縣市"},
@@ -335,13 +335,13 @@ BEGIN
       source = 'geojson',
       size = 'small',
       icon = NULL,
-      paint = '{"circle-color":["case",["boolean",["get","has_allergens"],false],"#ED6A45","#4CB495"],"circle-opacity":0.75,"circle-stroke-color":"#ffffff","circle-stroke-width":1,"circle-radius":5}'::json,
+      paint = '{"circle-color":["case",["boolean",["get","has_allergens"],false],"#ED6A45","#4CB495"],"circle-opacity":0.75,"circle-stroke-color":"#ffffff","circle-stroke-width":1,"circle-radius":["interpolate",["linear"],["zoom"],9,2,12,4,15,7]}'::json,
       property = '[{"key":"county","name":"縣市"},{"key":"company_name","name":"公司名稱"},{"key":"brand_name","name":"品牌名稱"},{"key":"product_name","name":"產品名稱"},{"key":"has_allergens","name":"是否含過敏原"},{"key":"allergens","name":"過敏原清單"}]'::json
   WHERE id = v_map_id;
 
   INSERT INTO public.component_maps ("index", title, type, source, size, icon, paint, property)
   SELECT 'food_allergen_classification_metrotaipei', '雙北食品過敏原分布', 'circle', 'geojson', 'small', NULL,
-         '{"circle-color":["case",["boolean",["get","has_allergens"],false],"#ED6A45","#4CB495"],"circle-opacity":0.75,"circle-stroke-color":"#ffffff","circle-stroke-width":1,"circle-radius":5}'::json,
+         '{"circle-color":["case",["boolean",["get","has_allergens"],false],"#ED6A45","#4CB495"],"circle-opacity":0.75,"circle-stroke-color":"#ffffff","circle-stroke-width":1,"circle-radius":["interpolate",["linear"],["zoom"],9,2,12,4,15,7]}'::json,
          '[{"key":"county","name":"縣市"},{"key":"company_name","name":"公司名稱"},{"key":"brand_name","name":"品牌名稱"},{"key":"product_name","name":"產品名稱"},{"key":"has_allergens","name":"是否含過敏原"},{"key":"allergens","name":"過敏原清單"}]'::json
   WHERE NOT EXISTS (
     SELECT 1 FROM public.component_maps WHERE "index" = 'food_allergen_classification_metrotaipei'
