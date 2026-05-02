@@ -12,6 +12,7 @@ CATEGORY_MAP = {
 }
 
 TARGET_COUNTIES = {"臺北市", "新北市"}
+TARGET_YEARS = set(range(105, 115))
 
 
 def _food_processing_pass_rate(**kwargs):
@@ -134,6 +135,8 @@ def _food_processing_pass_rate(**kwargs):
         try:
             year = int(year_str)
         except ValueError:
+            continue
+        if year not in TARGET_YEARS:
             continue
 
         df = pd.read_excel(local_file, sheet_name=sheet_name, header=None)
