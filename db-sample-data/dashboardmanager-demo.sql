@@ -97,10 +97,10 @@ COPY public.contributors (id, user_id, user_name, image, link, identity, descrip
 --
 
 COPY public.dashboards (id, index, name, components, icon, updated_at, created_at) FROM stdin;
-106	map-layers-taipei	圖資資訊	{217,303}	public	2025-03-12 01:59:00.512775+00	2024-03-21 10:04:24.928533+00
+106	map-layers-taipei	圖資資訊	{217}	public	2025-03-12 01:59:00.512775+00	2024-03-21 10:04:24.928533+00
 356	ltc_care_tpe	長照關懷	{214,215,216,218}	elderly	2025-02-26 08:43:42.86017+00	2024-03-21 09:38:37.66+00
 355	ltc_care_newtpe	長照關懷	{214,215,216,218}	elderly	2025-02-27 06:42:21.705931+00	2024-03-21 09:38:37.66+00
-359	map-layers-metrotaipei	圖資資訊	{217,303}	public	2024-05-16 03:56:12.76016+00	2024-03-21 10:04:24.928533+00
+359	map-layers-metrotaipei	圖資資訊	{217}	public	2024-05-16 03:56:12.76016+00	2024-03-21 10:04:24.928533+00
 358	practical_transportation_newtpe	務實交通	{60,212,213}	directions_car	2025-03-12 08:00:38.75842+00	2024-03-21 09:38:37.66+00
 401	food_safety_health_tpe	食安健康	{303,304,305,306,502}	restaurant	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00
 402	food_safety_health_metrotaipei	食安健康	{303,304,305,306,501,502}	restaurant	2026-05-02 00:00:00+00	2026-05-02 00:00:00+00
