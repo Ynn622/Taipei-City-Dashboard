@@ -15,7 +15,7 @@ const tabs = [
 	{
 		id: "operations",
 		name: "營運管理",
-		icon: "monitoring",
+		icon: "analytics",
 		count: 5,
 		description: "食安營運風險、供應商與改善建議",
 	},
@@ -62,7 +62,7 @@ const closeProfileModal = () => {
         <div class="hero-panel">
           <div class="hero-main">
             <div class="service-mark">
-              <span>analytics</span>
+              <span>add_chart</span>
             </div>
             <div class="title-area">
               <p class="eyebrow">
@@ -365,7 +365,12 @@ const closeProfileModal = () => {
         background: rgba(255, 255, 255, 0.06);
         color: var(--color-normal-text);
         font-family: var(--font-icon);
+        font-weight: normal;
+        font-style: normal;
         font-size: 1.25rem;
+        line-height: 1;
+        font-feature-settings: "liga";
+        text-transform: none;
       }
 
       .tab-copy {

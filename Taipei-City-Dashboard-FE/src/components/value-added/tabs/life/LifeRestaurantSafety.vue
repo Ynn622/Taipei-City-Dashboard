@@ -43,16 +43,19 @@ const gaugeOptions = computed(() => ({
 	colors: gaugeColor.value,
 	plotOptions: {
 		radialBar: {
-			hollow: { size: "55%" },
-			track: { background: "#494b4e" },
+			hollow: { size: "54%" },
+			track: {
+				background: "#494b4e",
+				strokeWidth: "82%",
+			},
 			dataLabels: {
-				name: { show: true, fontSize: "13px", color: "#888787", offsetY: -8 },
+				name: { show: true, fontSize: "1.05rem", color: "#888787", offsetY: -14 },
 				value: {
 					show: true,
-					fontSize: "2rem",
+					fontSize: "3rem",
 					fontWeight: 800,
 					color: "#fff",
-					offsetY: 4,
+					offsetY: 8,
 					formatter: () => String(score.value),
 				},
 			},
@@ -72,7 +75,7 @@ const gaugeOptions = computed(() => ({
       v-if="!loading"
       type="radialBar"
       width="100%"
-      height="200"
+      height="300"
       :options="gaugeOptions"
       :series="[score]"
     />

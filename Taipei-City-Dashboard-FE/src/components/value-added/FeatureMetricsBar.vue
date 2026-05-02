@@ -39,7 +39,10 @@ const metrics = computed(() => {
 		{ rawRows: violationRows },
 		{ unit: " 件", mode: "length" }
 	);
-	const highRiskAreas = highRiskAreaComparison({ rawRows: violationRows }, 1);
+	const highRiskAreas = highRiskAreaComparison(
+		{ rawRows: violationRows },
+		{ threshold: 1, groupKey: "district" }
+	);
 	const suppliers = metricComparison(datasets.value.foodSource, {
 		unit: " 處",
 		mode: "length",
@@ -47,6 +50,8 @@ const metrics = computed(() => {
 	});
 	const diarrhea = metricComparison(datasets.value.infectious, {
 		unit: " 人次",
+		seriesNames: ["門診", "住院", "急診"],
+		emptyText: "無資料",
 	});
 
 	return [
@@ -86,7 +91,7 @@ function filterRowsByProfile(rows) {
 		? store.userProfile.focusDistricts.filter(Boolean)
 		: [];
 	if (districts.length === 0) return rows;
-	return rows.filter((row) => districts.includes(rowLabel(row)));
+	return rows.filter((row) => districts.includes(row?.district || rowLabel(row)));
 }
 </script>
 
@@ -115,11 +120,11 @@ function filterRowsByProfile(rows) {
       >
         <div class="comparison-row primary">
           <strong>{{ metric.currentText }}</strong>
-          <span>本週</span>
+          <span>{{ metric.currentLabelText || "最新" }}</span>
         </div>
         <div class="metric-footer">
-          <div class="comparison-row">
-            <span>上週</span>
+          <div class="comparison-row previous">
+            <span>{{ metric.previousLabelText || "比較" }}</span>
             <strong>{{ metric.previousText }}</strong>
           </div>
           <div
@@ -149,7 +154,7 @@ function filterRowsByProfile(rows) {
   .metric-card {
     position: relative;
     min-width: 0;
-    min-height: 119px;
+    min-height: 128px;
     overflow: hidden;
     background: var(--color-component-background);
     border: solid 1px rgba(255, 255, 255, 0.09);
@@ -201,13 +206,14 @@ function filterRowsByProfile(rows) {
     .metric-comparison {
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
+      gap: 0.68rem;
     }
 
     .metric-footer {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.4rem;
+      grid-template-columns: minmax(0, 0.78fr) minmax(120px, 1.22fr);
+      gap: 0.55rem;
+      align-items: stretch;
     }
 
     .comparison-row {
@@ -240,13 +246,46 @@ function filterRowsByProfile(rows) {
         }
       }
 
+      &.previous {
+        justify-content: center;
+        padding: 0.42rem 0.5rem;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
       &.delta {
+        justify-content: center;
+        min-height: 48px;
+        padding: 0.48rem 0.62rem;
+        border: solid 1px rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.055);
+
+        span {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: var(--color-normal-text);
+        }
+
         strong {
           color: var(--color-complement-text);
-          font-weight: 600;
+          font-size: 1.28rem;
+          font-weight: 800;
+          line-height: 1.05;
         }
         &.up strong { color: #E86F51; }
         &.down strong { color: #30B68F; }
+
+        &.muted {
+          span {
+            color: var(--color-complement-text);
+          }
+
+          strong {
+            color: var(--color-complement-text);
+            font-size: 1.08rem;
+          }
+        }
       }
     }
   }
@@ -257,7 +296,11 @@ function filterRowsByProfile(rows) {
     grid-template-columns: 1fr;
 
     .metric-card {
-      min-height: 110px;
+      min-height: 128px;
+    }
+
+    .metric-card .metric-footer {
+      grid-template-columns: 1fr;
     }
   }
 }

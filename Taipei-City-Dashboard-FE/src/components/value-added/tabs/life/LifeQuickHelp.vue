@@ -5,7 +5,6 @@ import ValueAddedCard from "../../ValueAddedCard.vue";
 import {
 	COMPONENT_IDS,
 	formatNumber,
-	maxValue,
 	topRows,
 } from "../../valueAddedAnalytics";
 
@@ -19,7 +18,49 @@ onMounted(async () => {
 });
 
 const helpTypes = computed(() => topRows(rows.value, 5));
-const max = computed(() => maxValue(helpTypes.value));
+
+const chartOptions = computed(() => ({
+	chart: { type: "bar", background: "transparent", toolbar: { show: false }, fontFamily: "inherit" },
+	theme: { mode: "dark" },
+	colors: ["#30B68F"],
+	plotOptions: {
+		bar: {
+			horizontal: true,
+			borderRadius: 4,
+			barHeight: "58%",
+		},
+	},
+	dataLabels: {
+		enabled: true,
+		formatter: (value) => formatNumber(value, " 處"),
+		style: { fontSize: "11px", fontWeight: 700, colors: ["#fff"] },
+	},
+	grid: {
+		borderColor: "#494b4e",
+		xaxis: { lines: { show: true } },
+		yaxis: { lines: { show: false } },
+	},
+	xaxis: {
+		categories: helpTypes.value.map((item) => item.label),
+		labels: { style: { colors: "#888787", fontSize: "11px" } },
+		axisBorder: { show: false },
+		axisTicks: { show: false },
+	},
+	yaxis: {
+		labels: {
+			style: { colors: "#fff", fontSize: "11px", fontWeight: 600 },
+		},
+	},
+	legend: { show: false },
+	tooltip: {
+		theme: "dark",
+		y: { formatter: (value) => formatNumber(value, " 處") },
+	},
+}));
+
+const chartSeries = computed(() => [
+	{ name: "支援節點", data: helpTypes.value.map((item) => item.value) },
+]);
 </script>
 
 <template>
@@ -28,22 +69,14 @@ const max = computed(() => maxValue(helpTypes.value));
     subtitle="彙整醫療、申訴與消費爭議支援節點。"
     :loading="loading"
   >
-    <div class="rank-list">
-      <div
-        v-for="item in helpTypes"
-        :key="item.label"
-        class="rank-row"
-      >
-        <span>{{ item.label }}</span>
-        <strong>{{ formatNumber(item.value, " 處") }}</strong>
-        <div class="bar-track">
-          <span
-            class="bar-fill"
-            :style="{ width: `${(item.value / max) * 100}%` }"
-          />
-        </div>
-      </div>
-    </div>
+    <apexchart
+      v-if="!loading && chartSeries[0].data.length"
+      type="bar"
+      width="100%"
+      height="230"
+      :options="chartOptions"
+      :series="chartSeries"
+    />
     <p class="note">
       發生疑似食安事件時，先就醫保留診斷與消費憑證，再依所在地向衛生局或消保單位通報。
     </p>
