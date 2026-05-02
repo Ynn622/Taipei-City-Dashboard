@@ -1,0 +1,44 @@
+{
+  "dag_infos": {
+    "dag_id": "cdc_infectious_disease",
+    "start_date": "2026-05-02",
+    "schedule_interval": "0 10 * * 2",
+    "catchup": false,
+    "tags": [
+      "cdc",
+      "食安健康",
+      "腹瀉就診數量統計",
+      "腹瀉"
+    ],
+    "description": "Weekly CDC outpatient, inpatient, and emergency visit statistics for diarrhea.",
+    "default_args": {
+      "owner": "airflow",
+      "email": [
+        "DEFAULT_EMAIL_LIST"
+      ],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "cdc_infectious_disease",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "食安健康-腹瀉就診數量統計",
+    "airflow_update_freq": "10:00 every Tuesday",
+    "source": "https://od.cdc.gov.tw/eic/NHI_Diarrhea.csv; https://od.cdc.gov.tw/eic/RODS_AcuteDiarrhea.csv",
+    "source_type": "CDC csv",
+    "source_dept": "衛生福利部疾病管制署",
+    "gis_format": "",
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 0,
+    "dataset_description": "彙整 CDC 腹瀉之健保門診/住院與急性腹瀉急診監測資料，篩選 2016 至 2026 年並依 ISO week 加總，統一為疾病、監測來源、就診類別、縣市、年齡別與就診人次欄位。",
+    "etl_description": "下載兩份 CDC CSV，以 pandas 正規化欄位、用 ISO week 週一作為 data_time、篩選 2016 至 2026 年、依週和主要維度加總就診人次，統一台/臺用字後寫入單一 cdc_infectious_disease table。",
+    "sensitivity": "public"
+  }
+}
