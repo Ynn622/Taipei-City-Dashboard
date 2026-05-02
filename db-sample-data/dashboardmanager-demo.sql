@@ -201,3 +201,5 @@ SELECT pg_catalog.setval('public.groups_id_seq', (SELECT COALESCE(MAX(id), 4) FR
 
 --
 -- PostgreSQL database dump complete
+
+\ir add-post-help-agency-manager.sql

@@ -7,6 +7,8 @@ BEGIN;
 
 DROP TABLE IF EXISTS public.food_source_tpe;
 DROP TABLE IF EXISTS public.food_source_ntpe;
+DROP TABLE IF EXISTS public.post_help_agency_tpe;
+DROP TABLE IF EXISTS public.post_help_agency_ntpe;
 DROP TABLE IF EXISTS public.fda_good_restaurants;
 DROP TABLE IF EXISTS public.cdc_infectious_disease;
 DROP TABLE IF EXISTS public.food_safety_death_cause_share;
@@ -17,6 +19,14 @@ CREATE TABLE public.food_source_tpe (
 
 CREATE TABLE public.food_source_ntpe (
     district text
+);
+
+CREATE TABLE public.post_help_agency_tpe (
+    agency_type text
+);
+
+CREATE TABLE public.post_help_agency_ntpe (
+    agency_type text
 );
 
 CREATE TABLE public.fda_good_restaurants (
@@ -100,6 +110,45 @@ FROM (
         ('新莊區', 1),
         ('汐止區', 1)
 ) AS source_counts(district, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.post_help_agency_tpe (agency_type)
+SELECT agency_type
+FROM (
+    VALUES
+        ('藥局', 907),
+        ('西醫一般科', 641),
+        ('內科', 180),
+        ('家庭醫學科', 151),
+        ('內科、家庭醫學科', 30),
+        ('急診醫學科', 15),
+        ('西醫一般科、內科、家庭醫學科', 7),
+        ('西醫一般科、內科、家庭醫學科、急診醫學科', 3),
+        ('西醫一般科、家庭醫學科', 3),
+        ('內科、家庭醫學科、急診醫學科', 3),
+        ('西醫一般科、內科', 2),
+        ('家庭醫學科、急診醫學科', 1),
+        ('消保會', 1),
+        ('消費者服務中心', 1),
+        ('消基會', 1)
+) AS source_counts(agency_type, row_count)
+CROSS JOIN generate_series(1, row_count);
+
+INSERT INTO public.post_help_agency_ntpe (agency_type)
+SELECT agency_type
+FROM (
+    VALUES
+        ('藥局', 1282),
+        ('西醫一般科', 423),
+        ('家庭醫學科', 203),
+        ('內科', 174),
+        ('內科、家庭醫學科', 38),
+        ('內科、家庭醫學科、急診醫學科', 8),
+        ('西醫一般科、內科、家庭醫學科、急診醫學科', 4),
+        ('急診醫學科', 2),
+        ('內科、急診醫學科', 1),
+        ('消費者服務中心', 1)
+) AS source_counts(agency_type, row_count)
 CROSS JOIN generate_series(1, row_count);
 
 COPY public.fda_good_restaurants (data_time, city, district, award_year, restaurant_name, address, lng, lat, rating_result, wkb_geometry) FROM stdin;
