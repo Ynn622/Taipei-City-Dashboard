@@ -171,7 +171,7 @@ Dashboard data DB 的 `public.food_safety_death_cause_share` 由 Airflow DAG 產
 Dashboard query：
 
 - 臺北市：`y_axis` 使用 4 個死因，`x_axis` 使用年度，讀最新年度往前 10 年。
-- 雙北：`y_axis` 使用 `城市-死因`，`x_axis` 使用年度，依各城市最新年度往前讀 10 年。
+- 雙北：`y_axis` 使用 `死因(台北)` / `死因(新北)`，`x_axis` 使用年度，依各城市最新年度往前讀 10 年，圖例排序為同一死因先台北再新北。
 - 不設定 `history_config` 與 `query_history`，避免 UI 顯示歷史資料標籤與彈窗歷史圖。
 
 ## 前端調整

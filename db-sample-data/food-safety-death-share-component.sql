@@ -86,7 +86,7 @@ VALUES
   NOW(),
   NOW(),
   'time',
-  'WITH causes(death_cause, sort_order) AS (VALUES (''心臟疾病'', 1), (''糖尿病'', 2), (''腎炎腎徵候群及腎性病變'', 3), (''慢性肝病及肝硬化'', 4)), latest_year AS (SELECT city, MAX(year) AS year FROM public.food_safety_death_cause_share WHERE city IN (''臺北市'', ''新北市'') GROUP BY city) SELECT MAKE_DATE(d.year, 1, 1)::timestamp AS x_axis, d.city || ''-'' || c.death_cause AS y_axis, ROUND(d.death_share_percent::numeric, 2)::float AS data FROM public.food_safety_death_cause_share d JOIN causes c ON c.death_cause = d.death_cause JOIN latest_year y ON y.city = d.city WHERE d.city IN (''臺北市'', ''新北市'') AND d.year >= y.year - 9 ORDER BY d.year, d.city, c.sort_order',
+  'WITH causes(death_cause, sort_order) AS (VALUES (''心臟疾病'', 1), (''糖尿病'', 2), (''腎炎腎徵候群及腎性病變'', 3), (''慢性肝病及肝硬化'', 4)), latest_year AS (SELECT city, MAX(year) AS year FROM public.food_safety_death_cause_share WHERE city IN (''臺北市'', ''新北市'') GROUP BY city) SELECT MAKE_DATE(d.year, 1, 1)::timestamp AS x_axis, c.death_cause || ''('' || CASE d.city WHEN ''臺北市'' THEN ''台北'' ELSE ''新北'' END || '')'' AS y_axis, ROUND(d.death_share_percent::numeric, 2)::float AS data FROM public.food_safety_death_cause_share d JOIN causes c ON c.death_cause = d.death_cause JOIN latest_year y ON y.city = d.city WHERE d.city IN (''臺北市'', ''新北市'') AND d.year >= y.year - 9 ORDER BY d.year, c.sort_order, CASE d.city WHEN ''臺北市'' THEN 1 ELSE 2 END',
   NULL,
   'metrotaipei'
 );

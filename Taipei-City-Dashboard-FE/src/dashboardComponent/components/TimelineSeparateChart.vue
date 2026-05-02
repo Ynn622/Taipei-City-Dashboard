@@ -18,6 +18,42 @@ const props = defineProps(["chart_config", "activeChart", "series"]);
 // 原始資料拷貝避免更改原始資料
 const localSeries = ref(JSON.parse(JSON.stringify(props.series)));
 
+function getSeriesColorKey(name) {
+	return String(name || "").replace(/\([^()]*\)$/, "");
+}
+
+function buildSeriesColors(series = props.series) {
+	const palette = props.chart_config.color || [];
+	if (!palette.length) return [];
+
+	const colorByKey = new Map();
+	let nextColorIndex = 0;
+
+	return (series || []).map((item) => {
+		const key = getSeriesColorKey(item.name);
+		if (!colorByKey.has(key)) {
+			colorByKey.set(
+				key,
+				palette[nextColorIndex % palette.length]
+			);
+			nextColorIndex += 1;
+		}
+		return colorByKey.get(key);
+	});
+}
+
+function syncChartColors(series = props.series) {
+	const colors = buildSeriesColors(series);
+	chartOptions.value = {
+		...chartOptions.value,
+		colors,
+		stroke: {
+			...chartOptions.value.stroke,
+			colors,
+		},
+	};
+}
+
 function formatValue(value, unit) {
 	const number = Number(value);
 	if (!Number.isFinite(number)) return value;
@@ -37,7 +73,7 @@ const chartOptions = ref({
 			},
 		},
 	},
-	colors: [...props.chart_config.color],
+	colors: buildSeriesColors(),
 	dataLabels: {
 		enabled: false,
 	},
@@ -55,7 +91,7 @@ const chartOptions = ref({
 		strokeWidth: 0,
 	},
 	stroke: {
-		colors: [...props.chart_config.color],
+		colors: buildSeriesColors(),
 		curve: "smooth",
 		show: true,
 		width: 2,
@@ -127,6 +163,7 @@ watch(
 	() => props.series,
 	(newVal) => {
 		localSeries.value = JSON.parse(JSON.stringify(newVal || []));
+		syncChartColors(newVal);
 
 		const timestamps = newVal?.[0]?.data?.map((p) => new Date(p.x).getTime()) || [];
 		if (timestamps.length < 2) return;
@@ -161,6 +198,14 @@ watch(
 		}
 	},
 	{ deep: true, immediate: true }
+);
+
+watch(
+	() => props.chart_config.color,
+	() => {
+		syncChartColors(props.series);
+	},
+	{ deep: true }
 );
 
 </script>
