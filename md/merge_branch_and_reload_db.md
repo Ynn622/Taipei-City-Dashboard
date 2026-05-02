@@ -23,7 +23,7 @@ git diff --name-status HEAD..origin/<branch-name>
 常見檔案分工：
 
 - `db-sample-data/dashboardmanager-demo.sql`：sidebar、dashboard、component、map/chart config
-- `db-sample-data/dashboard-demo.sql`：實際 chart SQL 會查到的資料表
+- `db-sample-data/dashboard-demo.sql`：demo 用的 dashboard data dump；若 component 資料由 DE DAG/API 產生，不要把整包資料手動塞回這裡
 - `Taipei-City-Dashboard-FE/public/mapData/*.geojson`：前端地圖圖資
 - `Taipei-City-Dashboard-DE/dags/**`：ETL / Airflow DAG
 - `Taipei-City-Dashboard-FE/src/**`：前端 UI 或圖表行為
@@ -36,6 +36,7 @@ git diff --name-status HEAD..origin/<branch-name>
 - `dashboards.components` 有包含新 component id
 - `dashboard_groups` 有把 dashboard 放到正確 group
 - chart SQL 查到的資料表真的存在於 `postgres-data` 的 `dashboard` database
+- 若 chart SQL 查的是新 DAG table，要確認 `Taipei-City-Dashboard-DE/dags/**` 已包含對應 ETL，並在重建 DB 後執行該 DAG 或匯入該 DAG 產出的資料
 - map config 指到的 GeoJSON 檔案存在於 `Taipei-City-Dashboard-FE/public/mapData`
 
 ## 建議整併方式
@@ -113,11 +114,18 @@ manager DB 會載入 `MANAGER_SAMPLE_FILE`，預設是 `dashboardmanager-demo.sq
 docker compose -f docker-compose-init.yaml run --rm dashboard-be-init-manager
 ```
 
-dashboard data DB 會載入 `DASHBOARD_SAMPLE_FILE`，預設是 `dashboard-demo.sql`。
+dashboard data DB 會載入 `DASHBOARD_SAMPLE_FILE`，預設是 `dashboard-demo.sql`。`dashboard-demo.sql` 會再 include `food-safety-dashboard-data.sql`，用來初始化食安健康頁面 501/502 需要的 demo 資料表。
 
 ```bash
 docker compose -f docker-compose-init.yaml run --rm dashboard-be-init-dashboard
 ```
+
+注意：`food-safety-dashboard-data.sql` 目前納入以下 DE pipeline 產出的 demo 資料，刪除 volume 後不需要先跑 DAG 才能顯示 501/502：
+
+- `public.fda_good_restaurants`：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/fda_good_restaurants`
+- `public.cdc_infectious_disease`：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/cdc_infectious_disease`
+
+若之後新增其他只存在於 DE pipeline、但沒有納入 sample dump 的 component，仍需要執行對應 DAG 或匯入該 DAG 產出的資料，否則 manager DB 雖然有 component/query 設定，BE 執行 chart SQL 時會因為 dashboard DB 缺少資料表而回 500。
 
 FE 依賴若有變動，再跑一次：
 
