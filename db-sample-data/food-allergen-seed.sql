@@ -20,6 +20,8 @@ SET row_security = off;
 -- Data for Name: food_allergen_classification; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+TRUNCATE TABLE public.food_allergen_classification RESTART IDENTITY;
+
 INSERT INTO public.food_allergen_classification (county, company_name, brand_name, product_name, ingredients, has_allergens, allergens, allergen_count, lat, lon, data_time) VALUES ('臺北市', '和德昌股份有限公司', '麥當勞', '無糖冰綠茶(小)', '{冰綠茶(無糖),冰綠茶(無糖)}', false, '{}', 0, 25.018175, 121.53333, '2026-05-03 00:49:30.459896');
 INSERT INTO public.food_allergen_classification (county, company_name, brand_name, product_name, ingredients, has_allergens, allergens, allergen_count, lat, lon, data_time) VALUES ('臺北市', '和德昌股份有限公司', '麥當勞', '大蛋捲冰淇淋', '{甜筒酥杯,聖代奶漿,甜筒酥杯,聖代奶漿}', true, '{乳製品}', 1, 25.018175, 121.53333, '2026-05-03 00:49:30.4621');
 INSERT INTO public.food_allergen_classification (county, company_name, brand_name, product_name, ingredients, has_allergens, allergens, allergen_count, lat, lon, data_time) VALUES ('臺北市', '和德昌股份有限公司', '麥當勞', '薯餅', '{葵花油,薯餅}', false, '{}', 0, 25.018175, 121.53333, '2026-05-03 00:49:30.462125');
@@ -177,4 +179,3 @@ INSERT INTO public.food_allergen_classification (county, company_name, brand_nam
 --
 -- PostgreSQL database dump complete
 --
-

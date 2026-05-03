@@ -15907,3 +15907,5 @@ CREATE TRIGGER tran_ubike_realtime_new_tpe_mtime BEFORE INSERT OR UPDATE ON publ
 
 \ir food-safety-dashboard-data.sql
 \ir agri-noncompliance-data.sql
+\ir food-allergen-schema.sql
+\ir food-allergen-seed.sql
