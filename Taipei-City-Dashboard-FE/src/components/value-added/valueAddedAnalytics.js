@@ -13,6 +13,10 @@ export const COMPONENT_IDS = {
 export const GEOJSON_FILES = {
 	foodSource: ["food_source_tpe.geojson", "food_source_ntpe.geojson"],
 	market: ["food_safety_market_tpe.geojson", "food_safety_market_ntpe.geojson"],
+	logisticsVendor: [
+		"food_safety_logistics_vendor_tpe.geojson",
+		"food_safety_logistics_vendor_ntpe.geojson",
+	],
 	waterQuality: ["water_quality_tpe.geojson", "water_quality_ntpe.geojson"],
 	healthOffice: [
 		"food_safety_health_office_tpe.geojson",
@@ -133,6 +137,211 @@ export function rowValue(row) {
 			0
 	);
 	return Number.isFinite(value) ? value : 0;
+}
+
+export function normalizeLatLng(value) {
+	if (!value) return null;
+	if (Array.isArray(value) && value.length >= 2) {
+		const [lat, lng] = value.map(Number);
+		return validLatLng(lat, lng) ? { lat, lng } : null;
+	}
+	if (typeof value === "object") {
+		const lat = Number(value.lat ?? value.latitude ?? value.y);
+		const lng = Number(value.lng ?? value.lon ?? value.longitude ?? value.x);
+		return validLatLng(lat, lng) ? { lat, lng } : null;
+	}
+	if (typeof value === "string") {
+		const parts = value.split(/[,，\s]+/).map(Number).filter((item) => Number.isFinite(item));
+		if (parts.length >= 2) {
+			const [lat, lng] = parts;
+			return validLatLng(lat, lng) ? { lat, lng } : null;
+		}
+	}
+	return null;
+}
+
+function validLatLng(lat, lng) {
+	return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+}
+
+export function haversineKm(from, to) {
+	const origin = normalizeLatLng(from);
+	const target = normalizeLatLng(to);
+	if (!origin || !target) return null;
+	const radius = 6371;
+	const latDelta = toRadians(target.lat - origin.lat);
+	const lngDelta = toRadians(target.lng - origin.lng);
+	const a =
+		Math.sin(latDelta / 2) ** 2 +
+		Math.cos(toRadians(origin.lat)) *
+			Math.cos(toRadians(target.lat)) *
+			Math.sin(lngDelta / 2) ** 2;
+	return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function toRadians(value) {
+	return value * Math.PI / 180;
+}
+
+export function rowLatLng(row) {
+	const direct = normalizeLatLng(row);
+	if (direct) return direct;
+	const geometry = row?.geometry || row?._geometry;
+	if (Array.isArray(geometry?.coordinates)) {
+		const [lng, lat] = geometry.coordinates;
+		return normalizeLatLng({ lat, lng });
+	}
+	const district = row?.district || rowLabel(row);
+	return DISTRICT_COORDS[district] || null;
+}
+
+export function sortByDistanceThenDistrict(rows, userLocation, options = {}) {
+	const origin = normalizeLatLng(userLocation) || districtLocation(options.fallbackDistricts?.[0]);
+	return unwrapRows(rows)
+		.map((row) => {
+			const label = rowLabel(row);
+			const distance = origin ? haversineKm(origin, rowLatLng(row) || DISTRICT_COORDS[label]) : null;
+			return {
+				label,
+				value: rowValue(row),
+				distance,
+				distanceText: distance === null ? "距離待補" : `${distance.toFixed(1)} km`,
+				row,
+			};
+		})
+		.sort((a, b) => {
+			if (a.distance !== null && b.distance !== null && a.distance !== b.distance) {
+				return a.distance - b.distance;
+			}
+			if (a.distance !== null && b.distance === null) return -1;
+			if (a.distance === null && b.distance !== null) return 1;
+			return a.label.localeCompare(b.label, "zh-Hant");
+		});
+}
+
+export function districtLocation(district) {
+	return DISTRICT_COORDS[district] || null;
+}
+
+export function parseYmdRange(text) {
+	if (!text) return null;
+	const [from, to] = String(text).split("-").map((item) => parseYmd(item));
+	if (!from || !to) return null;
+	const start = from <= to ? from : to;
+	const end = endOfDay(from <= to ? to : from);
+	return { start, end };
+}
+
+function parseYmd(value) {
+	const raw = String(value || "").trim();
+	const compact = raw.match(/^(\d{4})(\d{2})(\d{2})$/);
+	const dashed = raw.replace(/\//g, "-").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+	const match = compact || dashed;
+	if (!match) return null;
+	const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+	return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function filterRowsByDateRange(rows, rangeText) {
+	const range = parseYmdRange(rangeText);
+	const source = unwrapRows(rows);
+	if (!range) return source;
+	const dated = source.filter((row) => {
+		const date = parseMetricDate(row);
+		return date && date >= range.start && date <= range.end;
+	});
+	return dated.length > 0 ? dated : source;
+}
+
+export function rankRows(rows, options = {}) {
+	const limit = options.limit || 6;
+	const groupKey = options.groupKey || "";
+	const totals = new Map();
+	unwrapRows(rows).forEach((row) => {
+		const label = (groupKey && row?.[groupKey]) || row?.product_category || row?.business_category || rowGroup(row) || rowLabel(row);
+		totals.set(label, (totals.get(label) || 0) + rowValue(row));
+	});
+	return [...totals.entries()]
+		.map(([label, value]) => ({ label, value }))
+		.sort((a, b) => b.value - a.value)
+		.slice(0, limit)
+		.map((item, index) => ({ ...item, rank: index + 1 }));
+}
+
+export function computePeriodDelta(rows, options = {}) {
+	const groupKey = options.groupKey || "";
+	const source = unwrapRows(rows);
+	const datedRows = source
+		.map((row) => ({ row, date: parseMetricDate(row) }))
+		.filter((item) => item.date);
+	if (datedRows.length === 0) {
+		return rankRows(source, { groupKey, limit: options.limit || 6 })
+			.map((item) => ({ ...item, current: item.value, previous: 0, delta: item.value, deltaRate: null }));
+	}
+	const latest = endOfDay(new Date(Math.max(...datedRows.map((item) => item.date.getTime()))));
+	const days = options.days || 30;
+	const currentStart = addDays(latest, -(days - 1));
+	const previousEnd = addDays(currentStart, -1);
+	const previousStart = addDays(previousEnd, -(days - 1));
+	return rankByDelta(source, {
+		groupKey,
+		limit: options.limit || 6,
+		currentStart,
+		currentEnd: latest,
+		previousStart,
+		previousEnd,
+	});
+}
+
+export function rankByDelta(rows, options = {}) {
+	const groupKey = options.groupKey || "";
+	const totals = new Map();
+	unwrapRows(rows).forEach((row) => {
+		const label = (groupKey && row?.[groupKey]) || row?.product_category || row?.business_category || rowGroup(row) || rowLabel(row);
+		const bucket = totals.get(label) || { label, current: 0, previous: 0 };
+		const date = parseMetricDate(row);
+		if (date && options.currentStart && date >= options.currentStart && date <= options.currentEnd) {
+			bucket.current += rowValue(row);
+		} else if (date && options.previousStart && date >= options.previousStart && date <= options.previousEnd) {
+			bucket.previous += rowValue(row);
+		} else if (!date) {
+			bucket.current += rowValue(row);
+		}
+		totals.set(label, bucket);
+	});
+	return [...totals.values()]
+		.map((item) => ({
+			...item,
+			value: item.current,
+			delta: item.current - item.previous,
+			deltaRate: item.previous > 0 ? (item.current - item.previous) / item.previous : null,
+		}))
+		.sort((a, b) => b.delta - a.delta || b.current - a.current)
+		.slice(0, options.limit || 6)
+		.map((item, index) => ({ ...item, rank: index + 1 }));
+}
+
+export function computeFoodSafetyRisk(options = {}) {
+	const violations = Math.max(Number(options.violations || 0), 0);
+	const support = Math.max(Number(options.support || 0), 0);
+	const water = Math.max(Number(options.water || 0), 0);
+	const infectious = Math.max(Number(options.infectious || 0), 0);
+	const raw = support * 2 - violations * 1.2 - water * 0.15 - infectious * 0.001;
+	const score = Math.max(0, Math.min(100, Math.round(55 + raw)));
+	const level = score >= 75 ? "低風險" : score >= 45 ? "中風險" : "高風險";
+	return { score, level, support, violations, water, infectious };
+}
+
+export function buildSummaryContext(title, sections = {}) {
+	return {
+		title,
+		generatedAt: new Date().toISOString(),
+		sections,
+		tables: Object.entries(sections).map(([name, rows]) => ({
+			name,
+			rows: Array.isArray(rows) ? rows.slice(0, 8) : rows,
+		})),
+	};
 }
 
 export function sumRows(rows) {
@@ -509,7 +718,7 @@ function metricLabel(row, groupKey = "") {
 	return (groupKey && row?.[groupKey]) || rowLabel(row);
 }
 
-function parseMetricDate(row) {
+export function parseMetricDate(row) {
 	const raw =
 		row?.data_time ||
 		row?.audit_date ||
@@ -528,6 +737,43 @@ function parseMetricDate(row) {
 	);
 	return Number.isNaN(date.getTime()) ? null : date;
 }
+
+export const DISTRICT_COORDS = {
+	中正區: { lat: 25.0324, lng: 121.5198 },
+	大同區: { lat: 25.0632, lng: 121.5130 },
+	中山區: { lat: 25.0644, lng: 121.5335 },
+	松山區: { lat: 25.0497, lng: 121.5773 },
+	大安區: { lat: 25.0262, lng: 121.5435 },
+	萬華區: { lat: 25.0353, lng: 121.4998 },
+	信義區: { lat: 25.0330, lng: 121.5669 },
+	士林區: { lat: 25.0950, lng: 121.5246 },
+	北投區: { lat: 25.1324, lng: 121.5014 },
+	內湖區: { lat: 25.0837, lng: 121.5929 },
+	南港區: { lat: 25.0553, lng: 121.6070 },
+	文山區: { lat: 24.9886, lng: 121.5736 },
+	板橋區: { lat: 25.0114, lng: 121.4618 },
+	三重區: { lat: 25.0615, lng: 121.4881 },
+	中和區: { lat: 24.9994, lng: 121.4983 },
+	永和區: { lat: 25.0097, lng: 121.5148 },
+	新莊區: { lat: 25.0359, lng: 121.4504 },
+	新店區: { lat: 24.9676, lng: 121.5414 },
+	土城區: { lat: 24.9722, lng: 121.4433 },
+	蘆洲區: { lat: 25.0855, lng: 121.4706 },
+	汐止區: { lat: 25.0642, lng: 121.6587 },
+	樹林區: { lat: 24.9907, lng: 121.4205 },
+	淡水區: { lat: 25.1697, lng: 121.4409 },
+	林口區: { lat: 25.0775, lng: 121.3917 },
+	五股區: { lat: 25.0920, lng: 121.4381 },
+	泰山區: { lat: 25.0589, lng: 121.4326 },
+	深坑區: { lat: 25.0023, lng: 121.6157 },
+	三峽區: { lat: 24.9343, lng: 121.3689 },
+	鶯歌區: { lat: 24.9564, lng: 121.3500 },
+	八里區: { lat: 25.1467, lng: 121.4033 },
+	瑞芳區: { lat: 25.1089, lng: 121.8050 },
+	萬里區: { lat: 25.1780, lng: 121.6890 },
+	金山區: { lat: 25.2236, lng: 121.6369 },
+	石碇區: { lat: 24.9919, lng: 121.6587 },
+};
 
 function endOfDay(date) {
 	const next = new Date(date);

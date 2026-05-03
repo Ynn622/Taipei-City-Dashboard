@@ -2,22 +2,43 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
-import { COMPONENT_IDS, topRows } from "../../valueAddedAnalytics";
+import {
+	COMPONENT_IDS,
+	buildSummaryContext,
+	computeFoodSafetyRisk,
+	computePeriodDelta,
+	sortByDistanceThenDistrict,
+	sumRows,
+} from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
-const rows = ref([]);
+const context = ref(null);
 const featureKey = "operations-improve";
 
 async function generate(options = {}) {
 	loading.value = true;
-	rows.value = rows.value?.length
-		? rows.value
-		: (await store.fetchComponentData(COMPONENT_IDS.foodSource)) || [];
+	const [source, foodAudit, healthAudit, help] = await Promise.all([
+		store.fetchComponentData(COMPONENT_IDS.foodSource),
+		store.fetchComponentData(COMPONENT_IDS.foodAuditViolation),
+		store.fetchComponentData(COMPONENT_IDS.healthAuditViolation),
+		store.fetchComponentData(COMPONENT_IDS.healthOffice),
+	]);
+	context.value = buildSummaryContext("營運管理總結", {
+		nearestSuppliers: sortByDistanceThenDistrict(source, store.userProfile.userLocation, {
+			fallbackDistricts: store.userProfile.focusDistricts,
+		}).slice(0, 5),
+		avoidFoods: computePeriodDelta(foodAudit, { groupKey: "product_category", limit: 5 }),
+		auditRisk: computePeriodDelta([...computePeriodDelta(foodAudit, { limit: 99 }), ...computePeriodDelta(healthAudit, { limit: 99 })], { limit: 5 }),
+		foodSafetyRisk: computeFoodSafetyRisk({
+			support: sumRows(help),
+			violations: sumRows(foodAudit) + sumRows(healthAudit),
+		}),
+	});
 	await store.fetchLLMSuggestion(featureKey, {
 		context: {
-			topItems: topRows(rows.value, 5),
-			task: "營運管理改善建議",
+			...context.value,
+			task: "營運管理改善建議：先總結，再列 3-5 條可執行行動。",
 		},
 	}, options);
 	loading.value = false;

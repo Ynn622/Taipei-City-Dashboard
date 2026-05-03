@@ -4,10 +4,10 @@ import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
 import {
 	COMPONENT_IDS,
+	computePeriodDelta,
 	filterByProfileDistrict,
 	formatNumber,
-	sumRows,
-	topRows,
+	rowLabel,
 } from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
@@ -29,51 +29,30 @@ const scopedRows = computed(() => [
 	...filterByProfileDistrict(healthRows.value, store.userProfile),
 	...filterByProfileDistrict(foodRows.value, store.userProfile),
 ]);
-const risks = computed(() => topRows(scopedRows.value, 6));
-
-const chartOptions = computed(() => ({
-	chart: { type: "bar", background: "transparent", toolbar: { show: false }, fontFamily: "inherit" },
-	theme: { mode: "dark" },
-	colors: risks.value.map((_, i) => {
-		const palette = ["#D84C73", "#E86F51", "#F2994A", "#F2C94C", "#30B68F", "#72C6A4"];
-		return palette[i] || "#888787";
-	}),
-	plotOptions: { bar: { horizontal: true, borderRadius: 4, distributed: true } },
-	dataLabels: { enabled: true, formatter: (v) => `${v} 件`, style: { fontSize: "11px", colors: ["#fff"] } },
-	grid: { borderColor: "#494b4e", xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
-	xaxis: {
-		categories: risks.value.map((r) => r.label),
-		labels: { style: { colors: "#888787", fontSize: "11px" } },
-		axisBorder: { show: false }, axisTicks: { show: false },
-	},
-	yaxis: { labels: { style: { colors: "#fff", fontSize: "11px", fontWeight: 600 } } },
-	legend: { show: false },
-	tooltip: { theme: "dark", y: { formatter: (v) => `${v} 件` } },
+const risks = computed(() => computePeriodDelta(scopedRows.value, {
+	groupKey: "business_category",
+	limit: 6,
 }));
-
-const chartSeries = computed(() => [
-	{ name: "違規件數", data: risks.value.map((r) => r.value) },
-]);
+const topDistrict = computed(() => {
+	const totals = new Map();
+	scopedRows.value.forEach((row) => {
+		const label = row?.district || rowLabel(row);
+		totals.set(label, (totals.get(label) || 0) + Number(row?.value ?? row?.y ?? row?.data ?? 1));
+	});
+	return [...totals.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "無資料";
+});
 </script>
 
 <template>
   <ValueAddedCard
     title="稽查風險預測"
-    subtitle="整合衛生與食品稽核違規，推估近期需優先注意的行政區。"
+    subtitle="依同屬性餐廳近期稽查次數排序，輔以最高風險區判斷。"
     :loading="loading"
   >
     <div class="summary-grid">
       <div class="summary-item">
         <div class="summary-label">
-          輪廓範圍違規
-        </div>
-        <div class="summary-value">
-          {{ formatNumber(sumRows(scopedRows), " 件") }}
-        </div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-label">
-          最高風險區
+          同屬性最高
         </div>
         <div class="summary-value">
           {{ risks[0]?.label || "無資料" }}
@@ -81,20 +60,56 @@ const chartSeries = computed(() => [
       </div>
       <div class="summary-item">
         <div class="summary-label">
-          建議稽查等級
+          最高風險區
         </div>
         <div class="summary-value">
-          {{ sumRows(scopedRows) > 80 ? "高" : "中" }}
+          {{ topDistrict }}
+        </div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">
+          近期增幅
+        </div>
+        <div class="summary-value">
+          {{ risks[0] ? formatNumber(risks[0].delta, " 件") : "無資料" }}
         </div>
       </div>
     </div>
-    <apexchart
-      v-if="!loading && chartSeries[0].data.length"
-      type="bar"
-      width="100%"
-      height="200"
-      :options="chartOptions"
-      :series="chartSeries"
-    />
+    <div class="rank-list">
+      <div
+        v-for="item in risks"
+        :key="item.label"
+        class="rank-row"
+      >
+        <span>#{{ item.rank }} {{ item.label }}</span>
+        <strong>{{ formatNumber(item.current, " 件") }}</strong>
+      </div>
+    </div>
   </ValueAddedCard>
 </template>
+
+<style scoped lang="scss">
+.rank-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.rank-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+
+  span {
+    color: var(--color-normal-text);
+    font-weight: 700;
+  }
+
+  strong {
+    color: #F2C94C;
+  }
+}
+</style>

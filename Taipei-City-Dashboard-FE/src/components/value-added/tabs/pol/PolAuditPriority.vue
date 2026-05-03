@@ -1,68 +1,127 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import VueApexCharts from "vue3-apexcharts";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
-import { COMPONENT_IDS, topRows } from "../../valueAddedAnalytics";
+import { COMPONENT_IDS, computePeriodDelta, formatNumber } from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
 const violationRows = ref([]);
-const restaurantRows = ref([]);
 
 onMounted(async () => {
-	const [violations, restaurants] = await Promise.all([
-		store.fetchComponentData(COMPONENT_IDS.healthAuditViolation),
-		store.fetchComponentData(COMPONENT_IDS.goodRestaurants),
-	]);
-	violationRows.value = violations;
-	restaurantRows.value = restaurants;
+	violationRows.value = await store.fetchComponentData(COMPONENT_IDS.healthAuditViolation);
 	loading.value = false;
 });
 
-const priorities = computed(() => {
-	const restaurantMap = new Map(topRows(restaurantRows.value, 99).map((item) => [item.label, item.value]));
-	return topRows(violationRows.value, 6)
-		.map((item) => ({
-			...item,
-			value: Math.max(Math.round(item.value - (restaurantMap.get(item.label) || 0) * 0.2), 0),
-		}))
-		.sort((a, b) => b.value - a.value)
-		.slice(0, 6);
-});
-
-const chartOptions = computed(() => ({
-	chart: { type: "bar", background: "transparent", toolbar: { show: false }, fontFamily: "inherit" },
-	theme: { mode: "dark" },
-	colors: ["#D84C73", "#E86F51", "#F2994A", "#F2C94C", "#1E88E5", "#72C6A4"],
-	plotOptions: { bar: { horizontal: true, borderRadius: 4, distributed: true } },
-	dataLabels: { enabled: true, formatter: (v) => v + " 分", style: { fontSize: "11px", colors: ["#fff"] } },
-	grid: { borderColor: "#494b4e", xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
-	xaxis: {
-		categories: priorities.value.map((r) => r.label),
-		labels: { style: { colors: "#888787", fontSize: "11px" } },
-		axisBorder: { show: false }, axisTicks: { show: false },
+const priorities = computed(() => computePeriodDelta(violationRows.value, { limit: 6 }));
+const chartSeries = computed(() => [
+	{
+		name: "違規增加",
+		data: priorities.value.map((item) => ({
+			x: item.label,
+			y: item.delta,
+			fillColor: item.delta >= 0 ? "#E86F51" : "#30B68F",
+		})),
 	},
-	yaxis: { labels: { style: { colors: "#fff", fontSize: "11px", fontWeight: 600 } } },
+]);
+const chartOptions = computed(() => ({
+	chart: {
+		type: "bar",
+		toolbar: { show: false },
+		background: "transparent",
+	},
+	plotOptions: {
+		bar: {
+			horizontal: true,
+			borderRadius: 3,
+			distributed: true,
+		},
+	},
+	grid: { show: false },
 	legend: { show: false },
-	tooltip: { theme: "dark", y: { formatter: (v) => v + " 分" } },
+	dataLabels: {
+		enabled: true,
+		formatter: (value) => `${value >= 0 ? "+" : ""}${Math.round(value)}`,
+		style: {
+			colors: ["#fff"],
+			fontSize: "11px",
+		},
+	},
+	xaxis: {
+		labels: { show: false },
+		axisTicks: { show: false },
+		axisBorder: { show: false },
+	},
+	yaxis: {
+		labels: {
+			style: {
+				colors: "#b8b8b8",
+				fontSize: "12px",
+			},
+		},
+	},
+	tooltip: {
+		theme: "dark",
+		y: {
+			formatter: (value) => `${value >= 0 ? "+" : ""}${Math.round(value)} 件`,
+		},
+	},
 }));
-
-const chartSeries = computed(() => [{ name: "稽查優先分數", data: priorities.value.map((r) => r.value) }]);
 </script>
 
 <template>
   <ValueAddedCard
     title="稽查優先排序"
-    subtitle="違規量扣除優良餐廳覆蓋度，數字愈高代表愈需優先稽查。"
+    subtitle="依上月到本月違規增加幅度排名，優先看增幅明顯區域。"
     :loading="loading"
   >
-    <apexchart
-      v-if="!loading && chartSeries[0].data.length"
-      type="bar"
-      width="100%"
-      height="230"
-      :options="chartOptions"
-      :series="chartSeries"
-    />
+    <div class="priority-chart">
+      <VueApexCharts
+        type="bar"
+        height="210"
+        :options="chartOptions"
+        :series="chartSeries"
+      />
+    </div>
+    <div class="priority-list">
+      <div
+        v-for="item in priorities"
+        :key="item.label"
+      >
+        <span>#{{ item.rank }} {{ item.label }}</span>
+        <strong>{{ item.delta >= 0 ? "+" : "" }}{{ formatNumber(item.delta, " 件") }}</strong>
+      </div>
+    </div>
   </ValueAddedCard>
 </template>
+
+<style scoped lang="scss">
+.priority-chart {
+  min-height: 210px;
+  margin: -0.4rem 0 -0.2rem;
+}
+
+.priority-list {
+  display: grid;
+  gap: 0.55rem;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.68rem;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  span {
+    color: var(--color-normal-text);
+    font-weight: 800;
+  }
+
+  strong {
+    color: #E86F51;
+  }
+}
+</style>

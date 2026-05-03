@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
-import { COMPONENT_IDS, topRows } from "../../valueAddedAnalytics";
+import { COMPONENT_IDS, formatNumber, sortByDistanceThenDistrict } from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
@@ -13,45 +13,66 @@ onMounted(async () => {
 	loading.value = false;
 });
 
-const recommended = computed(() => topRows(rows.value, 8));
-
-const chartOptions = computed(() => ({
-	chart: { type: "bar", background: "transparent", toolbar: { show: false }, fontFamily: "inherit" },
-	theme: { mode: "dark" },
-
-	plotOptions: { bar: { horizontal: true, borderRadius: 4, distributed: true } },
-	colors: ["#30B68F", "#72C6A4", "#1E88E5", "#F2C94C", "#F2994A", "#E86F51", "#B8325A", "#D84C73"],
-	dataLabels: { enabled: false },
-	grid: { borderColor: "#494b4e", xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
-	xaxis: {
-		categories: recommended.value.map((r) => r.label),
-		labels: { style: { colors: "#888787", fontSize: "11px" } },
-		axisBorder: { show: false },
-		axisTicks: { show: false },
-	},
-	yaxis: { labels: { style: { colors: "#888787", fontSize: "11px" } } },
-	tooltip: { theme: "dark", y: { formatter: (v) => `${v} 處` } },
-	legend: { show: false },
-}));
-
-const chartSeries = computed(() => [
-	{ name: "有機農場供應數", data: recommended.value.map((r) => r.value) },
-]);
+const recommended = computed(() => sortByDistanceThenDistrict(rows.value, store.userProfile.userLocation, {
+	fallbackDistricts: store.userProfile.focusDistricts,
+}).slice(0, 8));
 </script>
 
 <template>
   <ValueAddedCard
     title="安全供應來源推薦"
-    subtitle="依有機農場供應來源分布，優先推薦可替代採購區域。"
+    subtitle="依目前位置與行政區距離排序，優先推薦較近的可替代供應來源。"
     :loading="loading"
   >
-    <apexchart
-      v-if="!loading && chartSeries[0].data.length"
-      type="bar"
-      width="100%"
-      height="220"
-      :options="chartOptions"
-      :series="chartSeries"
-    />
+    <div class="rank-list">
+      <div
+        v-for="item in recommended"
+        :key="item.label"
+        class="rank-item"
+      >
+        <span>{{ item.label }}</span>
+        <strong>{{ item.distanceText }}</strong>
+        <small>{{ formatNumber(item.value, " 處") }}</small>
+      </div>
+    </div>
+    <p class="note">
+      未提供精準座標時，會以輪廓所在地行政區中心點作為距離排序基準。
+    </p>
   </ValueAddedCard>
 </template>
+
+<style scoped lang="scss">
+.rank-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rank-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.62rem 0.7rem;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+
+  span,
+  strong,
+  small {
+    min-width: 0;
+  }
+
+  span {
+    color: var(--color-normal-text);
+    font-weight: 700;
+  }
+
+  strong {
+    color: #72C6A4;
+  }
+
+  small {
+    color: var(--color-complement-text);
+  }
+}
+</style>
