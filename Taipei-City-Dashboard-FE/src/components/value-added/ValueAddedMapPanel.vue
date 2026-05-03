@@ -17,6 +17,11 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	areaLevel: {
+		type: String,
+		default: "district",
+		validator: (value) => ["district", "city"].includes(value),
+	},
 	selectedLabel: {
 		type: String,
 		default: "",
@@ -85,7 +90,9 @@ const districtFeatures = computed(() => {
 		props.districts.map((item) => [item.label, item]),
 	);
 	return boundary.features.map((feature) => {
-		const label = feature.properties?.TNAME || feature.properties?.district_name || "";
+		const label = props.areaLevel === "city"
+			? feature.properties?.PNAME || ""
+			: feature.properties?.TNAME || feature.properties?.district_name || "";
 		const district = districtValueMap.get(label);
 		const value = Number(district?.value || 0);
 		return {

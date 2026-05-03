@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
 import ValueAddedMapPanel from "../../ValueAddedMapPanel.vue";
@@ -8,16 +8,21 @@ import {
 	districtLocation,
 	filterRowsByDateRange,
 	formatNumber,
+	parseMetricDate,
 	rankRows,
 	sortByDistanceThenDistrict,
 	trendSummary,
+	unwrapRows,
 } from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
 const initialDateRange = parseDateRange(store.userProfile.dateRangeText || "");
-const startDate = ref(initialDateRange.start);
-const endDate = ref(initialDateRange.end);
+const startDate = ref("");
+const endDate = ref("");
+const startIndex = ref(0);
+const endIndex = ref(0);
+const areaLevel = ref("district");
 const selected = ref(null);
 const auditRows = ref([]);
 const waterRows = ref([]);
@@ -32,15 +37,42 @@ onMounted(async () => {
 	auditRows.value = audit;
 	waterRows.value = water;
 	infectiousRows.value = infectious;
+	initializeDateRange();
 	loading.value = false;
+});
+
+watch(areaLevel, () => {
+	selected.value = null;
+});
+
+watch([startIndex, endIndex], () => {
+	const range = sortedDateIndices.value;
+	startDate.value = dateOptions.value[range.start] || "";
+	endDate.value = dateOptions.value[range.end] || "";
+	selected.value = null;
 });
 
 const dateRangeText = computed(() => {
 	if (!startDate.value || !endDate.value) return "";
 	return `${compactDate(startDate.value)}-${compactDate(endDate.value)}`;
 });
-const districtRisks = computed(() => rankRows(filterRowsByDateRange(auditRows.value, dateRangeText.value), { limit: 99 }));
-const hotspots = computed(() => districtRisks.value.slice(0, 8));
+const actualDateOptions = computed(() => getMetricDateOptions(auditRows.value));
+const hasActualDateOptions = computed(() => actualDateOptions.value.length >= 2);
+const dateOptions = computed(() => hasActualDateOptions.value ? actualDateOptions.value : fallbackDateOptions());
+const dateSliderMax = computed(() => Math.max(dateOptions.value.length - 1, 0));
+const sortedDateIndices = computed(() => ({
+	start: Math.min(startIndex.value, endIndex.value),
+	end: Math.max(startIndex.value, endIndex.value),
+}));
+const dateRangeLabel = computed(() => {
+	if (!startDate.value || !endDate.value) return "全部日期";
+	return `${startDate.value} - ${endDate.value}`;
+});
+const filteredAuditRows = computed(() => filterRowsByDateRange(auditRows.value, dateRangeText.value));
+const districtRisks = computed(() => rankRows(filteredAuditRows.value, { limit: 99 }));
+const cityRisks = computed(() => aggregateDistrictsByCity(districtRisks.value));
+const activeRisks = computed(() => areaLevel.value === "city" ? cityRisks.value : districtRisks.value);
+const hotspots = computed(() => activeRisks.value.slice(0, 8));
 const selectedArea = computed(() => selected.value || hotspots.value[0]);
 const selectedLocation = computed(() => districtLocation(selectedArea.value?.label));
 const nearestWaterFactor = computed(() => {
@@ -49,12 +81,12 @@ const nearestWaterFactor = computed(() => {
 });
 const humanTrend = computed(() => trendSummary(infectiousRows.value));
 const waterFactorText = computed(() => {
-	if (!selectedArea.value) return "請先選取行政區";
+	if (!selectedArea.value) return "請先選取地區";
 	if (!nearestWaterFactor.value) return "附近檢測站資料待補";
 	return `${nearestWaterFactor.value.label} ${nearestWaterFactor.value.distanceText}，水質指標 ${formatNumber(nearestWaterFactor.value.value)}`;
 });
 const humanImpactText = computed(() => {
-	if (!selectedArea.value) return "請先選取行政區";
+	if (!selectedArea.value) return "請先選取地區";
 	if (!humanTrend.value.hasData) {
 		return `違規 ${formatNumber(selectedArea.value.value, " 件")}，腹瀉就診趨勢待補`;
 	}
@@ -64,8 +96,8 @@ const humanImpactText = computed(() => {
 	return `違規 ${formatNumber(selectedArea.value.value, " 件")}，近期腹瀉就診 ${formatNumber(humanTrend.value.latest, " 人次")}（${trendText}）`;
 });
 const mapDistricts = computed(() => {
-	const maxValue = Math.max(...districtRisks.value.map((item) => item.value), 1);
-	return districtRisks.value.map((item) => {
+	const maxValue = Math.max(...activeRisks.value.map((item) => item.value), 1);
+	return activeRisks.value.map((item) => {
 		const intensity = item.value / maxValue;
 		return {
 			label: item.label,
@@ -82,6 +114,57 @@ function heatColor(intensity) {
 	if (intensity >= 0.42) return "#E86F51";
 	if (intensity >= 0.24) return "#F2C94C";
 	return "#72C6A4";
+}
+
+function initializeDateRange() {
+	const options = dateOptions.value;
+	if (options.length === 0) return;
+	const initialStart = initialDateRange.start && options.includes(initialDateRange.start)
+		? initialDateRange.start
+		: options[0];
+	const initialEnd = initialDateRange.end && options.includes(initialDateRange.end)
+		? initialDateRange.end
+		: options[options.length - 1];
+	startIndex.value = options.indexOf(initialStart);
+	endIndex.value = options.indexOf(initialEnd);
+	startDate.value = options[sortedDateIndices.value.start] || initialStart;
+	endDate.value = options[sortedDateIndices.value.end] || initialEnd;
+}
+
+function fallbackDateOptions() {
+	const today = new Date();
+	return Array.from({ length: 31 }, (_, index) => {
+		const date = new Date(today);
+		date.setDate(today.getDate() - (30 - index));
+		return formatDateInput(date);
+	});
+}
+
+function getMetricDateOptions(rows) {
+	return [...new Set(
+		unwrapRows(rows)
+			.map((row) => parseMetricDate(row))
+			.filter(Boolean)
+			.map((date) => formatDateInput(date)),
+	)].sort();
+}
+
+function aggregateDistrictsByCity(rows) {
+	const totals = new Map();
+	rows.forEach((item) => {
+		const city = cityByDistrict(item.label);
+		const current = totals.get(city) || 0;
+		totals.set(city, current + item.value);
+	});
+	return [...totals.entries()]
+		.map(([label, value]) => ({ label, value }))
+		.sort((a, b) => b.value - a.value)
+		.map((item, index) => ({ ...item, rank: index + 1 }));
+}
+
+function cityByDistrict(district) {
+	if (TAIPEI_DISTRICTS.has(district)) return "臺北市";
+	return "新北市";
 }
 
 function parseDateRange(value) {
@@ -106,6 +189,28 @@ function dateInputValue(value) {
 function compactDate(value) {
 	return String(value || "").replaceAll("-", "");
 }
+
+function formatDateInput(date) {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
+}
+
+const TAIPEI_DISTRICTS = new Set([
+	"中正區",
+	"大同區",
+	"中山區",
+	"松山區",
+	"大安區",
+	"萬華區",
+	"信義區",
+	"士林區",
+	"北投區",
+	"內湖區",
+	"南港區",
+	"文山區",
+]);
 </script>
 
 <template>
@@ -115,25 +220,51 @@ function compactDate(value) {
     :loading="loading"
   >
     <template #action>
-      <div class="date-controls">
-        <label>
-          <span>開始</span>
-          <input
-            v-model="startDate"
-            type="date"
+      <div class="risk-actions">
+        <div class="segmented-control">
+          <button
+            type="button"
+            :class="{ active: areaLevel === 'city' }"
+            @click="areaLevel = 'city'"
           >
-        </label>
-        <label>
-          <span>結束</span>
-          <input
-            v-model="endDate"
-            type="date"
+            縣市
+          </button>
+          <button
+            type="button"
+            :class="{ active: areaLevel === 'district' }"
+            @click="areaLevel = 'district'"
           >
-        </label>
+            行政區
+          </button>
+        </div>
       </div>
     </template>
+    <div class="date-range-bar">
+      <div class="range-head">
+        <span>日期區間</span>
+        <strong>{{ dateRangeLabel }}</strong>
+      </div>
+      <small v-if="!hasActualDateOptions">
+        目前資料沒有日期欄位，區間僅調整顯示範圍標籤，地圖套用全部資料。
+      </small>
+      <div class="dual-range">
+        <input
+          v-model.number="startIndex"
+          type="range"
+          min="0"
+          :max="dateSliderMax"
+        >
+        <input
+          v-model.number="endIndex"
+          type="range"
+          min="0"
+          :max="dateSliderMax"
+        >
+      </div>
+    </div>
     <ValueAddedMapPanel
       :districts="mapDistricts"
+      :area-level="areaLevel"
       :selected-label="selectedArea?.label"
       :height="260"
       @select="selected = $event"
@@ -171,33 +302,95 @@ function compactDate(value) {
 </template>
 
 <style scoped lang="scss">
-.date-controls {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(120px, 1fr));
-  gap: 0.45rem;
+.risk-actions {
+  display: flex;
+  justify-content: flex-end;
+}
 
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.22rem;
+.segmented-control {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(58px, 1fr));
+  overflow: hidden;
+  border: solid 1px rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+
+  button {
+    min-height: 32px;
+    border: 0;
+    background: transparent;
     color: var(--color-complement-text);
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 0.58rem;
+
+    &.active {
+      background: var(--color-highlight);
+      color: #fff;
+    }
+  }
+}
+
+.date-range-bar {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.7rem 0.78rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+
+  .range-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    align-items: center;
     font-size: 0.72rem;
+
+    span {
+      color: var(--color-complement-text);
+    }
+
+    strong {
+      color: var(--color-normal-text);
+      font-size: 0.8rem;
+      text-align: right;
+    }
   }
 
-  input {
-    min-height: 32px;
-    border: solid 1px var(--color-border);
-    border-radius: 5px;
-    background: var(--color-background);
-    color: var(--color-normal-text);
-    padding: 0.25rem 0.42rem;
-    font-size: 0.78rem;
+  .dual-range {
+    position: relative;
+    min-height: 28px;
+
+    input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      margin: 0;
+      background: transparent;
+      pointer-events: none;
+      accent-color: var(--color-highlight);
+    }
+
+    input::-webkit-slider-thumb {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    input::-moz-range-thumb {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+  }
+
+  small {
+    color: var(--color-complement-text);
+    font-size: 0.72rem;
+    line-height: 1.45;
   }
 }
 
 @media (max-width: 560px) {
-  .date-controls {
-    grid-template-columns: 1fr;
+  .risk-actions {
+    justify-content: flex-start;
   }
 }
 </style>

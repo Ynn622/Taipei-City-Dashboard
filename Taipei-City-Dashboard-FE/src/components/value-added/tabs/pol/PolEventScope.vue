@@ -3,80 +3,119 @@ import { computed, onMounted, ref } from "vue";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
 import ValueAddedMapPanel from "../../ValueAddedMapPanel.vue";
-import { COMPONENT_IDS, districtLocation, formatNumber, normalizeLatLng, sumRows, topRows } from "../../valueAddedAnalytics";
+import {
+	DISTRICT_COORDS,
+	GEOJSON_FILES,
+	districtLocation,
+	formatNumber,
+	rowLabel,
+	rowLatLng,
+	rowValue,
+	unwrapRows,
+} from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
 const marketRows = ref([]);
+const logisticsRows = ref([]);
 const waterRows = ref([]);
-const radius = ref({
-	logistics: 2,
-	market: 4,
-	water: 6,
+const selectedDistrict = ref("全部");
+const layerOn = ref({
+	logistics: true,
+	market: true,
+	water: true,
 });
+const radiusUnits = ref({
+	logistics: 10,
+	market: 20,
+	water: 30,
+});
+const RADIUS_UNIT_METERS = 200;
 
 onMounted(async () => {
-	const [market, water] = await Promise.all([
-		store.fetchComponentData(COMPONENT_IDS.market),
-		store.fetchComponentData(COMPONENT_IDS.waterQuality),
+	const [market, logistics, water] = await Promise.all([
+		fetchRowsFromGeoJson(GEOJSON_FILES.market),
+		fetchRowsFromGeoJson(GEOJSON_FILES.logisticsVendor),
+		fetchRowsFromGeoJson(GEOJSON_FILES.waterQuality),
 	]);
 	marketRows.value = market;
+	logisticsRows.value = logistics;
 	waterRows.value = water;
 	loading.value = false;
 });
 
-const marketHotspots = computed(() => topRows(marketRows.value, 3));
-const waterHotspots = computed(() => topRows(waterRows.value, 3));
-const mapCenter = computed(() => {
-	const profileLocation = normalizeLatLng(store.userProfile.userLocation);
-	if (profileLocation) return profileLocation;
-	return districtLocation(marketHotspots.value[0]?.label) || districtLocation(waterHotspots.value[0]?.label) || { lat: 25.0448, lng: 121.5366 };
-});
+const districtOptions = computed(() => Object.keys(DISTRICT_COORDS));
+const filteredMarketRows = computed(() => filterRowsByDistrict(marketRows.value, selectedDistrict.value));
+const filteredLogisticsRows = computed(() => filterRowsByDistrict(logisticsRows.value, selectedDistrict.value));
+const filteredWaterRows = computed(() => filterRowsByDistrict(waterRows.value, selectedDistrict.value));
+const displayMarketRows = computed(() => rowsForMap(filteredMarketRows.value, marketRows.value));
+const displayLogisticsRows = computed(() => rowsForMap(filteredLogisticsRows.value, logisticsRows.value));
+const displayWaterRows = computed(() => rowsForMap(filteredWaterRows.value, waterRows.value));
 const mapPoints = computed(() => [
-	...marketHotspots.value.map((item) => pointFromDistrict(item, "#E86F51", 12)),
-	...waterHotspots.value.map((item) => pointFromDistrict(item, "#1E88E5", 10)),
-	{
-		...mapCenter.value,
-		label: "推估中心",
-		value: 0,
-		radius: 8,
-		color: "#F2C94C",
-	},
+	...(layerOn.value.market ? displayMarketRows.value.map((row) => pointFromRow(row, "市場", "#E86F51", 10)) : []),
+	...(layerOn.value.logistics ? displayLogisticsRows.value.map((row) => pointFromRow(row, "物流", "#30B68F", 9)) : []),
+	...(layerOn.value.water ? displayWaterRows.value.map((row) => pointFromRow(row, "水源", "#1E88E5", 9)) : []),
 ].filter(Boolean));
 const mapCircles = computed(() => [
-	{
-		...mapCenter.value,
-		label: "物流",
-		radiusKm: radius.value.logistics,
-		color: "#30B68F",
-		opacity: 0.18,
-	},
-	{
-		...mapCenter.value,
-		label: "市場",
-		radiusKm: radius.value.market,
-		color: "#E86F51",
-		opacity: 0.14,
-	},
-	{
-		...mapCenter.value,
-		label: "水源",
-		radiusKm: radius.value.water,
-		color: "#1E88E5",
-		opacity: 0.12,
-	},
-]);
+	...(layerOn.value.logistics ? displayLogisticsRows.value.map((row) => circleFromRow(row, "物流", radiusKm("logistics"), "#30B68F", 0.13)) : []),
+	...(layerOn.value.market ? displayMarketRows.value.map((row) => circleFromRow(row, "市場", radiusKm("market"), "#E86F51", 0.11)) : []),
+	...(layerOn.value.water ? displayWaterRows.value.map((row) => circleFromRow(row, "水源", radiusKm("water"), "#1E88E5", 0.10)) : []),
+].filter(Boolean));
+const visibleMarketRows = computed(() => layerOn.value.market ? filteredMarketRows.value : []);
+const visibleLogisticsRows = computed(() => layerOn.value.logistics ? filteredLogisticsRows.value : []);
+const visibleWaterRows = computed(() => layerOn.value.water ? filteredWaterRows.value : []);
 
-function pointFromDistrict(item, color, baseRadius) {
-	const location = districtLocation(item.label);
+async function fetchRowsFromGeoJson(files) {
+	const collections = await store.fetchGeoJsonFiles(files);
+	return collections.flatMap((collection) => collection.features || [])
+		.map((feature) => ({
+			...(feature.properties || {}),
+			_geometry: feature.geometry,
+		}));
+}
+
+function rowsForMap(filteredRows, allRows) {
+	if (selectedDistrict.value !== "全部") return filteredRows;
+	return unwrapRows(allRows).slice(0, 80);
+}
+
+function pointFromRow(row, category, color, baseRadius) {
+	const location = rowLatLng(row) || districtLocation(row?.district || rowLabel(row));
 	if (!location) return null;
 	return {
 		...location,
-		label: item.label,
-		value: item.value,
+		label: `${category} ${row?.name || row?.title || rowLabel(row)}`,
+		value: rowValue(row) || 1,
 		radius: baseRadius,
 		color,
 	};
+}
+
+function circleFromRow(row, category, radiusKm, color, opacity) {
+	const location = rowLatLng(row) || districtLocation(row?.district || rowLabel(row));
+	if (!location) return null;
+	return {
+		...location,
+		label: `${category} ${row?.name || row?.title || rowLabel(row)}`,
+		radiusKm,
+		color,
+		opacity,
+	};
+}
+
+function radiusKm(key) {
+	return radiusUnits.value[key] * RADIUS_UNIT_METERS / 1000;
+}
+
+function radiusLabel(key) {
+	const meters = radiusUnits.value[key] * RADIUS_UNIT_METERS;
+	if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+	return `${meters} m`;
+}
+
+function filterRowsByDistrict(rows, district) {
+	if (!district || district === "全部") return unwrapRows(rows);
+	return unwrapRows(rows).filter((row) => row?.district === district || rowLabel(row) === district);
 }
 </script>
 
@@ -86,25 +125,69 @@ function pointFromDistrict(item, color, baseRadius) {
     subtitle="可調整物流、市場與水源半徑，渲染可能影響範圍。"
     :loading="loading"
   >
+    <template #action>
+      <select
+        v-model="selectedDistrict"
+        class="district-select"
+      >
+        <option value="全部">
+          全部行政區
+        </option>
+        <option
+          v-for="district in districtOptions"
+          :key="district"
+          :value="district"
+        >
+          {{ district }}
+        </option>
+      </select>
+    </template>
     <div class="radius-controls">
-      <label>物流 {{ radius.logistics }} km <input
-        v-model.number="radius.logistics"
-        type="range"
-        min="1"
-        max="12"
-      ></label>
-      <label>市場 {{ radius.market }} km <input
-        v-model.number="radius.market"
-        type="range"
-        min="1"
-        max="12"
-      ></label>
-      <label>水源 {{ radius.water }} km <input
-        v-model.number="radius.water"
-        type="range"
-        min="1"
-        max="12"
-      ></label>
+      <label>
+        <input
+          v-model="layerOn.logistics"
+          type="checkbox"
+        >
+        <span>物流 {{ radiusLabel("logistics") }}</span>
+        <input
+          v-model.number="radiusUnits.logistics"
+          type="range"
+          min="1"
+          max="30"
+          step="1"
+          :disabled="!layerOn.logistics"
+        >
+      </label>
+      <label>
+        <input
+          v-model="layerOn.market"
+          type="checkbox"
+        >
+        <span>市場 {{ radiusLabel("market") }}</span>
+        <input
+          v-model.number="radiusUnits.market"
+          type="range"
+          min="1"
+          max="30"
+          step="1"
+          :disabled="!layerOn.market"
+        >
+      </label>
+      <label>
+        <input
+          v-model="layerOn.water"
+          type="checkbox"
+        >
+        <span>水源 {{ radiusLabel("water") }}</span>
+        <input
+          v-model.number="radiusUnits.water"
+          type="range"
+          min="1"
+          max="30"
+          step="1"
+          :disabled="!layerOn.water"
+        >
+      </label>
     </div>
     <ValueAddedMapPanel
       :points="mapPoints"
@@ -117,7 +200,15 @@ function pointFromDistrict(item, color, baseRadius) {
           市場節點
         </div>
         <div class="summary-value">
-          {{ formatNumber(sumRows(marketRows), " 攤") }}
+          {{ formatNumber(visibleMarketRows.length, " 處") }}
+        </div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">
+          物流節點
+        </div>
+        <div class="summary-value">
+          {{ formatNumber(visibleLogisticsRows.length, " 處") }}
         </div>
       </div>
       <div class="summary-item">
@@ -125,15 +216,7 @@ function pointFromDistrict(item, color, baseRadius) {
           水質監測
         </div>
         <div class="summary-value">
-          {{ formatNumber(sumRows(waterRows)) }}
-        </div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-label">
-          優先範圍
-        </div>
-        <div class="summary-value">
-          {{ marketHotspots[0]?.label || waterHotspots[0]?.label || "無資料" }}
+          {{ formatNumber(visibleWaterRows.length, " 站") }}
         </div>
       </div>
     </div>
@@ -141,6 +224,17 @@ function pointFromDistrict(item, color, baseRadius) {
 </template>
 
 <style scoped lang="scss">
+.district-select {
+  min-height: 32px;
+  min-width: 116px;
+  border: solid 1px var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-normal-text);
+  padding: 0.28rem 0.5rem;
+  font-size: 0.82rem;
+}
+
 .radius-controls {
   display: grid;
   gap: 0.5rem;
@@ -149,9 +243,19 @@ function pointFromDistrict(item, color, baseRadius) {
 
   label {
     display: grid;
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: auto 104px minmax(0, 1fr);
     gap: 0.6rem;
     align-items: center;
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-highlight);
+  }
+
+  input[type="range"]:disabled {
+    opacity: 0.35;
   }
 }
 

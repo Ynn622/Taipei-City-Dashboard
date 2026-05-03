@@ -3,13 +3,14 @@ import { computed, onMounted, ref } from "vue";
 import VueApexCharts from "vue3-apexcharts";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
-import { COMPONENT_IDS, computePeriodDelta, formatNumber } from "../../valueAddedAnalytics";
+import { COMPONENT_IDS, computePeriodDelta, formatNumber, profileDistricts, rowLabel, topRows, unwrapRows } from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
 const foodRows = ref([]);
 const healthRows = ref([]);
 const infectiousRows = ref([]);
+const selectedDistrict = ref(profileDistricts(store.userProfile)[0] || "全部");
 
 onMounted(async () => {
 	const [food, health, infectious] = await Promise.all([
@@ -23,10 +24,20 @@ onMounted(async () => {
 	loading.value = false;
 });
 
+const districtOptions = computed(() => [...new Set([
+	...topRows(healthRows.value, 99).map((item) => item.label),
+	...topRows(foodRows.value, 99).map((item) => item.label),
+])].sort((a, b) => a.localeCompare(b, "zh-Hant")));
+const scopedFoodRows = computed(() => scopedRows(foodRows.value, selectedDistrict.value));
+const scopedHealthRows = computed(() => scopedRows(healthRows.value, selectedDistrict.value));
+const scopedInfectiousRows = computed(() => {
+	const filtered = scopedRows(infectiousRows.value, selectedDistrict.value);
+	return filtered.length > 0 ? filtered : unwrapRows(infectiousRows.value);
+});
 const factors = computed(() => [
-	...computePeriodDelta(foodRows.value, { groupKey: "product_category", limit: 4 }).map((item) => ({ ...item, type: "食品違規" })),
-	...computePeriodDelta(healthRows.value, { limit: 4 }).map((item) => ({ ...item, type: "環境違規" })),
-	...computePeriodDelta(infectiousRows.value, { limit: 4 }).map((item) => ({ ...item, type: "就診趨勢" })),
+	...computePeriodDelta(scopedFoodRows.value, { groupKey: "product_category", limit: 4 }).map((item) => ({ ...item, type: "食品違規" })),
+	...computePeriodDelta(scopedHealthRows.value, { limit: 4 }).map((item) => ({ ...item, type: "環境違規" })),
+	...computePeriodDelta(scopedInfectiousRows.value, { limit: 4 }).map((item) => ({ ...item, type: "就診趨勢" })),
 ].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 6));
 const chartSeries = computed(() => [
 	{
@@ -90,14 +101,36 @@ function colorByType(type) {
 	if (type === "環境違規") return "#D84C73";
 	return "#F2C94C";
 }
+
+function scopedRows(rows, district) {
+	if (!district || district === "全部") return unwrapRows(rows);
+	return unwrapRows(rows).filter((row) => rowLabel(row) === district);
+}
 </script>
 
 <template>
   <ValueAddedCard
     title="趨勢分析"
-    subtitle="以時間因子排行榜呈現食品、環境與就診指標的最大變動。"
+    subtitle="依所在地區排序食品、環境與就診因子的變動量。"
     :loading="loading"
   >
+    <template #action>
+      <select
+        v-model="selectedDistrict"
+        class="district-select"
+      >
+        <option value="全部">
+          全部地區
+        </option>
+        <option
+          v-for="district in districtOptions"
+          :key="district"
+          :value="district"
+        >
+          {{ district }}
+        </option>
+      </select>
+    </template>
     <div class="trend-chart">
       <VueApexCharts
         type="bar"
@@ -120,6 +153,17 @@ function colorByType(type) {
 </template>
 
 <style scoped lang="scss">
+.district-select {
+  min-height: 32px;
+  min-width: 116px;
+  border: solid 1px var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-normal-text);
+  padding: 0.28rem 0.5rem;
+  font-size: 0.82rem;
+}
+
 .trend-chart {
   min-height: 230px;
   margin: -0.35rem 0 -0.1rem;

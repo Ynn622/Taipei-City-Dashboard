@@ -13,6 +13,10 @@ export const COMPONENT_IDS = {
 export const GEOJSON_FILES = {
 	foodSource: ["food_source_tpe.geojson", "food_source_ntpe.geojson"],
 	market: ["food_safety_market_tpe.geojson", "food_safety_market_ntpe.geojson"],
+	logisticsVendor: [
+		"food_safety_logistics_vendor_tpe.geojson",
+		"food_safety_logistics_vendor_ntpe.geojson",
+	],
 	waterQuality: ["water_quality_tpe.geojson", "water_quality_ntpe.geojson"],
 	healthOffice: [
 		"food_safety_health_office_tpe.geojson",
@@ -734,7 +738,7 @@ export function parseMetricDate(row) {
 	return Number.isNaN(date.getTime()) ? null : date;
 }
 
-const DISTRICT_COORDS = {
+export const DISTRICT_COORDS = {
 	中正區: { lat: 25.0324, lng: 121.5198 },
 	大同區: { lat: 25.0632, lng: 121.5130 },
 	中山區: { lat: 25.0644, lng: 121.5335 },
