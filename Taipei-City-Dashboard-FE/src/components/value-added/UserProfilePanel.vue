@@ -19,7 +19,7 @@ const messages = ref([]);
 const locationText = ref("");
 const dateRangeText = ref("");
 
-const initialMessage = "你好，我會用幾個問題幫你建立實策輪廓。你是民眾、餐飲業者，還是政府/治理單位？";
+const initialMessage = "你好，我會用幾個問題幫你建立食策輪廓。你是民眾、餐飲業者，還是政府/治理單位？";
 
 const audienceLabel = computed(() => {
 	const labels = {

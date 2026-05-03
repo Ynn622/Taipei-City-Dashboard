@@ -81,7 +81,7 @@ const closeProfileModal = () => {
               <span>add_chart</span>
             </div>
             <div class="title-area">
-              <h1>實策</h1>
+              <h1>食策</h1>
             </div>
           </div>
 
