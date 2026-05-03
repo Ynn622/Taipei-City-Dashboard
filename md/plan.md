@@ -1,7 +1,7 @@
-# Plan: 加值服務 Tab 新增
+# Plan: 實策 Tab 新增
 
 ## TL;DR
-在 NavBar 新增「加值服務」Tab（路由 `/value-added`），頁面上半部顯示可設定的用戶輪廓欄位，下半部以「營運管理」、「政策分析」、「生活指南」三個 Tab 呈現加值功能（呼叫現有 component API + 新增 LLM API 串接）。所有擁有加值服務的用戶均可見全部三個功能分頁。
+在 NavBar 新增「實策」Tab（路由 `/value-added`），頁面上半部顯示可設定的用戶輪廓欄位，下半部以「營運管理」、「政策分析」、「生活指南」三個 Tab 呈現加值功能（呼叫現有 component API + 新增 LLM API 串接）。所有擁有實策的用戶均可見全部三個功能分頁。
 
 ---
 
@@ -17,8 +17,8 @@
 
 ### Step 2 — NavBar 新增 Tab
 - 檔案：`Taipei-City-Dashboard-FE/src/components/utilities/bars/NavBar.vue`
-- 在「地圖交叉比對」router-link 之後，加入「加值服務」tab
-- 不需傳 linkQuery（加值服務不依賴 dashboard index）
+- 在「地圖交叉比對」router-link 之後，加入「實策」tab
+- 不需傳 linkQuery（實策不依賴 dashboard index）
 
 ### Step 3 — App.vue Layout 分支
 - 檔案：`Taipei-City-Dashboard-FE/src/App.vue`
@@ -162,5 +162,5 @@
 ## Decisions
 - 角色 B/G/C 概念已完全移除，不存於 localStorage，不影響任何功能顯示
 - LLM 端點暫定 `/llm/suggest`，待實際 key 到位後確認路由
-- 加值服務頁面不共用 SideBar/SettingsBar，全版面自行配置
+- 實策頁面不共用 SideBar/SettingsBar，全版面自行配置
 - 組件1（優良餐廳）ID 待確認，不阻擋實作，可用 index 查詢

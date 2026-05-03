@@ -81,7 +81,7 @@ const isLocalhost = computed(() => {
         地圖交叉比對
       </router-link>
       <router-link to="/value-added">
-        加值服務
+        實策
       </router-link>
     </div>
     <div class="navbar-user">

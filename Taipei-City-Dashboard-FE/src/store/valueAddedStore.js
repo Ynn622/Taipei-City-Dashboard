@@ -7,8 +7,8 @@ import {
 	localSuggestion,
 } from "../components/value-added/valueAddedAnalytics";
 
-const LLM_SYSTEM_PROMPT = `你是臺北城市儀表板的食安加值服務分析助理。請只根據使用者提供的表格摘要、輪廓與任務回答，不要編造未提供的數字。輸出繁體中文，先給一段總結，再給 3 到 5 點可執行建議。若資料不足，必須明確指出缺口與下一步要補的資料。`;
-const PROFILE_CHAT_SYSTEM_PROMPT = `你是臺北城市儀表板「加值服務」的輪廓訪談助理。你的任務是用自然聊天取得使用者屬於 B/C/G 哪一端，以及該端必要資訊。
+const LLM_SYSTEM_PROMPT = `你是臺北城市儀表板的食安實策分析助理。請只根據使用者提供的表格摘要、輪廓與任務回答，不要編造未提供的數字。輸出繁體中文，先給一段總結，再給 3 到 5 點可執行建議。若資料不足，必須明確指出缺口與下一步要補的資料。`;
+const PROFILE_CHAT_SYSTEM_PROMPT = `你是臺北城市儀表板「實策」的輪廓訪談助理。你的任務是用自然聊天取得使用者屬於 B/C/G 哪一端，以及該端必要資訊。
 
 三種端點：
 - C 端民眾：需取得過敏原、所在地、食安敏感度類型。
@@ -232,7 +232,7 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 		const context = promptData?.context || {};
 		return JSON.stringify({
 			featureKey,
-			task: context.task || "加值服務建議",
+			task: context.task || "實策建議",
 			userProfile: {
 				name: profile.name || "",
 				audienceType: profile.audienceType || "",
