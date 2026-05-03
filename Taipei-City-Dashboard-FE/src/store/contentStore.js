@@ -17,6 +17,47 @@ import { useAuthStore } from "./authStore";
 import { getComponentDataTimeframe } from "../assets/utilityFunctions/dataTimeframe";
 import { CityManager } from "../dashboardComponent/utilities/cityManager";
 
+const FOOD_SAFETY_HEALTH_DASHBOARDS = new Set([
+	"food_safety_health_tpe",
+	"food_safety_health_metrotaipei",
+	"food-safety-health-tpe",
+	"food-safety-health-metrotaipei",
+]);
+
+const FOOD_SAFETY_COMPONENT_ORDER = new Map(
+	[
+		"fda_good_restaurants",
+		"food_processing_pass_rate",
+		"food_safety_logistics_vendor",
+		"food_safety_market",
+		"food_source",
+		"agri_sales_resume_noncompliance",
+		"water_quality",
+		"food_safety_health_office",
+		"health_audit_violation",
+		"food_audit_violation",
+		"cdc_infectious_disease",
+		"food_safety_death_share",
+		"food_allergen_classification",
+		"post_help_agency",
+	].map((componentIndex, order) => [componentIndex, order]),
+);
+
+function sortDashboardComponents(dashboardIndex, components) {
+	if (!FOOD_SAFETY_HEALTH_DASHBOARDS.has(dashboardIndex)) {
+		return components;
+	}
+
+	return [...components].sort((a, b) => {
+		const aOrder =
+			FOOD_SAFETY_COMPONENT_ORDER.get(a.index) ?? Number.MAX_SAFE_INTEGER;
+		const bOrder =
+			FOOD_SAFETY_COMPONENT_ORDER.get(b.index) ?? Number.MAX_SAFE_INTEGER;
+
+		return aOrder - bOrder;
+	});
+}
+
 export const useContentStore = defineStore("content", {
 	state: () => ({
 		// cityManager is used to manage city settings. (tag, select, sidebar, mobileNavigation etc.)
@@ -638,9 +679,15 @@ export const useContentStore = defineStore("content", {
 
 				// If city is defined, filter components by city
 				if (this.currentDashboard.city) {
-					this.currentDashboard.components = currentCityData;
+					this.currentDashboard.components = sortDashboardComponents(
+						this.currentDashboard.index,
+						currentCityData,
+					);
 					this.currentDashboardExcluded.components =
-						notCurrentCityData;
+						sortDashboardComponents(
+							this.currentDashboard.index,
+							notCurrentCityData,
+						);
 				} else {
 					// Is personal dashboard
 
@@ -670,8 +717,15 @@ export const useContentStore = defineStore("content", {
 						);
 						return uniqueItem && uniqueItem.city !== item.city;
 					});
-					this.currentDashboard.components = uniqueData;
-					this.currentDashboardExcluded.components = excludedData;
+					this.currentDashboard.components = sortDashboardComponents(
+						this.currentDashboard.index,
+						uniqueData,
+					);
+					this.currentDashboardExcluded.components =
+						sortDashboardComponents(
+							this.currentDashboard.index,
+							excludedData,
+						);
 				}
 			} else {
 				this.currentDashboard.components = [];
