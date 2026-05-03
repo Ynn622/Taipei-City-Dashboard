@@ -212,3 +212,4 @@ SET search_path = public;
 \ir add-health-audit-violation-manager.sql
 \ir food-safety-infectious-disease-component.sql
 \ir add-food-allergen-classification.sql
+\ir agri-noncompliance-manager.sql
