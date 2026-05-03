@@ -1,0 +1,45 @@
+{
+  "dag_infos": {
+    "dag_id": "agri_sales_resume_noncompliance",
+    "start_date": "2026-05-03",
+    "schedule_interval": "0 2 * * 1",
+    "catchup": false,
+    "tags": [
+      "moa",
+      "食安健康",
+      "農產品",
+      "產銷履歷",
+      "不合格率"
+    ],
+    "description": "Weekly crawl of agricultural product sales resume inspection results; compute monthly non-compliance rate.",
+    "default_args": {
+      "owner": "airflow",
+      "email": [
+        "DEFAULT_EMAIL_LIST"
+      ],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "agri_sales_resume_noncompliance",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "食安健康-農產品產銷履歷不合格率",
+    "airflow_update_freq": "02:00 every Monday",
+    "source": "https://data.moa.gov.tw/api/v1/SalesResumeAgriproductsResultsType/",
+    "source_type": "MOA Open API",
+    "source_dept": "農業部農糧署",
+    "gis_format": "",
+    "output_coordinate": "",
+    "is_geometry": 0,
+    "dataset_description": "農業部農糧署產銷履歷農產品抽驗結果，涵蓋全台各縣市抽驗紀錄，計算各月不合格率。",
+    "etl_description": "分頁爬取 MOA API 全量資料，依 InspectResult 欄位判定合格/不合格（非「合格」均視為不合格），按月份聚合計算不合格率後寫入 agri_sales_resume_noncompliance table。",
+    "sensitivity": "public"
+  }
+}
