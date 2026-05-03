@@ -18,6 +18,9 @@ const chatBody = ref(null);
 const messages = ref([]);
 const locationText = ref("");
 const dateRangeText = ref("");
+const streamingReply = ref("");
+const isStreamingReply = ref(false);
+const typewriterTimer = ref(null);
 
 const initialMessage = "你好，我會用幾個問題幫你建立食策輪廓。你是民眾、餐飲業者，還是政府/治理單位？";
 
@@ -59,7 +62,12 @@ watch(
 
 async function submitMessage() {
 	const content = inputText.value.trim();
-	if (!content || loading.value) return;
+	if (!content || loading.value || isStreamingReply.value) return;
+
+	if (typewriterTimer.value) {
+		clearInterval(typewriterTimer.value);
+		typewriterTimer.value = null;
+	}
 
 	messages.value.push({ role: "user", content });
 	inputText.value = "";
@@ -67,12 +75,27 @@ async function submitMessage() {
 	await scrollToBottom();
 
 	const result = await store.chatProfileAssistant(messages.value);
-	messages.value.push({
-		role: "assistant",
-		content: result.reply || "我已更新輪廓，還可以繼續補充所在地、過敏原或餐飲類別。",
-	});
+	const reply = result.reply || "我已更新輪廓，還可以繼續補充所在地、過敏原或餐飲類別。";
 	loading.value = false;
+	isStreamingReply.value = true;
+	streamingReply.value = "";
 	await scrollToBottom();
+
+	let i = 0;
+	typewriterTimer.value = setInterval(() => {
+		if (i >= reply.length) {
+			clearInterval(typewriterTimer.value);
+			typewriterTimer.value = null;
+			isStreamingReply.value = false;
+			messages.value.push({ role: "assistant", content: reply });
+			streamingReply.value = "";
+			scrollToBottom();
+			return;
+		}
+		streamingReply.value = reply.slice(0, i + 1);
+		i++;
+		scrollToBottom();
+	}, 25);
 }
 
 function useQuickPrompt(text) {
@@ -81,6 +104,12 @@ function useQuickPrompt(text) {
 }
 
 function resetConversation() {
+	if (typewriterTimer.value) {
+		clearInterval(typewriterTimer.value);
+		typewriterTimer.value = null;
+	}
+	isStreamingReply.value = false;
+	streamingReply.value = "";
 	store.resetProfile();
 	messages.value = [{ role: "assistant", content: initialMessage }];
 	inputText.value = "";
@@ -133,7 +162,7 @@ async function scrollToBottom() {
             <p class="eyebrow">
               PROFILE CHAT
             </p>
-            <h3>用聊天設定輪廓</h3>
+            <h3>聊聊關於你</h3>
           </div>
           <button
             class="icon-btn"
@@ -167,6 +196,13 @@ async function scrollToBottom() {
               >
                 <span class="message-role">助理</span>
                 <p>正在整理輪廓...</p>
+              </div>
+              <div
+                v-if="isStreamingReply"
+                class="chat-message assistant"
+              >
+                <span class="message-role">助理</span>
+                <p>{{ streamingReply }}<span class="cursor">|</span></p>
               </div>
             </div>
 

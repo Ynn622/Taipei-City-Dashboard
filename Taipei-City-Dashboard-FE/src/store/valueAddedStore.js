@@ -58,6 +58,7 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 	const geoJsonCache = reactive(new Map());
 	const llmResult = reactive(new Map());
 	const profileVersion = ref(0);
+	const abortControllers = new Map();
 
 	function loadProfile() {
 		const saved = localStorage.getItem("valueAdded_profile");
@@ -154,77 +155,213 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 			return cachedResult;
 		}
 
+		const previous = abortControllers.get(featureKey);
+		if (previous) {
+			previous.abort();
+		}
+		const controller = new AbortController();
+		abortControllers.set(featureKey, controller);
+
 		llmResult.set(featureKey, { loading: true, text: "" });
 
 		try {
-			const res = await http.post("/ai/chat/twai", {
-				session: `value_added_${featureKey}`,
-				stream: false,
-				max_new_tokens: 600,
-				temperature: 0.35,
-				top_p: 0.9,
-				messages: [
-					{
-						role: "system",
-						content: LLM_SYSTEM_PROMPT,
-					},
-					{
-						role: "user",
-						content: buildLLMPrompt(featureKey, userProfile, promptData),
-					},
-				],
+			const token = localStorage.getItem("token") || "";
+			const apiUrl = import.meta.env.VITE_API_URL || "";
+			const response = await fetch(`${apiUrl}/ai/chat/twai`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${token}`,
+				},
+				signal: controller.signal,
+				body: JSON.stringify({
+					session: `value_added_${featureKey}`,
+					stream: true,
+					max_new_tokens: 600,
+					temperature: 0.35,
+					top_p: 0.9,
+					messages: [
+						{
+							role: "system",
+							content: LLM_SYSTEM_PROMPT,
+						},
+						{
+							role: "user",
+							content: buildLLMPrompt(featureKey, userProfile, promptData),
+						},
+					],
+				}),
 			});
+
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}`);
+			}
+
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+			let buffer = "";
+			let fullText = "";
+			let receivedAny = false;
+
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+
+				buffer += decoder.decode(value, { stream: true });
+				const lines = buffer.split("\n");
+				buffer = lines.pop();
+
+				for (const line of lines) {
+					const trimmed = line.trim();
+					if (!trimmed.startsWith("data:")) continue;
+
+					const data = trimmed.slice(5).trim();
+					if (data === "[DONE]") continue;
+
+					try {
+						const chunk = JSON.parse(data);
+						let text = "";
+						if (chunk.choices?.[0]?.delta?.content) {
+							text = chunk.choices[0].delta.content;
+						} else if (chunk.generated_text) {
+							text = chunk.generated_text;
+						}
+						if (text) {
+							fullText += text;
+							receivedAny = true;
+							llmResult.set(featureKey, {
+								loading: false,
+								text: fullText,
+							});
+						}
+					} catch (e) {
+					}
+				}
+			}
+
+			if (!receivedAny) {
+				fullText = localSuggestion(featureKey, userProfile, promptData?.context);
+			}
+
 			llmResult.set(featureKey, {
 				loading: false,
-				text: res.data?.data?.content || localSuggestion(featureKey, userProfile, promptData?.context),
-				fallback: false,
+				text: fullText,
+				fallback: !receivedAny,
 			});
 		} catch (error) {
+			if (error.name === "AbortError") {
+				return llmResult.get(featureKey);
+			}
 			console.error("ValueAddedLLMFetchError:", error);
 			llmResult.set(featureKey, {
 				loading: false,
 				text: localSuggestion(featureKey, userProfile, promptData?.context),
 				fallback: true,
-				error: error?.response?.data?.message || error?.message || "LLM request failed",
+				error: error?.message || "LLM request failed",
 			});
+		} finally {
+			abortControllers.delete(featureKey);
 		}
 		return llmResult.get(featureKey);
 	}
 
 	async function chatProfileAssistant(messages) {
+		const previous = abortControllers.get("profile_chat");
+		if (previous) {
+			previous.abort();
+		}
+		const controller = new AbortController();
+		abortControllers.set("profile_chat", controller);
+
 		try {
-			const res = await http.post("/ai/chat/twai", {
-				session: "value_added_profile",
-				stream: false,
-				max_new_tokens: 700,
-				temperature: 0.25,
-				top_p: 0.9,
-				messages: [
-					{
-						role: "system",
-						content: PROFILE_CHAT_SYSTEM_PROMPT,
-					},
-					{
-						role: "user",
-						content: JSON.stringify({
-							currentProfile: userProfile,
-							conversation: messages.map(({ role, content }) => ({ role, content })),
-						}, null, 2),
-					},
-				],
+			const token = localStorage.getItem("token") || "";
+			const apiUrl = import.meta.env.VITE_API_URL || "";
+			const response = await fetch(`${apiUrl}/ai/chat/twai`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${token}`,
+				},
+				signal: controller.signal,
+				body: JSON.stringify({
+					session: "value_added_profile",
+					stream: true,
+					max_new_tokens: 700,
+					temperature: 0.25,
+					top_p: 0.9,
+					messages: [
+						{
+							role: "system",
+							content: PROFILE_CHAT_SYSTEM_PROMPT,
+						},
+						{
+							role: "user",
+							content: JSON.stringify({
+								currentProfile: userProfile,
+								conversation: messages.map(({ role, content }) => ({ role, content })),
+							}, null, 2),
+						},
+					],
+				}),
 			});
-			const parsed = parseProfileChatResponse(res.data?.data?.content);
+
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}`);
+			}
+
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+			let buffer = "";
+			let fullText = "";
+
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+
+				buffer += decoder.decode(value, { stream: true });
+				const lines = buffer.split("\n");
+				buffer = lines.pop();
+
+				for (const line of lines) {
+					const trimmed = line.trim();
+					if (!trimmed.startsWith("data:")) continue;
+
+					const data = trimmed.slice(5).trim();
+					if (data === "[DONE]") continue;
+
+					try {
+						const chunk = JSON.parse(data);
+						let text = "";
+						if (chunk.choices?.[0]?.delta?.content) {
+							text = chunk.choices[0].delta.content;
+						} else if (chunk.generated_text) {
+							text = chunk.generated_text;
+						}
+						if (text) {
+							fullText += text;
+						}
+					} catch (e) {
+					}
+				}
+			}
+
+			const parsed = parseProfileChatResponse(fullText);
 			if (parsed.profile) {
 				saveProfile(parsed.profile);
 			}
 			return parsed;
 		} catch (error) {
+			if (error.name === "AbortError") {
+				return { reply: "", profile: null };
+			}
 			console.error("ValueAddedProfileChatError:", error);
 			const fallback = fallbackProfileChat(messages);
 			if (fallback.profile) {
 				saveProfile(fallback.profile);
 			}
 			return fallback;
+		} finally {
+			abortControllers.delete("profile_chat");
 		}
 	}
 

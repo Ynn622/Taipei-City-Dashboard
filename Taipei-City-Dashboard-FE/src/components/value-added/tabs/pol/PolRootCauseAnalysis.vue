@@ -29,9 +29,22 @@ onMounted(async () => {
 
 const regionOptions = computed(() => topRows(auditRows.value, 99).map((item) => item.label));
 const filteredAuditRows = computed(() => filterRowsByRegion(auditRows.value, selectedRegion.value));
-const filteredHelpRows = computed(() => filterRowsByRegion(helpRows.value, selectedRegion.value));
+const filteredHelpRows = computed(() => {
+	if (!selectedRegion.value || selectedRegion.value === "全部") return unwrapRows(helpRows.value);
+	const raw = helpRows.value?.rawRows;
+	if (raw && Array.isArray(raw)) {
+		const filtered = raw.filter((row) => row?.district === selectedRegion.value);
+		const totals = new Map();
+		filtered.forEach((row) => {
+			const type = row?.agency_type || row?.agency_group || "未分類";
+			totals.set(type, (totals.get(type) || 0) + 1);
+		});
+		return [...totals.entries()].map(([x_axis, data]) => ({ x_axis, data }));
+	}
+	return filterRowsByRegion(helpRows.value, selectedRegion.value);
+});
 const rootCauses = computed(() => topRows(filteredAuditRows.value, 4));
-const support = computed(() => topRows(filteredHelpRows.value.length > 0 ? filteredHelpRows.value : helpRows.value, 3));
+const support = computed(() => topRows(filteredHelpRows.value.length > 0 ? filteredHelpRows.value : unwrapRows(helpRows.value), 3));
 
 function filterRowsByRegion(rows, region) {
 	if (!region || region === "全部") return unwrapRows(rows);

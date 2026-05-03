@@ -111,15 +111,20 @@ function isRowObject(item) {
 }
 
 export function rowLabel(row) {
-	return (
-		row?.x_axis ||
-		row?.x ||
-		row?.name ||
-		row?.district ||
-		row?.agency_type ||
-		row?.rating_result ||
-		"未分類"
-	);
+	const xAxis = row?.x_axis;
+	const xAxisIsDate = xAxis && /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(String(xAxis));
+
+	const candidates = xAxisIsDate
+		? [row?.name, row?.district, row?.agency_type, row?.rating_result, row?.x, xAxis]
+		: [xAxis, row?.x, row?.name, row?.district, row?.agency_type, row?.rating_result];
+
+	for (const candidate of candidates) {
+		if (candidate === null || candidate === undefined) continue;
+		const str = String(candidate).trim();
+		if (str) return str;
+	}
+
+	return "未分類";
 }
 
 export function rowGroup(row) {

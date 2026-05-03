@@ -192,7 +192,7 @@ function filterRowsByDistrict(rows, district) {
     <ValueAddedMapPanel
       :points="mapPoints"
       :circles="mapCircles"
-      :height="235"
+      :height="600"
     />
     <div class="summary-grid">
       <div class="summary-item">

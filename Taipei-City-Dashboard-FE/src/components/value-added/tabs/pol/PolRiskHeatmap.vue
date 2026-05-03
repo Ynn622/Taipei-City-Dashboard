@@ -266,7 +266,7 @@ const TAIPEI_DISTRICTS = new Set([
       :districts="mapDistricts"
       :area-level="areaLevel"
       :selected-label="selectedArea?.label"
-      :height="260"
+      :height="600"
       @select="selected = $event"
     />
     <div class="summary-grid">
