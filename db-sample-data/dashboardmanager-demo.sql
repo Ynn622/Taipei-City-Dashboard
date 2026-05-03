@@ -79,15 +79,15 @@ COPY public.components (id, index, name) FROM stdin;
 218	aging_kpi	長照指標
 215	aging_workforce_trend	高齡就業人口之年增結構
 217	bike_map	自行車道路網圖資
-307	food_source	有機農場
-303	food_safety_market	公有市場圖資
-304	food_safety_logistics_vendor	食品物流業者
-305	food_safety_health_office	衛生監管機構
-306	water_quality	淨水場水質濁度
-501	fda_good_restaurants	優良餐廳
-502	cdc_infectious_disease	腹瀉就診數量統計
-503	food_safety_death_share	主要死因死亡占比
-505	food_processing_pass_rate	加工食品不合格率
+307	food_source	有機農場分布
+303	food_safety_market	食品供應市場分布
+304	food_safety_logistics_vendor	食品物流業者分布
+305	food_safety_health_office	衛生監管機構分布
+306	water_quality	淨水廠水質濁度統計
+501	fda_good_restaurants	餐飲衛生優良業者分布
+502	cdc_infectious_disease	腹瀉就診數據統計
+503	food_safety_death_share	主要死因占比統計
+505	food_processing_pass_rate	加工食品不合格率統計
 \.
 
 

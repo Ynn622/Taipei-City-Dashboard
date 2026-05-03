@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.agri_sales_resume_noncompliance (
 
 -- ── 2. 在 Manager DB 登錄組件（postgres-manager）────────────────────────────
 INSERT INTO public.components (id, "index", name)
-VALUES (506, 'agri_sales_resume_noncompliance', '農產品產銷履歷不合格率')
+VALUES (506, 'agri_sales_resume_noncompliance', '產銷履歷合格率')
 ON CONFLICT (id) DO UPDATE SET
     "index" = EXCLUDED."index",
     name    = EXCLUDED.name;

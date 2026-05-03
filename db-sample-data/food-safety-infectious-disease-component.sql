@@ -1,13 +1,13 @@
 BEGIN;
 
 INSERT INTO public.components ("index", name)
-SELECT 'cdc_infectious_disease', '腹瀉就診數量統計'
+SELECT 'cdc_infectious_disease', '腹瀉就診數據統計'
 WHERE NOT EXISTS (
   SELECT 1 FROM public.components WHERE "index" = 'cdc_infectious_disease'
 );
 
 UPDATE public.components
-SET name = '腹瀉就診數量統計'
+SET name = '腹瀉就診數據統計'
 WHERE "index" = 'cdc_infectious_disease';
 
 INSERT INTO public.component_charts ("index", color, types, unit)

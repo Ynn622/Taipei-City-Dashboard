@@ -100,7 +100,7 @@ WHERE "index" = 'food_allergen_classification';
 
 -- 3. Register component in manager DB
 INSERT INTO public.components (id, "index", name)
-VALUES (504, 'food_allergen_classification', '食品過敏原分布')
+VALUES (504, 'food_allergen_classification', '食品過敏原風險分類')
 ON CONFLICT (id) DO UPDATE SET "index" = EXCLUDED."index", name = EXCLUDED.name;
 
 -- 4. Register chart config: MapLegend + DonutChart with 8 colors

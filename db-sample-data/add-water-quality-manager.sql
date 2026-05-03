@@ -21,7 +21,7 @@ ON CONFLICT (id) DO UPDATE SET
   property = EXCLUDED.property;
 
 INSERT INTO public.components (id, index, name) VALUES
-(306, 'water_quality', '淨水場水質濁度')
+(306, 'water_quality', '淨水廠水質濁度統計')
 ON CONFLICT (index) DO UPDATE SET
   name = EXCLUDED.name;
 

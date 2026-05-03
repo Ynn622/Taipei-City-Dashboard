@@ -14,7 +14,7 @@ SET
   unit = EXCLUDED.unit;
 
 INSERT INTO public.components (id, "index", name)
-VALUES (503, 'food_safety_death_share', '主要死因死亡占比')
+VALUES (503, 'food_safety_death_share', '主要死因占比統計')
 ON CONFLICT (id) DO UPDATE
 SET
   "index" = EXCLUDED."index",

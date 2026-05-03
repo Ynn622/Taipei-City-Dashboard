@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.food_processing_pass_rate (
 
 -- 2. Register component in manager DB (run against postgres-manager)
 INSERT INTO public.components (id, "index", name)
-VALUES (505, 'food_processing_pass_rate', '加工食品不合格率')
+VALUES (505, 'food_processing_pass_rate', '加工食品不合格率統計')
 ON CONFLICT (id) DO UPDATE SET "index" = EXCLUDED."index", name = EXCLUDED.name;
 
 INSERT INTO public.component_charts ("index", color, types, unit)

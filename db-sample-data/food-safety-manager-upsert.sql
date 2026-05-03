@@ -251,13 +251,13 @@ SET
 WHERE "index" = 'food_safety_logistics_vendor_ntpe';
 
 INSERT INTO public.components ("index", name)
-SELECT 'food_safety_market', '公有市場圖資'
+SELECT 'food_safety_market', '食品供應市場分布'
 WHERE NOT EXISTS (
   SELECT 1 FROM public.components WHERE "index" = 'food_safety_market'
 );
 
 UPDATE public.components
-SET name = '公有市場圖資'
+SET name = '食品供應市場分布'
 WHERE "index" = 'food_safety_market';
 
 INSERT INTO public.component_charts ("index", color, types, unit)
@@ -278,13 +278,13 @@ SET
 WHERE "index" = 'food_safety_market';
 
 INSERT INTO public.components ("index", name)
-SELECT 'food_safety_logistics_vendor', '食品物流業者'
+SELECT 'food_safety_logistics_vendor', '食品物流業者分布'
 WHERE NOT EXISTS (
   SELECT 1 FROM public.components WHERE "index" = 'food_safety_logistics_vendor'
 );
 
 UPDATE public.components
-SET name = '食品物流業者'
+SET name = '食品物流業者分布'
 WHERE "index" = 'food_safety_logistics_vendor';
 
 INSERT INTO public.component_charts ("index", color, types, unit)

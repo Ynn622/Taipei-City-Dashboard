@@ -80,13 +80,13 @@ SET
 WHERE "index" = 'fda_good_restaurants';
 
 INSERT INTO public.components ("index", name)
-SELECT 'fda_good_restaurants', '優良餐廳'
+SELECT 'fda_good_restaurants', '餐飲衛生優良業者分布'
 WHERE NOT EXISTS (
   SELECT 1 FROM public.components WHERE "index" = 'fda_good_restaurants'
 );
 
 UPDATE public.components
-SET name = '優良餐廳'
+SET name = '餐飲衛生優良業者分布'
 WHERE "index" = 'fda_good_restaurants';
 
 INSERT INTO public.component_charts ("index", color, types, unit)

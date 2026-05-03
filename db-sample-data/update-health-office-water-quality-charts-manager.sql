@@ -4,7 +4,7 @@
 BEGIN;
 
 UPDATE public.components
-SET name = '衛生監管機構'
+SET name = '衛生監管機構分布'
 WHERE index = 'food_safety_health_office';
 
 UPDATE public.component_charts
@@ -32,7 +32,7 @@ WHERE index = 'food_safety_health_office'
   AND city = 'taipei';
 
 UPDATE public.components
-SET name = '淨水場水質濁度'
+SET name = '淨水廠水質濁度統計'
 WHERE index = 'water_quality';
 
 UPDATE public.component_charts

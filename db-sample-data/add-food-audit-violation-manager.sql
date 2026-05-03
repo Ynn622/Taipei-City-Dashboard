@@ -25,7 +25,7 @@ SET index = EXCLUDED.index,
     property = EXCLUDED.property;
 
 INSERT INTO components (id, index, name)
-VALUES (308, 'food_audit_violation', '食品稽核違規單位')
+VALUES (308, 'food_audit_violation', '食品抽驗結果統計')
 ON CONFLICT (id) DO UPDATE
 SET index = EXCLUDED.index,
     name = EXCLUDED.name;
