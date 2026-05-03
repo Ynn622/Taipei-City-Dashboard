@@ -8,23 +8,23 @@ import PolicyView from "../components/value-added/tabs/PolicyView.vue";
 import LifeGuideView from "../components/value-added/tabs/LifeGuideView.vue";
 
 const valueAddedStore = useValueAddedStore();
-const activeTab = ref("operations");
+const activeTab = ref("policy");
 const isProfileModalOpen = ref(false);
 
 const tabs = [
-	{
-		id: "operations",
-		name: "營運管理",
-		icon: "analytics",
-		count: 5,
-		description: "食安營運風險、供應商與改善建議",
-	},
 	{
 		id: "policy",
 		name: "政策分析",
 		icon: "query_stats",
 		count: 6,
 		description: "區域熱點、事件規模與政策優先序",
+	},
+	{
+		id: "operations",
+		name: "營運管理",
+		icon: "analytics",
+		count: 5,
+		description: "食安營運風險、供應商與改善建議",
 	},
 	{
 		id: "lifeguide",
