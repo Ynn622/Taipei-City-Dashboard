@@ -2,83 +2,90 @@
 import { computed, onMounted, ref } from "vue";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
-import {
-	COMPONENT_IDS,
-	formatNumber,
-	topRows,
-} from "../../valueAddedAnalytics";
+import { COMPONENT_IDS, formatNumber, sortByDistanceThenDistrict } from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
 const rows = ref([]);
+const selectedType = ref("全部");
 
 onMounted(async () => {
 	rows.value = await store.fetchComponentData(COMPONENT_IDS.postHelpAgency);
 	loading.value = false;
 });
 
-const helpTypes = computed(() => topRows(rows.value, 5));
-
-const chartOptions = computed(() => ({
-	chart: { type: "bar", background: "transparent", toolbar: { show: false }, fontFamily: "inherit" },
-	theme: { mode: "dark" },
-	colors: ["#30B68F"],
-	plotOptions: {
-		bar: {
-			horizontal: true,
-			borderRadius: 4,
-			barHeight: "58%",
-		},
-	},
-	dataLabels: {
-		enabled: true,
-		formatter: (value) => formatNumber(value, " 處"),
-		style: { fontSize: "11px", fontWeight: 700, colors: ["#fff"] },
-	},
-	grid: {
-		borderColor: "#494b4e",
-		xaxis: { lines: { show: true } },
-		yaxis: { lines: { show: false } },
-	},
-	xaxis: {
-		categories: helpTypes.value.map((item) => item.label),
-		labels: { style: { colors: "#888787", fontSize: "11px" } },
-		axisBorder: { show: false },
-		axisTicks: { show: false },
-	},
-	yaxis: {
-		labels: {
-			style: { colors: "#fff", fontSize: "11px", fontWeight: 600 },
-		},
-	},
-	legend: { show: false },
-	tooltip: {
-		theme: "dark",
-		y: { formatter: (value) => formatNumber(value, " 處") },
-	},
+const allResources = computed(() => sortByDistanceThenDistrict(rows.value, store.userProfile.userLocation, {
+	fallbackDistricts: store.userProfile.focusDistricts,
 }));
-
-const chartSeries = computed(() => [
-	{ name: "支援節點", data: helpTypes.value.map((item) => item.value) },
-]);
+const types = computed(() => ["全部", ...new Set(allResources.value.map((item) => item.label).filter(Boolean))].slice(0, 8));
+const resources = computed(() => allResources.value
+	.filter((item) => selectedType.value === "全部" || item.label === selectedType.value)
+	.slice(0, 8));
 </script>
 
 <template>
   <ValueAddedCard
     title="快速求助"
-    subtitle="彙整醫療、申訴與消費爭議支援節點。"
+    subtitle="依目前所在地距離排序醫療與食安事件支援資源。"
     :loading="loading"
   >
-    <apexchart
-      v-if="!loading && chartSeries[0].data.length"
-      type="bar"
-      width="100%"
-      height="230"
-      :options="chartOptions"
-      :series="chartSeries"
-    />
-    <p class="note">
-      發生疑似食安事件時，先就醫保留診斷與消費憑證，再依所在地向衛生局或消保單位通報。
-    </p>
+    <template #action>
+      <select v-model="selectedType">
+        <option
+          v-for="type in types"
+          :key="type"
+        >
+          {{ type }}
+        </option>
+      </select>
+    </template>
+    <div class="resource-list">
+      <div
+        v-for="item in resources"
+        :key="`${item.label}-${item.distanceText}`"
+      >
+        <span>{{ item.label }}</span>
+        <strong>{{ item.distanceText }}</strong>
+        <small>{{ formatNumber(item.value, " 處") }}</small>
+      </div>
+    </div>
   </ValueAddedCard>
 </template>
+
+<style scoped lang="scss">
+select {
+  border: solid 1px var(--color-border);
+  border-radius: 5px;
+  background: var(--color-background);
+  color: var(--color-normal-text);
+  padding: 0.35rem 0.5rem;
+}
+
+.resource-list {
+  display: grid;
+  gap: 0.55rem;
+
+  div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.62rem 0.7rem;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  span {
+    color: var(--color-normal-text);
+    font-weight: 800;
+  }
+
+  strong {
+    color: #72C6A4;
+  }
+
+  small {
+    color: var(--color-complement-text);
+  }
+}
+</style>

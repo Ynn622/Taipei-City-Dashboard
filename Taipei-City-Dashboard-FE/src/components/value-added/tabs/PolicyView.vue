@@ -36,7 +36,7 @@ import PolImproveSuggestion from "./pol/PolImproveSuggestion.vue";
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  align-items: stretch;
+  align-items: start;
 }
 
 .tab-column {
@@ -46,26 +46,10 @@ import PolImproveSuggestion from "./pol/PolImproveSuggestion.vue";
   min-width: 0;
 }
 
-.balanced-column {
-  height: 100%;
-
-  :deep(.value-card) {
-    flex: 1 1 0;
-  }
-}
-
 @media (max-width: 860px) {
   .tab-main {
     grid-template-columns: 1fr;
     align-items: start;
-  }
-
-  .balanced-column {
-    height: auto;
-
-    :deep(.value-card) {
-      flex: 0 1 auto;
-    }
   }
 }
 </style>

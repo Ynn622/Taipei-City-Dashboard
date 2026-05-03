@@ -2,22 +2,34 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useValueAddedStore } from "../../../../store/valueAddedStore";
 import ValueAddedCard from "../../ValueAddedCard.vue";
-import { COMPONENT_IDS, topRows } from "../../valueAddedAnalytics";
+import { COMPONENT_IDS, buildSummaryContext, computePeriodDelta, rankRows } from "../../valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
-const rows = ref([]);
+const context = ref(null);
 const featureKey = "policy-improve";
 
 async function generate(options = {}) {
 	loading.value = true;
-	rows.value = rows.value?.length
-		? rows.value
-		: (await store.fetchComponentData(COMPONENT_IDS.healthAuditViolation)) || [];
+	const [healthAudit, foodAudit, market, water] = await Promise.all([
+		store.fetchComponentData(COMPONENT_IDS.healthAuditViolation),
+		store.fetchComponentData(COMPONENT_IDS.foodAuditViolation),
+		store.fetchComponentData(COMPONENT_IDS.market),
+		store.fetchComponentData(COMPONENT_IDS.waterQuality),
+	]);
+	context.value = buildSummaryContext("政策分析總結", {
+		riskHotspots: rankRows(healthAudit, { limit: 6 }),
+		auditPriority: computePeriodDelta(healthAudit, { limit: 6 }),
+		trendFactors: [
+			...computePeriodDelta(foodAudit, { groupKey: "product_category", limit: 4 }),
+			...computePeriodDelta(water, { limit: 4 }),
+		],
+		eventScope: rankRows(market, { limit: 4 }),
+	});
 	await store.fetchLLMSuggestion(featureKey, {
 		context: {
-			topItems: topRows(rows.value, 5),
-			task: "政策分析改善建議",
+			...context.value,
+			task: "政策分析改善建議：先總結，再列政策優先事項。",
 		},
 	}, options);
 	loading.value = false;

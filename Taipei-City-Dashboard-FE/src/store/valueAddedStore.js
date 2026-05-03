@@ -7,7 +7,7 @@ import {
 	localSuggestion,
 } from "../components/value-added/valueAddedAnalytics";
 
-const LLM_SYSTEM_PROMPT = `你是臺北城市儀表板的食安加值服務分析助理。請只根據使用者提供的資料摘要、輪廓與任務回答，不要編造未提供的數字。輸出繁體中文，給 3 到 5 點可執行建議，語氣專業精簡。`;
+const LLM_SYSTEM_PROMPT = `你是臺北城市儀表板的食安加值服務分析助理。請只根據使用者提供的表格摘要、輪廓與任務回答，不要編造未提供的數字。輸出繁體中文，先給一段總結，再給 3 到 5 點可執行建議。若資料不足，必須明確指出缺口與下一步要補的資料。`;
 const PROFILE_CHAT_SYSTEM_PROMPT = `你是臺北城市儀表板「加值服務」的輪廓訪談助理。你的任務是用自然聊天取得使用者屬於 B/C/G 哪一端，以及該端必要資訊。
 
 三種端點：
@@ -31,6 +31,8 @@ const PROFILE_CHAT_SYSTEM_PROMPT = `你是臺北城市儀表板「加值服務�
     "allergens": [],
     "foodSafetySensitivityTypes": [],
     "businessCategory": "",
+    "userLocation": null,
+    "dateRangeText": "",
     "notes": "",
     "isComplete": false
   }
@@ -46,6 +48,8 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 		allergens: [],
 		foodSafetySensitivityTypes: [],
 		businessCategory: "",
+		userLocation: null,
+		dateRangeText: "",
 		notes: "",
 		isComplete: false,
 	});
@@ -83,6 +87,8 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 			allergens: [],
 			foodSafetySensitivityTypes: [],
 			businessCategory: "",
+			userLocation: null,
+			dateRangeText: "",
 			notes: "",
 			isComplete: false,
 		}, { preserveExisting: false });
@@ -90,7 +96,8 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 
 	async function fetchComponentData(id, options = {}) {
 		const city = options.city || "metrotaipei";
-		const cacheKey = `${id}:${city}`;
+		const timeKey = [options.time_from, options.time_to, options.dateRangeText].filter(Boolean).join(":");
+		const cacheKey = `${id}:${city}:${timeKey}`;
 		if (componentCache.has(cacheKey)) {
 			return componentCache.get(cacheKey);
 		}
@@ -99,7 +106,11 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 
 		try {
 			const res = await http.get(`/component/${id}/chart`, {
-				params: { city },
+				params: {
+					city,
+					time_from: options.time_from,
+					time_to: options.time_to,
+				},
 			});
 			componentCache.set(cacheKey, res.data);
 			return res.data;
@@ -231,6 +242,8 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 				allergens: profile.allergens || [],
 				foodSafetySensitivityTypes: profile.foodSafetySensitivityTypes || [],
 				businessCategory: profile.businessCategory || "",
+				userLocation: profile.userLocation || null,
+				dateRangeText: profile.dateRangeText || "",
 				notes: profile.notes || "",
 			},
 			dataContext: context,
@@ -290,6 +303,8 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 				preserveExisting
 			),
 			businessCategory: profile.businessCategory || userProfile.businessCategory || "",
+			userLocation: normalizeLocation(profile.userLocation ?? userProfile.userLocation),
+			dateRangeText: profile.dateRangeText ?? userProfile.dateRangeText ?? "",
 			notes: profile.notes || userProfile.notes || "",
 			isComplete: Boolean(profile.isComplete ?? userProfile.isComplete),
 		};
@@ -302,6 +317,17 @@ export const useValueAddedStore = defineStore("valueAdded", () => {
 		}
 
 		return normalized;
+	}
+
+	function normalizeLocation(value) {
+		if (!value) return null;
+		if (typeof value === "object") {
+			const lat = Number(value.lat);
+			const lng = Number(value.lng);
+			return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+		}
+		const parts = String(value).split(/[,，\s]+/).map(Number).filter((item) => Number.isFinite(item));
+		return parts.length >= 2 ? { lat: parts[0], lng: parts[1] } : null;
 	}
 
 	function normalizeProfileList(nextValue, currentValue, preserveExisting) {

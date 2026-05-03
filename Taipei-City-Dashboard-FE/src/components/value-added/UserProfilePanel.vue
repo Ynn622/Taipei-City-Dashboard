@@ -16,6 +16,8 @@ const inputText = ref("");
 const loading = ref(false);
 const chatBody = ref(null);
 const messages = ref([]);
+const locationText = ref("");
+const dateRangeText = ref("");
 
 const initialMessage = "你好，我會用幾個問題幫你建立加值服務輪廓。你是民眾、餐飲業者，還是政府/治理單位？";
 
@@ -46,6 +48,10 @@ watch(
 		if (!isOpen) return;
 		messages.value = [{ role: "assistant", content: initialMessage }];
 		inputText.value = "";
+		locationText.value = store.userProfile.userLocation
+			? `${store.userProfile.userLocation.lat}, ${store.userProfile.userLocation.lng}`
+			: "";
+		dateRangeText.value = store.userProfile.dateRangeText || "";
 		await scrollToBottom();
 	},
 	{ immediate: true }
@@ -78,10 +84,32 @@ function resetConversation() {
 	store.resetProfile();
 	messages.value = [{ role: "assistant", content: initialMessage }];
 	inputText.value = "";
+	locationText.value = "";
+	dateRangeText.value = "";
 }
 
 function close() {
 	emit("close");
+}
+
+function saveProfileOptions() {
+	store.saveProfile({
+		userLocation: parseLocation(locationText.value),
+		dateRangeText: dateRangeText.value.trim(),
+	});
+}
+
+function parseLocation(value) {
+	const parts = value.split(/[,，\s]+/).map(Number).filter((item) => Number.isFinite(item));
+	return parts.length >= 2 ? { lat: parts[0], lng: parts[1] } : null;
+}
+
+function useBrowserLocation() {
+	if (!navigator.geolocation) return;
+	navigator.geolocation.getCurrentPosition((position) => {
+		locationText.value = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+		saveProfileOptions();
+	});
 }
 
 async function scrollToBottom() {
@@ -183,6 +211,33 @@ async function scrollToBottom() {
               >
                 {{ chip }}
               </span>
+            </div>
+            <div class="profile-fields">
+              <label>
+                <span>目前位置 lat, lng</span>
+                <input
+                  v-model="locationText"
+                  type="text"
+                  placeholder="25.033, 121.565"
+                  @change="saveProfileOptions"
+                >
+              </label>
+              <button
+                type="button"
+                class="locate-btn"
+                @click="useBrowserLocation"
+              >
+                使用定位
+              </button>
+              <label>
+                <span>日期區間</span>
+                <input
+                  v-model="dateRangeText"
+                  type="text"
+                  placeholder="20260101-20260131"
+                  @change="saveProfileOptions"
+                >
+              </label>
             </div>
           </aside>
         </div>
@@ -439,6 +494,39 @@ async function scrollToBottom() {
     padding: 0.42rem 0.62rem;
     font-size: 0.78rem;
     overflow-wrap: anywhere;
+  }
+}
+
+.profile-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    color: var(--color-complement-text);
+    font-size: 0.76rem;
+  }
+
+  input {
+    min-width: 0;
+    border: solid 1px rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    background: rgba(9, 9, 9, 0.35);
+    color: var(--color-normal-text);
+    padding: 0.58rem 0.65rem;
+    outline: none;
+  }
+
+  .locate-btn {
+    border: solid 1px rgba(255, 255, 255, 0.14);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-normal-text);
+    padding: 0.55rem 0.7rem;
+    cursor: pointer;
   }
 }
 
