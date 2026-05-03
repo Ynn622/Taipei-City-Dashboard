@@ -13,6 +13,10 @@ const props = defineProps({
 		type: Array,
 		default: () => [],
 	},
+	lines: {
+		type: Array,
+		default: () => [],
+	},
 	districts: {
 		type: Array,
 		default: () => [],
@@ -42,7 +46,7 @@ let map = null;
 let resizeObserver = null;
 
 const hasMapToken = computed(() => Boolean(accessToken));
-const hasGeoData = computed(() => pointFeatures.value.length > 0 || circleFeatures.value.length > 0 || districtFeatures.value.length > 0);
+const hasGeoData = computed(() => pointFeatures.value.length > 0 || circleFeatures.value.length > 0 || lineFeatures.value.length > 0 || districtFeatures.value.length > 0);
 
 const pointFeatures = computed(() => props.points
 	.filter((item) => isValidCoordinate(item))
@@ -73,6 +77,28 @@ const circleFeatures = computed(() => props.circles
 		},
 	})));
 
+const lineFeatures = computed(() => props.lines
+	.map((item) => {
+		const coordinates = lineCoordinates(item);
+		if (!coordinates) return null;
+		return {
+			type: "Feature",
+			geometry: {
+				type: "LineString",
+				coordinates,
+			},
+			properties: {
+				label: item.label || "",
+				value: Number(item.value || 0),
+				color: item.color || "#72C6A4",
+				opacity: Number(item.opacity ?? 0.78),
+				width: Number(item.width || 2.5),
+				isSelected: item.label === props.selectedLabel,
+			},
+		};
+	})
+	.filter(Boolean));
+
 const pointCollection = computed(() => ({
 	type: "FeatureCollection",
 	features: pointFeatures.value,
@@ -81,6 +107,11 @@ const pointCollection = computed(() => ({
 const circleCollection = computed(() => ({
 	type: "FeatureCollection",
 	features: circleFeatures.value,
+}));
+
+const lineCollection = computed(() => ({
+	type: "FeatureCollection",
+	features: lineFeatures.value,
 }));
 
 const districtFeatures = computed(() => {
@@ -155,7 +186,7 @@ onBeforeUnmount(() => {
 });
 
 watch(
-	[pointCollection, circleCollection, districtCollection],
+	[pointCollection, circleCollection, lineCollection, districtCollection],
 	() => {
 		updateData();
 		fitToData();
@@ -179,6 +210,10 @@ function addLayers() {
 	map.addSource("value-added-circles", {
 		type: "geojson",
 		data: circleCollection.value,
+	});
+	map.addSource("value-added-lines", {
+		type: "geojson",
+		data: lineCollection.value,
 	});
 	map.addSource("value-added-points", {
 		type: "geojson",
@@ -237,6 +272,30 @@ function addLayers() {
 		},
 	});
 	map.addLayer({
+		id: "value-added-lines",
+		type: "line",
+		source: "value-added-lines",
+		layout: {
+			"line-cap": "round",
+			"line-join": "round",
+		},
+		paint: {
+			"line-color": ["get", "color"],
+			"line-opacity": [
+				"case",
+				["get", "isSelected"],
+				1,
+				["get", "opacity"],
+			],
+			"line-width": [
+				"case",
+				["get", "isSelected"],
+				["+", ["get", "width"], 1.5],
+				["get", "width"],
+			],
+		},
+	});
+	map.addLayer({
 		id: "value-added-points",
 		type: "circle",
 		source: "value-added-points",
@@ -282,6 +341,7 @@ function updateData() {
 	if (!mapReady.value || !map) return;
 	map.getSource("value-added-points")?.setData(pointCollection.value);
 	map.getSource("value-added-circles")?.setData(circleCollection.value);
+	map.getSource("value-added-lines")?.setData(lineCollection.value);
 	map.getSource("value-added-districts")?.setData(districtCollection.value);
 }
 
@@ -290,6 +350,9 @@ function fitToData() {
 	const bounds = new mapboxGl.LngLatBounds();
 	districtFeatures.value.forEach((feature) => extendBoundsByGeometry(bounds, feature.geometry));
 	pointFeatures.value.forEach((feature) => bounds.extend(feature.geometry.coordinates));
+	lineFeatures.value.forEach((feature) => {
+		feature.geometry.coordinates.forEach((coordinate) => bounds.extend(coordinate));
+	});
 	circleFeatures.value.forEach((feature) => {
 		feature.geometry.coordinates[0].forEach((coordinate) => bounds.extend(coordinate));
 	});
@@ -315,7 +378,7 @@ async function fetchDistrictBoundary() {
 
 function bindLayerInteractions() {
 	if (!map) return;
-	["value-added-points", "value-added-district-fill"].forEach((layerId) => {
+	["value-added-points", "value-added-lines", "value-added-district-fill"].forEach((layerId) => {
 		map.on("click", layerId, (event) => {
 			const feature = event.features?.[0];
 			if (feature?.properties?.label) {
@@ -348,6 +411,22 @@ function isValidCoordinate(item) {
 	const lat = Number(item?.lat);
 	const lng = Number(item?.lng);
 	return Number.isFinite(lat) && Number.isFinite(lng);
+}
+
+function lineCoordinates(item) {
+	if (Array.isArray(item?.coordinates) && item.coordinates.length >= 2) {
+		const coordinates = item.coordinates
+			.map((coordinate) => Array.isArray(coordinate) ? coordinate.map(Number) : [])
+			.filter((coordinate) => coordinate.length >= 2 && Number.isFinite(coordinate[0]) && Number.isFinite(coordinate[1]));
+		return coordinates.length >= 2 ? coordinates : null;
+	}
+	const from = item?.from;
+	const to = item?.to;
+	if (!isValidCoordinate(from) || !isValidCoordinate(to)) return null;
+	return [
+		[Number(from.lng), Number(from.lat)],
+		[Number(to.lng), Number(to.lat)],
+	];
 }
 
 function circlePolygon(center, radiusKm, steps = 72) {

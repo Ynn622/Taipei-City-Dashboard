@@ -326,8 +326,12 @@ export function computeFoodSafetyRisk(options = {}) {
 	const support = Math.max(Number(options.support || 0), 0);
 	const water = Math.max(Number(options.water || 0), 0);
 	const infectious = Math.max(Number(options.infectious || 0), 0);
-	const raw = support * 2 - violations * 1.2 - water * 0.15 - infectious * 0.001;
-	const score = Math.max(0, Math.min(100, Math.round(55 + raw)));
+	const supportBoost = Math.min(22, Math.log1p(support) * 5);
+	const violationPenalty = Math.min(58, Math.log1p(violations) * 5.5);
+	const waterPenalty = Math.min(12, water * 0.08);
+	const infectiousPenalty = Math.min(10, infectious * 0.0003);
+	const raw = 68 + supportBoost - violationPenalty - waterPenalty - infectiousPenalty;
+	const score = Math.max(0, Math.min(100, Math.round(raw)));
 	const level = score >= 75 ? "低風險" : score >= 45 ? "中風險" : "高風險";
 	return { score, level, support, violations, water, infectious };
 }

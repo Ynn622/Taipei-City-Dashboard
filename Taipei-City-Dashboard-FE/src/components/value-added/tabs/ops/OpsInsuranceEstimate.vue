@@ -16,7 +16,7 @@ onMounted(async () => {
 		store.fetchComponentData(COMPONENT_IDS.healthAuditViolation),
 	]);
 	helpRows.value = help;
-	violationRows.value = { rawRows: [...topRows(foodAudit, 99), ...topRows(healthAudit, 99)] };
+	violationRows.value = [...topRows(foodAudit, 99), ...topRows(healthAudit, 99)];
 	loading.value = false;
 });
 
