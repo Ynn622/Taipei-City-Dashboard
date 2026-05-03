@@ -34,7 +34,7 @@ CREATE OR REPLACE FUNCTION update_food_allergen_geometry()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.lat IS NOT NULL AND NEW.lon IS NOT NULL THEN
-        NEW.wkb_geometry = ST_SetSRID(ST_MakePoint(NEW.lon, NEW.lat), 4326);
+        NEW.wkb_geometry = public.ST_SetSRID(public.ST_MakePoint(NEW.lon, NEW.lat), 4326);
     END IF;
     RETURN NEW;
 END;
@@ -319,6 +319,7 @@ END $$;
 -- and keep map popup fields focused on point-level details.
 DO $$
 DECLARE
+  v_map_id integer;
   v_tpe_map_id integer;
   v_metro_map_id integer;
 BEGIN
@@ -327,6 +328,11 @@ BEGIN
       color = ARRAY['#ED6A45', '#4CB495', '#F2C94C', '#2D9CDB', '#9B51E0', '#EB5757', '#56CCF2', '#F2994A'],
       types = ARRAY['MapLegend', 'DonutChart']
   WHERE "index" = 'food_allergen_classification';
+
+  SELECT id INTO v_map_id
+  FROM public.component_maps
+  WHERE "index" = 'food_allergen_classification'
+  LIMIT 1;
 
   UPDATE public.component_maps
   SET "index" = 'food_allergen_classification_tpe',

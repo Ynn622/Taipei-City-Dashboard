@@ -2,15 +2,18 @@ from operators.common_pipeline import CommonDag
 from airflow.models import Variable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
+import logging
 import random
 import json
 import urllib.parse
 import time
 import requests
 
+logger = logging.getLogger(__name__)
+
 # Configuration
 OPEN_DATA_URL = "https://data.taipei/api/v1/dataset/29869b6f-1cd3-4ce8-8c78-eb85aeea8583"
-TOWIN_API_URL = "http://localhost:3011/search"
+TOWIN_API_URL = Variable.get("TOWIN_API_URL", default_var="http://localhost:3011/search")
 SAMPLE_SIZE_PER_COMPANY = 30
 LLM_BATCH_SIZE = 35
 MAX_CONCURRENT = 10
@@ -21,9 +24,10 @@ def _food_allergen_classification(**kwargs):
     from sqlalchemy import create_engine
     from utils.extract_stage import download_file
     from utils.load_stage import (
-        save_dataframe_to_postgresql,
+        save_geodataframe_to_postgresql,
         update_lasttime_in_data_to_dataset_info,
     )
+    from utils.transform_geometry import add_point_wkbgeometry_column_to_df
 
     def fetch_all_records():
         all_records = []
@@ -82,7 +86,7 @@ def _food_allergen_classification(**kwargs):
                     elif "新北" in county: county = "新北市"
                 return result.get("lat"), result.get("lon"), county
         except Exception as e:
-            print(f"Geocode error for {brand_name}: {e}")
+            logger.error(f"Geocode error for {brand_name}: {e}")
         return None, None, None
 
     def classify_allergens_llm(products_batch, api_url, api_key, model):
@@ -150,26 +154,35 @@ def _food_allergen_classification(**kwargs):
                     pass
             except Exception as e:
                 if attempt < 2:
-                    print(f"  Retry batch after error: {e}")
+                    logger.error(f"Retry batch after error: {e}")
                     time.sleep(5)
                     continue
-                print(f"  Batch failed after 3 attempts: {e}")
+                logger.error(f"Batch failed after 3 attempts: {e}")
 
-        return [{"has_allergens": False, "allergens": []} for _ in products_batch]
+        raise RuntimeError(
+            f"LLM classification failed after 3 attempts for batch of {len(products_batch)} products."
+        )
 
     def chunk_list(lst, chunk_size):
         for i in range(0, len(lst), chunk_size):
             yield lst[i : i + chunk_size]
 
+    api_url = Variable.get("TWCC_API_URL", default_var="https://api-ams.twcc.ai/api")
+    api_key = Variable.get("TWCC_API_KEY", default_var="")
+    model = Variable.get("TWCC_MODEL", default_var="llama3.3-ffm-70b-16k-chat")
+
+    if not api_key:
+        raise ValueError("TWCC_API_KEY is not set in Airflow Variables.")
+
     # 1. Extract
-    print("Step 1: Fetching all records from API...")
+    logger.info("Step 1: Fetching all records from API...")
     records = fetch_all_records()
-    print(f"  Total records fetched: {len(records)}")
+    logger.info(f"Total records fetched: {len(records)}")
 
     # 2. Transform - aggregate
-    print("Step 2: Aggregating by company and product...")
+    logger.info("Step 2: Aggregating by company and product...")
     products = aggregate_by_company_product(records)
-    print(f"  Unique products: {len(products)}")
+    logger.info(f"Unique products: {len(products)}")
 
     # Group by company
     company_groups = {}
@@ -179,7 +192,7 @@ def _food_allergen_classification(**kwargs):
             company_groups[company] = []
         company_groups[company].append(p)
 
-    print(f"  Total companies: {len(company_groups)}")
+    logger.info(f"Total companies: {len(company_groups)}")
 
     # Sample
     sampled_products = []
@@ -187,10 +200,10 @@ def _food_allergen_classification(**kwargs):
         sampled = sample_products(prods, SAMPLE_SIZE_PER_COMPANY)
         sampled_products.extend(sampled)
 
-    print(f"  Sampled products: {len(sampled_products)}")
+    logger.info(f"Sampled products: {len(sampled_products)}")
 
     # 3. Geocode
-    print("Step 3: Geocoding brand names...")
+    logger.info("Step 3: Geocoding brand names...")
     brand_coords = {}
     for company, prods in company_groups.items():
         brand = prods[0]["brand_name"] if prods else company
@@ -199,16 +212,13 @@ def _food_allergen_classification(**kwargs):
             brand_coords[brand] = (lat, lon, county)
             time.sleep(0.1)
 
-    print(f"  Brands geocoded: {len(brand_coords)}")
+    logger.info(f"Brands geocoded: {len(brand_coords)}")
 
     # 4. Classify with LLM (concurrent, max 10 workers)
-    print("Step 4: Classifying allergens with LLM (concurrent)...")
-    api_url = Variable.get("TWCC_API_URL", default_var="https://api-ams.twcc.ai/api")
-    api_key = Variable.get("TWCC_API_KEY", default_var="")
-    model = Variable.get("TWCC_MODEL", default_var="llama3.3-ffm-70b-16k-chat")
+    logger.info("Step 4: Classifying allergens with LLM (concurrent)...")
 
     batches = list(chunk_list(sampled_products, LLM_BATCH_SIZE))
-    print(f"  Total batches: {len(batches)}, Workers: {MAX_CONCURRENT}")
+    logger.info(f"Total batches: {len(batches)}, Workers: {MAX_CONCURRENT}")
 
     llm_results = [None] * len(batches)
     lock = Lock()
@@ -229,16 +239,18 @@ def _food_allergen_classification(**kwargs):
             completed += 1
             if completed % 10 == 0 or completed == len(batches):
                 elapsed = time.time() - start
-                print(f"  Completed {completed}/{len(batches)} batches ({elapsed:.0f}s)")
+                logger.info(f"Completed {completed}/{len(batches)} batches ({elapsed:.0f}s)")
 
     llm_time = time.time() - start
-    print(f"  LLM total time: {llm_time:.1f}s ({llm_time/60:.1f} min)")
+    logger.info(f"LLM total time: {llm_time:.1f}s ({llm_time/60:.1f} min)")
 
     # 5. Merge results
-    print("Step 5: Preparing final data...")
+    logger.info("Step 5: Preparing final data...")
     final_records = []
     flat_results = []
     for r in llm_results:
+        if r is None:
+            raise RuntimeError("LLM classification returned incomplete batch results.")
         flat_results.extend(r)
 
     for product, result in zip(sampled_products, flat_results):
@@ -275,24 +287,35 @@ def _food_allergen_classification(**kwargs):
         )
 
     ready_data = pd.DataFrame(final_records)
-    print(f"  Final records: {len(ready_data)}")
-    print(f"  With coordinates: {ready_data['lat'].notna().sum()}")
-    print(f"  With allergens: {ready_data['has_allergens'].sum()}")
+    lon_series = pd.Series(ready_data["lon"])
+    lat_series = pd.Series(ready_data["lat"])
+    ready_data = add_point_wkbgeometry_column_to_df(
+        ready_data, x=lon_series, y=lat_series, from_crs=4326
+    )
+    ready_data = ready_data.drop(columns=["geometry"])
+    logger.info(f"Final records: {len(ready_data)}")
+    logger.info(f"With coordinates: {ready_data['lat'].notna().sum()}")
+    logger.info(f"With allergens: {ready_data['has_allergens'].sum()}")
 
     ready_data_db_uri = kwargs.get("ready_data_db_uri")
     dag_infos = kwargs.get("dag_infos")
+    if dag_infos is None:
+        raise ValueError("dag_infos is required.")
+    if ready_data_db_uri is None:
+        raise ValueError("ready_data_db_uri is required.")
     dag_id = dag_infos.get("dag_id")
     load_behavior = dag_infos.get("load_behavior")
     default_table = dag_infos.get("ready_data_default_table")
     history_table = dag_infos.get("ready_data_history_table")
 
     engine = create_engine(ready_data_db_uri)
-    save_dataframe_to_postgresql(
+    save_geodataframe_to_postgresql(
         engine,
-        data=ready_data,
+        gdata=ready_data,
         load_behavior=load_behavior,
         default_table=default_table,
         history_table=history_table,
+        geometry_type="Point",
     )
     update_lasttime_in_data_to_dataset_info(
         engine,
@@ -300,7 +323,7 @@ def _food_allergen_classification(**kwargs):
         ready_data["data_time"].max(),
     )
 
-    print("Done!")
+    logger.info("Done!")
 
 
 dag = CommonDag(
