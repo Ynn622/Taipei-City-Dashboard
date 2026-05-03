@@ -36,14 +36,30 @@ const tabs = [
 ];
 
 const profileSummary = computed(() => {
-	const { focusDistricts, focusCategories } = valueAddedStore.userProfile;
+	const {
+		audienceType,
+		focusDistricts,
+		focusCategories,
+		allergens,
+		businessCategory,
+	} = valueAddedStore.userProfile;
+	const audienceLabels = {
+		B: "B 端業者",
+		C: "C 端民眾",
+		G: "G 端治理",
+	};
+	const audience = audienceLabels[audienceType] || "尚未設定";
 	const districts = Array.isArray(focusDistricts) && focusDistricts.length
 		? focusDistricts.join("、")
-		: "全市";
-	const categories = Array.isArray(focusCategories) && focusCategories.length
-		? focusCategories.join("、")
-		: "所有類型";
-	return { districts, categories };
+		: "待補所在地";
+	const categories = businessCategory ||
+		(Array.isArray(focusCategories) && focusCategories.length
+			? focusCategories.join("、")
+			: "待補偏好");
+	const allergenText = Array.isArray(allergens) && allergens.length
+		? allergens.join("、")
+		: "未設定";
+	return { audience, districts, categories, allergenText };
 });
 
 const openProfileModal = () => {
@@ -65,41 +81,43 @@ const closeProfileModal = () => {
               <span>add_chart</span>
             </div>
             <div class="title-area">
-              <p class="eyebrow">
-                VALUE-ADDED SERVICES
-              </p>
               <h1>加值服務</h1>
-              <p class="subtitle">
-                食安資料、稽查風險與民眾生活資訊的整合工作台。
-              </p>
             </div>
           </div>
 
           <div class="profile-panel">
             <div class="profile-heading">
-              <span class="material-icon">account_circle</span>
-              <div>
-                <span class="chip-label">目前輪廓</span>
-                <strong>{{ valueAddedStore.userProfile.name || "尚未設定" }}</strong>
+              <div class="profile-title">
+                <span class="material-icon">account_circle</span>
+                <div>
+                  <span class="chip-label">目前輪廓</span>
+                  <strong>{{ profileSummary.audience }}</strong>
+                </div>
               </div>
+              <button
+                class="open-profile-btn"
+                @click="openProfileModal"
+              >
+                <span>tune</span>
+                設定
+              </button>
             </div>
             <div class="profile-details">
               <div>
-                <span>行政區</span>
+                <span>所在地</span>
                 <strong>{{ profileSummary.districts }}</strong>
               </div>
               <div>
-                <span>食安類型</span>
+                <span>{{ valueAddedStore.userProfile.audienceType === "C" ? "過敏原" : "類型" }}</span>
+                <strong>
+                  {{ valueAddedStore.userProfile.audienceType === "C" ? profileSummary.allergenText : profileSummary.categories }}
+                </strong>
+              </div>
+              <div v-if="valueAddedStore.userProfile.audienceType === 'C'">
+                <span>敏感類型</span>
                 <strong>{{ profileSummary.categories }}</strong>
               </div>
             </div>
-            <button
-              class="open-profile-btn"
-              @click="openProfileModal"
-            >
-              <span>tune</span>
-              設定輪廓
-            </button>
           </div>
         </div>
         <FeatureMetricsBar />
@@ -155,7 +173,7 @@ const closeProfileModal = () => {
 
   .value-added-top {
     display: grid;
-    grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.65fr);
+    grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
     gap: 1rem;
     align-items: stretch;
   }
@@ -239,11 +257,20 @@ const closeProfileModal = () => {
       .profile-heading {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 0.58rem;
+
+        .profile-title {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 0.58rem;
+        }
 
         .material-icon {
           width: 34px;
           height: 34px;
+          flex: 0 0 34px;
           display: grid;
           place-items: center;
           border-radius: 8px;
@@ -270,14 +297,18 @@ const closeProfileModal = () => {
 
       .profile-details {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.5rem;
 
         div {
           min-width: 0;
-          padding: 0.58rem 0.65rem;
+          min-height: 72px;
+          padding: 0.78rem 0.78rem;
           border-radius: 7px;
           background: rgba(255, 255, 255, 0.045);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
         }
 
         span,
@@ -288,12 +319,12 @@ const closeProfileModal = () => {
         span {
           margin-bottom: 0.22rem;
           color: var(--color-complement-text);
-          font-size: 0.72rem;
+          font-size: 0.78rem;
         }
 
         strong {
           color: var(--color-normal-text);
-          font-size: 0.86rem;
+          font-size: 1rem;
           line-height: 1.35;
           overflow-wrap: anywhere;
         }
@@ -304,12 +335,13 @@ const closeProfileModal = () => {
         align-items: center;
         justify-content: center;
         gap: 0.35rem;
-        min-height: 38px;
+        flex: 0 0 auto;
+        min-height: 34px;
         border: solid 1px rgba(255, 255, 255, 0.14);
         background: rgba(255, 255, 255, 0.06);
         color: var(--color-normal-text);
         font-weight: 600;
-        padding: 0.58rem 0.8rem;
+        padding: 0.45rem 0.68rem;
         border-radius: 7px;
         cursor: pointer;
         transition: background 0.2s ease, border-color 0.2s ease;
@@ -437,16 +469,16 @@ const closeProfileModal = () => {
     width: calc(100% - (var(--font-s) * 2));
     margin: var(--font-s) var(--font-s);
 
-    .value-added-top {
-      grid-template-columns: 1fr;
-    }
-
     .value-added-tabs {
       grid-template-columns: 1fr;
     }
   }
 
   @media (max-width: 640px) {
+    .value-added-top {
+      grid-template-columns: 1fr;
+    }
+
     .hero-panel {
       .hero-main {
         flex-direction: column;

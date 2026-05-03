@@ -3,51 +3,22 @@ import { computed, onMounted, ref } from "vue";
 import { useValueAddedStore } from "../../store/valueAddedStore";
 import {
 	COMPONENT_IDS,
-	highRiskAreaComparison,
 	metricComparison,
-	rowLabel,
-	unwrapRows,
 } from "./valueAddedAnalytics";
 
 const store = useValueAddedStore();
 const loading = ref(true);
 const datasets = ref({
-	healthAudit: [],
-	foodAudit: [],
-	foodSource: [],
 	infectious: [],
 });
 
 onMounted(async () => {
-	const [healthAudit, foodAudit, foodSource, infectious] = await Promise.all([
-		store.fetchComponentData(COMPONENT_IDS.healthAuditViolation),
-		store.fetchComponentData(COMPONENT_IDS.foodAuditViolation),
-		store.fetchComponentData(COMPONENT_IDS.foodSource),
-		store.fetchComponentData(COMPONENT_IDS.infectious),
-	]);
-	datasets.value = { healthAudit, foodAudit, foodSource, infectious };
+	const infectious = await store.fetchComponentData(COMPONENT_IDS.infectious);
+	datasets.value = { infectious };
 	loading.value = false;
 });
 
 const metrics = computed(() => {
-	const allViolationRows = [
-		...rowsForMetric(datasets.value.healthAudit),
-		...rowsForMetric(datasets.value.foodAudit),
-	];
-	const violationRows = filterRowsByProfile(allViolationRows);
-	const violations = metricComparison(
-		{ rawRows: violationRows },
-		{ unit: " 件", mode: "length" }
-	);
-	const highRiskAreas = highRiskAreaComparison(
-		{ rawRows: violationRows },
-		{ threshold: 1, groupKey: "district" }
-	);
-	const suppliers = metricComparison(datasets.value.foodSource, {
-		unit: " 處",
-		mode: "length",
-		static: true,
-	});
 	const diarrhea = metricComparison(datasets.value.infectious, {
 		unit: " 人次",
 		seriesNames: ["門診", "住院", "急診"],
@@ -56,24 +27,6 @@ const metrics = computed(() => {
 
 	return [
 		{
-			label: "雙北違規總數",
-			id: "violation-total",
-			icon: "warning",
-			...violations,
-		},
-		{
-			label: "高風險區域數",
-			id: "high-risk-areas",
-			icon: "location_on",
-			...highRiskAreas,
-		},
-		{
-			label: "優良農場供應商數",
-			id: "good-farms",
-			icon: "verified",
-			...suppliers,
-		},
-		{
 			label: "近期腹瀉就診趨勢",
 			id: "diarrhea-trend",
 			icon: "show_chart",
@@ -81,18 +34,6 @@ const metrics = computed(() => {
 		},
 	];
 });
-
-function rowsForMetric(payload) {
-	return Array.isArray(payload?.rawRows) ? payload.rawRows : unwrapRows(payload);
-}
-
-function filterRowsByProfile(rows) {
-	const districts = Array.isArray(store.userProfile.focusDistricts)
-		? store.userProfile.focusDistricts.filter(Boolean)
-		: [];
-	if (districts.length === 0) return rows;
-	return rows.filter((row) => districts.includes(row?.district || rowLabel(row)));
-}
 </script>
 
 <template>
@@ -147,7 +88,7 @@ function filterRowsByProfile(rows) {
 <style scoped lang="scss">
 .metrics-bar {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.8rem;
   height: 100%;
 
@@ -211,7 +152,7 @@ function filterRowsByProfile(rows) {
 
     .metric-footer {
       display: grid;
-      grid-template-columns: minmax(0, 0.78fr) minmax(120px, 1.22fr);
+      grid-template-columns: 1fr;
       gap: 0.55rem;
       align-items: stretch;
     }
@@ -233,9 +174,9 @@ function filterRowsByProfile(rows) {
       }
 
       &.primary {
-        flex-direction: row;
-        align-items: baseline;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
         gap: 0.7rem;
 
         strong {

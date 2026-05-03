@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useValueAddedStore } from "../../store/valueAddedStore";
 
 const props = defineProps({
@@ -12,57 +12,84 @@ const props = defineProps({
 const emit = defineEmits(["close"]);
 
 const store = useValueAddedStore();
+const inputText = ref("");
+const loading = ref(false);
+const chatBody = ref(null);
+const messages = ref([]);
 
-const localProfile = ref({
-	name: "",
-	focusDistrictsText: "",
-	focusCategoriesText: "",
-	notes: "",
+const initialMessage = "你好，我會用幾個問題幫你建立加值服務輪廓。你是民眾、餐飲業者，還是政府/治理單位？";
+
+const audienceLabel = computed(() => {
+	const labels = {
+		B: "B 端業者",
+		C: "C 端民眾",
+		G: "G 端治理",
+	};
+	return labels[store.userProfile.audienceType] || "尚未判定";
 });
 
-const setLocalProfileFromStore = () => {
-	localProfile.value = {
-		name: store.userProfile.name || "",
-		focusDistrictsText: Array.isArray(store.userProfile.focusDistricts)
-			? store.userProfile.focusDistricts.join(", ")
-			: store.userProfile.focusDistricts || "",
-		focusCategoriesText: Array.isArray(store.userProfile.focusCategories)
-			? store.userProfile.focusCategories.join(", ")
-			: store.userProfile.focusCategories || "",
-		notes: store.userProfile.notes || "",
-	};
-};
+const profileChips = computed(() => {
+	const profile = store.userProfile;
+	const chips = [
+		audienceLabel.value,
+		...(profile.focusDistricts || []),
+		...(profile.allergens || []).map((item) => `過敏原：${item}`),
+		...(profile.foodSafetySensitivityTypes || []).map((item) => `敏感：${item}`),
+		profile.businessCategory ? `餐飲類別：${profile.businessCategory}` : "",
+	].filter(Boolean);
+	return chips.length ? chips : ["等待聊天建立輪廓"];
+});
 
 watch(
 	() => props.open,
-	(isOpen) => {
-		if (isOpen) {
-			setLocalProfileFromStore();
-		}
+	async (isOpen) => {
+		if (!isOpen) return;
+		messages.value = [{ role: "assistant", content: initialMessage }];
+		inputText.value = "";
+		await scrollToBottom();
 	},
 	{ immediate: true }
 );
 
-const parseCommaSeparated = (value) => {
-	return value
-		.split(",")
-		.map((item) => item.trim())
-		.filter((item) => item.length > 0);
-};
+async function submitMessage() {
+	const content = inputText.value.trim();
+	if (!content || loading.value) return;
 
-const save = () => {
-	store.saveProfile({
-		name: localProfile.value.name,
-		focusDistricts: parseCommaSeparated(localProfile.value.focusDistrictsText),
-		focusCategories: parseCommaSeparated(localProfile.value.focusCategoriesText),
-		notes: localProfile.value.notes,
+	messages.value.push({ role: "user", content });
+	inputText.value = "";
+	loading.value = true;
+	await scrollToBottom();
+
+	const result = await store.chatProfileAssistant(messages.value);
+	messages.value.push({
+		role: "assistant",
+		content: result.reply || "我已更新輪廓，還可以繼續補充所在地、過敏原或餐飲類別。",
 	});
-	emit("close");
-};
+	loading.value = false;
+	await scrollToBottom();
+}
 
-const close = () => {
+function useQuickPrompt(text) {
+	inputText.value = text;
+	submitMessage();
+}
+
+function resetConversation() {
+	store.resetProfile();
+	messages.value = [{ role: "assistant", content: initialMessage }];
+	inputText.value = "";
+}
+
+function close() {
 	emit("close");
-};
+}
+
+async function scrollToBottom() {
+	await nextTick();
+	if (chatBody.value) {
+		chatBody.value.scrollTop = chatBody.value.scrollHeight;
+	}
+}
 </script>
 
 <template>
@@ -76,9 +103,9 @@ const close = () => {
         <div class="modal-head">
           <div>
             <p class="eyebrow">
-              PROFILE CONFIGURATION
+              PROFILE CHAT
             </p>
-            <h3>用戶輪廓設定</h3>
+            <h3>用聊天設定輪廓</h3>
           </div>
           <button
             class="icon-btn"
@@ -89,52 +116,89 @@ const close = () => {
           </button>
         </div>
 
-        <div class="panel-content">
-          <div class="form-group">
-            <label>稱呼 / 姓名</label>
-            <input
-              v-model="localProfile.name"
-              type="text"
-              placeholder="例如：張先生"
+        <div class="profile-layout">
+          <section class="chat-panel">
+            <div
+              ref="chatBody"
+              class="chat-body"
             >
-          </div>
-          <div class="form-group">
-            <label>關注行政區</label>
-            <input
-              v-model="localProfile.focusDistrictsText"
-              type="text"
-              placeholder="例如：大安區, 信義區 (逗號分隔)"
+              <div
+                v-for="(message, index) in messages"
+                :key="`${message.role}-${index}`"
+                class="chat-message"
+                :class="message.role"
+              >
+                <span class="message-role">
+                  {{ message.role === "user" ? "你" : "助理" }}
+                </span>
+                <p>{{ message.content }}</p>
+              </div>
+              <div
+                v-if="loading"
+                class="chat-message assistant"
+              >
+                <span class="message-role">助理</span>
+                <p>正在整理輪廓...</p>
+              </div>
+            </div>
+
+            <div class="quick-prompts">
+              <button @click="useQuickPrompt('我是民眾，想設定 C 端輪廓')">
+                C 民眾
+              </button>
+              <button @click="useQuickPrompt('我是餐飲業者，想設定 B 端輪廓')">
+                B 業者
+              </button>
+              <button @click="useQuickPrompt('我是政府或治理單位，想設定 G 端輪廓')">
+                G 治理
+              </button>
+            </div>
+
+            <form
+              class="chat-input-row"
+              @submit.prevent="submitMessage"
             >
-          </div>
-          <div class="form-group">
-            <label>關注食安類型</label>
-            <input
-              v-model="localProfile.focusCategoriesText"
-              type="text"
-              placeholder="例如：餐廳, 市場 (逗號分隔)"
-            >
-          </div>
-          <div class="form-group full-row">
-            <label>備註</label>
-            <textarea
-              v-model="localProfile.notes"
-              placeholder="其他需求或備註..."
-            />
-          </div>
+              <input
+                v-model="inputText"
+                type="text"
+                :disabled="loading"
+                placeholder="例如：我是民眾，住大安區，對海鮮過敏，重視餐廳衛生"
+              >
+              <button
+                type="submit"
+                :disabled="loading || !inputText.trim()"
+              >
+                send
+              </button>
+            </form>
+          </section>
+
+          <aside class="profile-summary">
+            <span class="summary-label">目前輪廓</span>
+            <strong>{{ audienceLabel }}</strong>
+            <div class="chip-list">
+              <span
+                v-for="chip in profileChips"
+                :key="chip"
+              >
+                {{ chip }}
+              </span>
+            </div>
+          </aside>
         </div>
 
         <div class="modal-actions">
           <button
             class="ghost-btn"
-            @click="close"
+            @click="resetConversation"
           >
-            取消
+            清除重來
           </button>
           <button
             class="save-btn"
-            @click="save"
+            @click="close"
           >
-            儲存並更新
+            完成
           </button>
         </div>
       </div>
@@ -155,14 +219,16 @@ const close = () => {
   padding: 1rem;
 
   .profile-modal-panel {
-    width: min(760px, 100%);
+    width: min(880px, 100%);
+    height: min(760px, calc(100vh - 2rem));
     border-radius: 8px;
     border: solid 1px rgba(255, 255, 255, 0.12);
     background: var(--color-component-background);
     box-shadow: 0 18px 54px rgba(0, 0, 0, 0.46);
     padding: var(--font-m);
     color: var(--color-normal-text);
-    position: relative;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 
     .modal-head {
@@ -170,10 +236,10 @@ const close = () => {
       justify-content: space-between;
       align-items: flex-start;
       gap: 0.8rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
 
       .eyebrow {
-        margin: 0 0 0.4rem;
+        margin: 0 0 0.35rem;
         font-size: 0.75rem;
         letter-spacing: 0;
         font-weight: 600;
@@ -209,116 +275,235 @@ const close = () => {
       }
     }
   }
+}
 
-  .panel-content {
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+.profile-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 1rem;
+}
 
-    .form-group {
-      flex: 1 1 calc(50% - 0.6rem);
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+.chat-panel,
+.profile-summary {
+  min-height: 0;
+  border: solid 1px rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(9, 9, 9, 0.24);
+}
 
-      &.full-row {
-        flex-basis: 100%;
-      }
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-      label {
-        font-weight: 600;
-        font-size: 0.85rem;
-        color: var(--color-complement-text);
-        letter-spacing: 0;
-      }
+.chat-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
 
-      input,
-      textarea {
-        padding: 0.78rem 0.85rem;
-        border: solid 1px rgba(255, 255, 255, 0.12);
-        border-radius: 8px;
-        background: rgba(9, 9, 9, 0.35);
-        color: var(--color-normal-text);
-        outline: none;
-        transition: all 0.3s ease;
+.chat-message {
+  max-width: 82%;
+  min-height: fit-content;
+  flex: 0 0 auto;
+  padding: 0.78rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-normal-text);
 
-        &::placeholder {
-          color: rgba(255, 255, 255, 0.3);
-        }
-
-        &:focus {
-          border-color: rgba(255, 255, 255, 0.22);
-          background: rgba(9, 9, 9, 0.48);
-          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
-        }
-      }
-
-      textarea {
-        min-height: 110px;
-        resize: vertical;
-      }
-    }
+  &.user {
+    align-self: flex-end;
+    background: rgba(92, 155, 255, 0.16);
   }
 
-  .modal-actions {
-    margin-top: 1.8rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.8rem;
+  &.assistant {
+    align-self: flex-start;
+  }
 
-    .ghost-btn,
-    .save-btn {
-      border-radius: 6px;
-      padding: 0.65rem 1.2rem;
-      border: 1px solid transparent;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
+  .message-role {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--color-complement-text);
+  }
 
-    .ghost-btn {
-      border-color: rgba(255, 255, 255, 0.15);
-      background: transparent;
-      color: var(--color-complement-text);
+  p {
+    margin: 0;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
 
-      &:hover {
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--color-normal-text);
-      }
-    }
+.quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem 0.85rem;
 
-    .save-btn {
-      border-color: rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.06);
+  button {
+    border: solid 1px rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-complement-text);
+    padding: 0.45rem 0.7rem;
+    cursor: pointer;
+
+    &:hover {
       color: var(--color-normal-text);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.08);
-        transform: translateY(-1px);
-      }
+      background: rgba(255, 255, 255, 0.08);
     }
   }
 }
 
-@media (max-width: 640px) {
-  .profile-modal-overlay {
-    .panel-content {
-      .form-group {
-        flex-basis: 100%;
-      }
+.chat-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem 1rem;
+  border-top: solid 1px rgba(255, 255, 255, 0.08);
+
+  input {
+    min-width: 0;
+    height: 44px;
+    padding: 0.78rem 0.85rem;
+    border: solid 1px rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(9, 9, 9, 0.35);
+    color: var(--color-normal-text);
+    line-height: 1.25;
+    outline: none;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.32);
     }
 
-    .modal-actions {
-      flex-direction: column;
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.22);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+    }
+  }
 
-      .ghost-btn,
-      .save-btn {
-        width: 100%;
-      }
+  button {
+    width: 44px;
+    height: 44px;
+    border: solid 1px rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--color-normal-text);
+    font-family: var(--font-icon);
+    font-size: 1.15rem;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.profile-summary {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+
+  .summary-label {
+    color: var(--color-complement-text);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  strong {
+    font-size: 1.1rem;
+  }
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  span {
+    max-width: 100%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-complement-text);
+    padding: 0.42rem 0.62rem;
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.modal-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+
+  .ghost-btn,
+  .save-btn {
+    border-radius: 6px;
+    padding: 0.65rem 1.2rem;
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .ghost-btn {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: transparent;
+    color: var(--color-complement-text);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--color-normal-text);
+    }
+  }
+
+  .save-btn {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-normal-text);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .profile-modal-overlay {
+    align-items: stretch;
+  }
+
+  .profile-modal-overlay .profile-modal-panel {
+    height: calc(100vh - 2rem);
+  }
+
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-body {
+    min-height: 0;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+
+    .ghost-btn,
+    .save-btn {
+      width: 100%;
     }
   }
 }
