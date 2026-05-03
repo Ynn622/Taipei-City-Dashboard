@@ -59,6 +59,16 @@ import {
 } from "../assets/utilityFunctions/getThematicColor.js";
 import { parseDistrictChartData } from "../dashboardComponent/utilities/districtChartData.js";
 
+const DISTRICT_CHART_MIN_OPACITY = 0.08;
+const DISTRICT_CHART_MAX_OPACITY = 0.65;
+const DISTRICT_CHART_BASE_BEFORE_IDS = [
+	"metrotaipei_town_label",
+	"metrotaipei_village_label",
+	"taipei_building_3d",
+	"metrotaipei_town",
+	"metrotaipei_village",
+];
+
 export const useMapStore = defineStore("map", {
 	state: () => ({
 		// Array of layer IDs that are in the map
@@ -456,6 +466,26 @@ export const useMapStore = defineStore("map", {
 		getDistrictChartLayerId(component) {
 			return `${component.index}-district-chart-${component.city || "metrotaipei"}`;
 		},
+		getDistrictChartBeforeId(layerId) {
+			const thematicLayerId = this.currentLayers.find(
+				(currentLayerId) =>
+					currentLayerId !== layerId &&
+					!currentLayerId.includes("-district-chart-") &&
+					this.map.getLayer(currentLayerId),
+			);
+
+			if (thematicLayerId) return thematicLayerId;
+
+			return DISTRICT_CHART_BASE_BEFORE_IDS.find((beforeId) =>
+				this.map.getLayer(beforeId),
+			);
+		},
+		moveDistrictChartLayerBelowMapLayers(layerId) {
+			const beforeId = this.getDistrictChartBeforeId(layerId);
+			if (beforeId && this.map.getLayer(layerId)) {
+				this.map.moveLayer(layerId, beforeId);
+			}
+		},
 		getDistrictChartBoundaryData(component, boundaryData) {
 			const districtData = parseDistrictChartData(
 				component.chart_config,
@@ -482,8 +512,12 @@ export const useMapStore = defineStore("map", {
 						const value = Number(districtData[district] || 0);
 						const opacity =
 							value === 0 && highest === 0
-								? 0.12
-								: Math.max(0.12, value / highest);
+								? DISTRICT_CHART_MIN_OPACITY
+								: Math.max(
+									DISTRICT_CHART_MIN_OPACITY,
+									(value / highest) *
+										DISTRICT_CHART_MAX_OPACITY,
+								);
 
 						return {
 							...feature,
@@ -537,6 +571,7 @@ export const useMapStore = defineStore("map", {
 						"visibility",
 						"visible",
 					);
+					this.moveDistrictChartLayerBelowMapLayers(layerId);
 				} else {
 					this.map.addLayer({
 						id: layerId,
@@ -547,14 +582,14 @@ export const useMapStore = defineStore("map", {
 							"fill-opacity": [
 								"coalesce",
 								["get", "district_opacity"],
-								0.12,
+								DISTRICT_CHART_MIN_OPACITY,
 							],
 							"fill-outline-color": "#ffffff",
 						},
 						layout: {
 							visibility: "visible",
 						},
-					});
+					}, this.getDistrictChartBeforeId(layerId));
 					this.currentLayers.push(layerId);
 				}
 
