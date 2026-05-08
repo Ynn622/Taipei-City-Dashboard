@@ -1,0 +1,45 @@
+{
+  "dag_infos": {
+    "dag_id": "fda_good_restaurants",
+    "start_date": "2026-05-02",
+    "schedule_interval": "0 5 1 * *",
+    "catchup": false,
+    "tags": [
+      "fda_good_restaurants",
+      "食安健康",
+      "優良餐廳",
+      "臺北市",
+      "新北市"
+    ],
+    "description": "Monthly update of Taipei and New Taipei excellent/good restaurant award locations.",
+    "default_args": {
+      "owner": "airflow",
+      "email": [
+        "DEFAULT_EMAIL_LIST"
+      ],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "fda_good_restaurants",
+    "ready_data_history_table": "fda_good_restaurants_history",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "current+history"
+  },
+  "data_infos": {
+    "name_cn": "雙北優良餐廳",
+    "airflow_update_freq": "05:00 first day every month",
+    "source": "https://foodtracer.health.ntpc.gov.tw/w/foodtracer/FoodAward; https://data.gov.tw/dataset/145738",
+    "source_type": "New Taipei FoodTracer API and Taipei CSV",
+    "source_dept": "新北市政府衛生局、臺北市政府衛生局",
+    "gis_format": "Point",
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "彙整臺北市與新北市最新年度評核結果為優或良之優良餐廳，包含店名、地址、經緯度與評分結果。",
+    "etl_description": "新北市由 FoodTracer POST API 取得含經緯度 JSON，解析最新年度與優/良結果；臺北市由 CSV 取得當年度資料，改用不需 API key 的開放式地理編碼補上座標；最後僅保留資料來源最新年度資料並寫入 PostGIS。",
+    "sensitivity": "public"
+  }
+}

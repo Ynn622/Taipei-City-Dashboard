@@ -1,0 +1,46 @@
+{
+  "dag_infos": {
+    "dag_id": "food_safety_death_share",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@yearly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "death_share",
+      "death_cause",
+      "臺北市",
+      "新北市",
+      "Taipei-City"
+    ],
+    "description": "Taipei and New Taipei 10-year major death-cause share time series for food safety health dashboard.",
+    "default_args": {
+      "owner": "airflow",
+      "email": [
+        "DEFAULT_EMAIL_LIST"
+      ],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "food_safety_death_cause_share",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "主要死因死亡占比",
+    "airflow_update_freq": "@yearly",
+    "source": "https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=8100&kind=21&type=0&funid=A05032801&cycle=4&outmode=12&compmode=0&outkind=1&deflst=2&nzo=1; https://data.ntpc.gov.tw/datasets/e490f906-93f0-4fc3-b5b3-fe34fb31d1db",
+    "source_type": "Taipei statistics CSV; New Taipei open data API",
+    "source_dept": "臺北市政府主計處、新北市政府主計處",
+    "gis_format": "",
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 0,
+    "dataset_description": "彙整臺北市主要死因死亡率與新北市主要死因死亡人數，轉換為主要死因占所有死亡原因之百分比，供主圖呈現近 10 年趨勢。",
+    "etl_description": "下載臺北市主計處 CSV 與新北市開放資料 API，標準化年度、城市、死因與數值欄位，計算死亡占比並產生各城市最新年度往前 10 年的主圖時間序列資料。",
+    "sensitivity": "public"
+  }
+}

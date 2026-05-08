@@ -1,7 +1,7 @@
 <!-- Developed by Taipei Urban Intelligence Center 2023-2024-->
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import bus from "../assets/map/bus.png";
 import metro from "../assets/map/metro.png";
 import triangle_green from "../assets/map/triangle_green.png";
@@ -16,6 +16,7 @@ import live from "../assets/map/live.png";
 
 const props = defineProps([
 	"chart_config",
+	"activeChart",
 	"series",
 	"map_config",
 	"map_filter",
@@ -60,6 +61,16 @@ function returnIcon(name) {
 
 const selectedIndex = ref(null);
 
+const legendSeries = computed(() => {
+	return props.series.filter((item) => item.type !== "donut");
+});
+
+function getLegendColor(item, index) {
+	if (item.name === "有過敏原") return "#ED6A45";
+	if (item.name === "無過敏原") return "#4CB495";
+	return props.chart_config.color[index];
+}
+
 function handleDataSelection(index) {
 	if (!props.map_filter || !props.map_filter_on) {
 		return;
@@ -71,13 +82,13 @@ function handleDataSelection(index) {
 				"filterByParam",
 				props.map_filter,
 				props.map_config,
-				props.series[index].name,
+				legendSeries.value[index].name,
 				null
 			);
 		}
 		// Supports filtering by xAxis
 		else if (props.map_filter.mode === "byLayer") {
-			emits("filterByLayer", props.map_config, props.series[index].name);
+			emits("filterByLayer", props.map_config, legendSeries.value[index].name);
 		}
 		selectedIndex.value = index;
 	} else {
@@ -92,10 +103,13 @@ function handleDataSelection(index) {
 </script>
 
 <template>
-  <div class="maplegend">
+  <div
+    v-if="activeChart === 'MapLegend'"
+    class="maplegend"
+  >
     <div class="maplegend-legend">
       <button
-        v-for="(item, index) in series"
+        v-for="(item, index) in legendSeries"
         :key="item.name"
         :class="{
           'maplegend-legend-item': true,
@@ -109,7 +123,7 @@ function handleDataSelection(index) {
         <div
           v-if="item.type !== 'symbol'"
           :style="{
-            backgroundColor: `${chart_config.color[index]}`,
+            backgroundColor: getLegendColor(item, index),
             height: item.type === 'line' ? '0.4rem' : '1rem',
             borderRadius: item.type === 'circle' ? '50%' : '2px',
           }"

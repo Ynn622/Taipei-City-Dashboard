@@ -57,6 +57,17 @@ import {
 	getCrowdColor,
 	mrtLineColor,
 } from "../assets/utilityFunctions/getThematicColor.js";
+import { parseDistrictChartData } from "../dashboardComponent/utilities/districtChartData.js";
+
+const DISTRICT_CHART_MIN_OPACITY = 0.08;
+const DISTRICT_CHART_MAX_OPACITY = 0.65;
+const DISTRICT_CHART_BASE_BEFORE_IDS = [
+	"metrotaipei_town_label",
+	"metrotaipei_village_label",
+	"taipei_building_3d",
+	"metrotaipei_town",
+	"metrotaipei_village",
+];
 
 export const useMapStore = defineStore("map", {
 	state: () => ({
@@ -206,11 +217,12 @@ export const useMapStore = defineStore("map", {
 						.addLayer(metroTaipeiVillage);
 				});
 			// Taipei 3D Buildings
-			if (!authStore.isMobileDevice) {
+			const taipeiBuildingTileUrl = import.meta.env.VITE_MAPBOXTILE;
+			if (!authStore.isMobileDevice && taipeiBuildingTileUrl) {
 				this.map
 					.addSource("taipei_building_3d_source", {
 						type: "vector",
-						url: import.meta.env.VITE_MAPBOXTILE,
+						url: taipeiBuildingTileUrl,
 					})
 					.addLayer(TaipeiBuilding);
 			}
@@ -450,6 +462,180 @@ export const useMapStore = defineStore("map", {
 					this.addRasterSource(appendLayer);
 				}
 			});
+		},
+		getDistrictChartLayerId(component) {
+			return `${component.index}-district-chart-${component.city || "metrotaipei"}`;
+		},
+		getDistrictChartBeforeId(layerId) {
+			const thematicLayerId = this.currentLayers.find(
+				(currentLayerId) =>
+					currentLayerId !== layerId &&
+					!currentLayerId.includes("-district-chart-") &&
+					this.map.getLayer(currentLayerId),
+			);
+
+			if (thematicLayerId) return thematicLayerId;
+
+			return DISTRICT_CHART_BASE_BEFORE_IDS.find((beforeId) =>
+				this.map.getLayer(beforeId),
+			);
+		},
+		moveDistrictChartLayerBelowMapLayers(layerId) {
+			const beforeId = this.getDistrictChartBeforeId(layerId);
+			if (beforeId && this.map.getLayer(layerId)) {
+				this.map.moveLayer(layerId, beforeId);
+			}
+		},
+		getDistrictChartBoundaryData(component, boundaryData) {
+			const districtData = parseDistrictChartData(
+				component.chart_config,
+				component.chart_data || [],
+			);
+			const cityFilter = {
+				taipei: "臺北市",
+				newtaipei: "新北市",
+				newTaipei: "新北市",
+			}[component.city];
+			const unit = component.chart_config?.unit || "";
+			const highest = districtData.highest || 0;
+
+			return {
+				type: "FeatureCollection",
+				features: boundaryData.features
+					.filter(
+						(feature) =>
+							!cityFilter ||
+							feature.properties?.PNAME === cityFilter,
+					)
+					.map((feature) => {
+						const district = feature.properties?.TNAME;
+						const value = Number(districtData[district] || 0);
+						const opacity =
+							value === 0 && highest === 0
+								? DISTRICT_CHART_MIN_OPACITY
+								: Math.max(
+									DISTRICT_CHART_MIN_OPACITY,
+									(value / highest) *
+										DISTRICT_CHART_MAX_OPACITY,
+								);
+
+						return {
+							...feature,
+							properties: {
+								...feature.properties,
+								district_name: district,
+								district_value: value,
+								district_unit: unit,
+								district_opacity: opacity,
+							},
+						};
+					}),
+			};
+		},
+		async addDistrictChartLayer(component) {
+			if (!this.map || !component?.chart_config?.types?.includes("DistrictChart")) {
+				return;
+			}
+
+			const layerId = this.getDistrictChartLayerId(component);
+			const sourceId = `${layerId}-source`;
+			const layerColor = component.chart_config?.color?.[0] || "#30B68F";
+			this.loadingLayers.push(layerId);
+
+			try {
+				const response = await axios.get(
+					"/mapData/metrotaipei_town.geojson",
+				);
+				const data = this.getDistrictChartBoundaryData(
+					component,
+					response.data,
+				);
+
+				if (this.map.getSource(sourceId)) {
+					this.map.getSource(sourceId).setData(data);
+				} else {
+					this.map.addSource(sourceId, {
+						type: "geojson",
+						data,
+					});
+				}
+
+				if (this.map.getLayer(layerId)) {
+					this.map.setPaintProperty(
+						layerId,
+						"fill-color",
+						layerColor,
+					);
+					this.map.setLayoutProperty(
+						layerId,
+						"visibility",
+						"visible",
+					);
+					this.moveDistrictChartLayerBelowMapLayers(layerId);
+				} else {
+					this.map.addLayer({
+						id: layerId,
+						type: "fill",
+						source: sourceId,
+						paint: {
+							"fill-color": layerColor,
+							"fill-opacity": [
+								"coalesce",
+								["get", "district_opacity"],
+								DISTRICT_CHART_MIN_OPACITY,
+							],
+							"fill-outline-color": "#ffffff",
+						},
+						layout: {
+							visibility: "visible",
+						},
+					}, this.getDistrictChartBeforeId(layerId));
+					this.currentLayers.push(layerId);
+				}
+
+				this.mapConfigs[layerId] = {
+					id: layerId,
+					index: layerId,
+					layerId,
+					title: `${component.name}行政區圖`,
+					type: "fill",
+					source: "district-chart",
+					city: component.city,
+					property: [
+						{ key: "district_name", name: "行政區" },
+						{
+							key: "district_value",
+							name: component.chart_config?.unit
+								? `數量(${component.chart_config.unit})`
+								: "數量",
+						},
+					],
+				};
+
+				if (!this.currentVisibleLayers.includes(layerId)) {
+					this.currentVisibleLayers.push(layerId);
+				}
+			} catch (error) {
+				console.error("Failed to add district chart layer:", error);
+			} finally {
+				this.loadingLayers = this.loadingLayers.filter(
+					(element) => element !== layerId,
+				);
+			}
+		},
+		turnOffDistrictChartLayer(component) {
+			if (!this.map || !component) return;
+			const layerId = this.getDistrictChartLayerId(component);
+			this.loadingLayers = this.loadingLayers.filter(
+				(element) => element !== layerId,
+			);
+			if (this.map.getLayer(layerId)) {
+				this.map.setLayoutProperty(layerId, "visibility", "none");
+			}
+			this.currentVisibleLayers = this.currentVisibleLayers.filter(
+				(element) => element !== layerId,
+			);
+			this.removePopup();
 		},
 		// 2. Call an API to get the layer data
 		fetchLocalGeoJson(map_config) {

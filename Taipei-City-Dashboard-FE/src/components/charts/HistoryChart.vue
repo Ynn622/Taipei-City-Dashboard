@@ -8,6 +8,16 @@ const props = defineProps(["chart_config", "series", "history_config"]);
 
 const currentSeries = ref(0);
 
+function formatValue(value, unit) {
+	const number = Number(value);
+	if (!Number.isFinite(number)) return value;
+
+	const maximumFractionDigits = unit === "%" ? 2 : 2;
+	return new Intl.NumberFormat("zh-TW", {
+		maximumFractionDigits,
+	}).format(number);
+}
+
 const chartOptions = ref({
 	chart: {
 		toolbar: {
@@ -58,7 +68,12 @@ const chartOptions = ref({
 				)}` +
 				"</h6>" +
 				"<span>" +
-				series[seriesIndex][dataPointIndex] +
+				formatValue(
+					series[seriesIndex][dataPointIndex],
+					props.history_config.unit
+						? props.history_config.unit
+						: props.chart_config.unit
+				) +
 				` ${
 					props.history_config.unit
 						? props.history_config.unit

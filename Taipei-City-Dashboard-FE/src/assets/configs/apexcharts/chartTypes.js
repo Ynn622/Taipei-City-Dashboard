@@ -1,5 +1,6 @@
 export const chartTypes = {
 	DonutChart: "圓餅圖",
+	RankListChart: "排名列表圖",
 	BarChart: "橫向長條圖",
 	ColumnChart: "縱向長條圖",
 	BarPercentChart: "長條圖(%)",
@@ -34,6 +35,7 @@ export const chartsPerDataType = {
 	],
 	three_d: [
 		"ColumnChart",
+		"RankListChart",
 		"BarPercentChart",
 		"RadarChart",
 		"DistrictChart",
@@ -41,6 +43,7 @@ export const chartsPerDataType = {
 		"IndicatorChart",
 		"PolarAreaChart",
 		"TextUnitChart",
+		"TreemapChart",
 	],
 	time: ["TimelineSeparateChart", "TimelineStackedChart", "ColumnLineChart"],
 	percent: [

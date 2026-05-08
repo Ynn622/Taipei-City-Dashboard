@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "health_audit_violation_ntpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "health_audit_violation",
+      "fsmc.ntpc",
+      "新北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of New Taipei environmental sanitation audit violation units with provided coordinates.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "health_audit_violation_ntpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "新北市衛生稽核違規單位",
+    "airflow_update_freq": "@monthly",
+    "source": "https://fsmc.ntpc.gov.tw/DigitalMap/PublicWebsite",
+    "source_type": "New Taipei environmental sanitation audit map API",
+    "source_dept": "新北市政府衛生局",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "新北市食品藥物安全及衛生管理地圖環境衛生查核資料，包含業者名稱、行政區、地址、座標、稽查日期、主業別與稽查結果。",
+    "etl_description": "retrieve environmental sanitation audit records from map API, keep reinspection non-compliant records, standardize columns and geometry",
+    "sensitivity": "public"
+  }
+}

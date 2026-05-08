@@ -58,16 +58,16 @@ ThreeDimensionalData & PercentData Json Format:
 >> ThreeDimensionalData is shared by 3D and percentage data
 */
 type ThreeDimensionalData struct {
-	Xaxis string `gorm:"column:x_axis"`
-	Icon  string `gorm:"column:icon"`
-	Yaxis string `gorm:"column:y_axis"`
-	Data  int    `gorm:"column:data"`
+	Xaxis string  `gorm:"column:x_axis"`
+	Icon  string  `gorm:"column:icon"`
+	Yaxis string  `gorm:"column:y_axis"`
+	Data  float64 `gorm:"column:data"`
 }
 
 type ThreeDimensionalDataOutput struct {
-	Name string `json:"name"`
-	Icon string `json:"icon"`
-	Data []int  `json:"data"`
+	Name string    `json:"name"`
+	Icon string    `json:"icon"`
+	Data []float64 `json:"data"`
 }
 
 /*
@@ -274,7 +274,7 @@ func GetThreeDimensionalData(query *string, timeFrom string, timeTo string) (cha
 
 		// If a unique yAxis is found, create a new entry in the output
 		if !foundY {
-			chartDataOutput = append(chartDataOutput, ThreeDimensionalDataOutput{Name: data.Yaxis, Icon: data.Icon, Data: []int{data.Data}})
+			chartDataOutput = append(chartDataOutput, ThreeDimensionalDataOutput{Name: data.Yaxis, Icon: data.Icon, Data: []float64{data.Data}})
 		}
 	}
 

@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "water_quality_ntpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "water_quality",
+      "water.gov.tw",
+      "新北市",
+      "New-Taipei-City"
+    ],
+    "description": "Monthly update of New Taipei drinking water quality by purification plant.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "water_quality_ntpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "新北市自來水平均水質",
+    "airflow_update_freq": "@monthly",
+    "source": "https://www.water.gov.tw/ch/WaterQuality?nodeId=4631",
+    "source_type": "HTML",
+    "source_dept": "臺灣自來水股份有限公司",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺灣自來水公司平均水質頁面中關鍵字為新北市的淨水場水質資料。",
+    "etl_description": "submit New Taipei keyword search, parse plant detail pages, add fixed plant coordinates",
+    "sensitivity": "public"
+  }
+}

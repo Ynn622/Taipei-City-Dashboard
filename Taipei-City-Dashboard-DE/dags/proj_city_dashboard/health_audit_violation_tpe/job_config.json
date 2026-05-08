@@ -1,0 +1,43 @@
+{
+  "dag_infos": {
+    "dag_id": "health_audit_violation_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "health_audit_violation",
+      "imap.health.gov.taipei",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of Taipei food sanitation audit violation units with point geometry from health map search.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "health_audit_violation_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "臺北市衛生稽核違規單位",
+    "airflow_update_freq": "@monthly",
+    "source": "https://imap.health.gov.taipei/Index.aspx",
+    "source_type": "Taipei health inspection map ASP.NET search result",
+    "source_dept": "臺北市政府衛生局",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市政府衛生局食藥粧網路地圖中食品業者衛生稽查結果，包含業者名稱、地址、座標、稽查日期與稽查結果。",
+    "etl_description": "submit health map search form for food businesses with inspection results limited to deadline improvement and reinspection non-compliant records, standardize fields and geometry",
+    "sensitivity": "public"
+  }
+}

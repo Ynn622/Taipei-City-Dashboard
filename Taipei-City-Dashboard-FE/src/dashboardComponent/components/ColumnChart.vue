@@ -39,6 +39,42 @@ const chartWidth = computed(() => {
 	return isLargeDataSet.value ? `${widthValue.value}px` : "100%";
 });
 
+const displayCategories = computed(() => {
+	return props.chart_config.categories?.map(formatWeekCategory) || [];
+});
+
+function formatWeekCategory(category) {
+	if (typeof category !== "string") {
+		return category;
+	}
+
+	const match = category.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	if (!match) {
+		return category;
+	}
+
+	const [, year, month, day] = match;
+	const date = new Date(Date.UTC(+year, +month - 1, +day));
+	if (Number.isNaN(date.getTime())) {
+		return category;
+	}
+
+	const dayOfWeek = date.getUTCDay() || 7;
+	if (dayOfWeek !== 1) {
+		return category;
+	}
+
+	date.setUTCDate(date.getUTCDate() + 4 - dayOfWeek);
+	const weekYear = date.getUTCFullYear();
+	const yearStart = new Date(Date.UTC(weekYear, 0, 1));
+	const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+
+	return `${weekYear} w${week}`;
+}
+
+function getRawCategory(index) {
+	return props.chart_config.categories?.[index] || displayCategories.value[index];
+}
 
 const chartOptions = ref({
 	chart: {
@@ -103,7 +139,7 @@ const chartOptions = ref({
 			return (
 				'<div class="chart-tooltip">' +
 					"<h6>" +
-						w.globals.labels[dataPointIndex] +
+						formatWeekCategory(w.globals.labels[dataPointIndex]) +
 						`${
 							props.chart_config.categories
 								? "-" + w.globals.seriesNames[seriesIndex]
@@ -126,7 +162,7 @@ const chartOptions = ref({
 			show: false,
 		},
 		categories: props.chart_config.categories
-			? props.chart_config.categories
+			? displayCategories.value
 			: [],
 		labels: {
 			offsetY: 2,
@@ -150,7 +186,7 @@ function handleDataSelection(_e, _chartContext, config) {
 				"filterByParam",
 				props.map_filter,
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex],
+				getRawCategory(config.dataPointIndex),
 				config.w.globals.seriesNames[config.seriesIndex]
 			);
 		}
@@ -159,7 +195,7 @@ function handleDataSelection(_e, _chartContext, config) {
 			emits(
 				"filterByLayer",
 				props.map_config,
-				config.w.globals.labels[config.dataPointIndex]
+				getRawCategory(config.dataPointIndex)
 			);
 		}
 		selectedIndex.value = `${config.dataPointIndex}-${config.seriesIndex}`;
@@ -270,4 +306,3 @@ function resetWidth() {
 	}
 }
 </style>
-

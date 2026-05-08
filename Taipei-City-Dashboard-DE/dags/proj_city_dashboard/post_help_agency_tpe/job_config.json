@@ -1,0 +1,44 @@
+{
+  "dag_infos": {
+    "dag_id": "post_help_agency_tpe",
+    "start_date": "2026-05-02",
+    "schedule_interval": "@monthly",
+    "catchup": false,
+    "tags": [
+      "food_safety_health",
+      "post_help_agency",
+      "medical",
+      "consumer_protection",
+      "臺北市",
+      "Taipei-City"
+    ],
+    "description": "Monthly update of Taipei post-incident help agencies including medical institutions and consumer protection agencies.",
+    "default_args": {
+      "owner": "airflow",
+      "email": ["DEFAULT_EMAIL_LIST"],
+      "email_on_retry": false,
+      "email_on_failure": true,
+      "retries": 1,
+      "retry_delay": 60
+    },
+    "ready_data_db": "postgres_default",
+    "ready_data_default_table": "post_help_agency_tpe",
+    "ready_data_history_table": "",
+    "raw_data_db": "postgres_default",
+    "raw_data_table": "",
+    "load_behavior": "replace"
+  },
+  "data_infos": {
+    "name_cn": "臺北市事後求助機構",
+    "airflow_update_freq": "@monthly",
+    "source": "https://data.taipei/",
+    "source_type": "Taipei Open Data API and fixed consumer protection agency addresses",
+    "source_dept": "臺北市政府衛生局、行政院消費者保護處、臺北市政府法務局、財團法人中華民國消費者文教基金會",
+    "gis_format": null,
+    "output_coordinate": "EPSG:4326",
+    "is_geometry": 1,
+    "dataset_description": "臺北市藥局、西醫一般科、內科、家庭醫學科、急診醫學科醫療機構與消費者保護相關求助機構。",
+    "etl_description": "retrieve Taipei medical open data, deduplicate hospitals appearing in multiple specialties, aggregate specialties, geocode addresses, append consumer protection agencies, and output point geometry",
+    "sensitivity": "public"
+  }
+}

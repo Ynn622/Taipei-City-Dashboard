@@ -16,35 +16,121 @@ const props = defineProps(["chart_config", "activeChart", "series"]);
 // ]);
 
 // 原始資料拷貝避免更改原始資料
-const localSeries = ref(JSON.parse(JSON.stringify(props.series)));
+const localSeries = ref(JSON.parse(JSON.stringify(props.series || [])));
+
+function isRateSeriesName(name = "") {
+	return name.includes("率") || name.includes("%") || name.includes("百分比");
+}
+
+function getSeriesUnit(name = "") {
+	return isRateSeriesName(name) ? "%" : props.chart_config.unit;
+}
+
+function formatValue(value, unit) {
+	const number = Number(value);
+	if (!Number.isFinite(number)) return value;
+	if (unit === "%") return number.toFixed(1);
+	if (number !== 0 && Math.abs(number) < 10) return number.toFixed(1);
+	return number.toFixed(0);
+}
 
 const parseSeries = computed(() => {
 	return localSeries.value.map(
-		(
-			serie,
-			index
-		) => ({
+		(serie) => ({
 			...serie,
-			type: index === 0 ? "column" : "line",
+			type: isRateSeriesName(serie.name) ? "line" : "column",
 		})
 	);
 });
 
-const totalMax = computed(() => {
-	if (props.series[0].name.slice(-2) === props.series[1].name.slice(-2)) {
-		let max = Math.max(
-			...props.series[0].data.map((d) => d.y),
-			...props.series[1].data.map((d) => d.y)
-		);
+const firstRateSeriesName = computed(() =>
+	localSeries.value.find((serie) => isRateSeriesName(serie.name))?.name ?? ""
+);
 
-		// add 10% then round up to the nearest 100
-		return Math.ceil((max * 1.1) / 100) * 100;
-	}
-	return null;
+const totalMax = computed(() => {
+	const stackedTotals = new Map();
+
+	localSeries.value
+		.filter((serie) => !isRateSeriesName(serie.name))
+		.forEach((serie) => {
+			serie.data.forEach((d) => {
+				const key = d.x;
+				stackedTotals.set(key, (stackedTotals.get(key) || 0) + Number(d.y || 0));
+			});
+		});
+
+	if (stackedTotals.size === 0) return null;
+
+	const max = Math.max(...stackedTotals.values());
+
+	// add 10% then round up to the nearest 100
+	return Math.ceil((max * 1.1) / 10) * 10;
 });
 
-const chartOptions = ref({
+const xaxisType = ref("datetime");
+const tickAmount = ref(undefined);
+
+const countYAxis = computed(() => ({
+	min: 0,
+	max: function (max) {
+		if (totalMax.value) {
+			return totalMax.value;
+		}
+		return max;
+	},
+	labels: {
+		formatter: function (val) {
+			return formatValue(val, props.chart_config.unit);
+		},
+	},
+	title: {
+		text: props.chart_config.unit,
+		style: {
+			color: "var(--color-complement-text)",
+		},
+	},
+}));
+
+const rateYAxis = computed(() => ({
+	min: 0,
+	labels: {
+		formatter: function (val) {
+			return `${val.toFixed(1)}%`;
+		},
+	},
+	opposite: true,
+	title: {
+		text: firstRateSeriesName.value,
+		style: {
+			color: "var(--color-complement-text)",
+		},
+	},
+}));
+
+const chartYAxes = computed(() => {
+	const axes = localSeries.value.map((serie, index) => {
+		if (isRateSeriesName(serie.name)) {
+			return {
+				...rateYAxis.value,
+				seriesName: serie.name,
+			};
+		}
+
+		return {
+			...countYAxis.value,
+			seriesName: serie.name,
+			show: index === 0,
+			showAlways: index === 0,
+		};
+	});
+
+	return axes.length > 0 ? axes : [countYAxis.value];
+});
+
+const chartOptions = computed(() => ({
 	chart: {
+		stacked: true,
+		stackOnlyBar: true,
 		toolbar: {
 			show: false,
 			tools: {
@@ -77,12 +163,11 @@ const chartOptions = ref({
 		colors: [...props.chart_config.color],
 		curve: "smooth",
 		show: true,
-		width: 2,
+		width: parseSeries.value.map((serie) => serie.type === "line" ? 2 : 0),
 	},
 	plotOptions: {
-		column: {
-			stacked: false,
-			grouping: false,
+		bar: {
+			columnWidth: "55%",
 		},
 	},
 	tooltip: {
@@ -100,7 +185,7 @@ const chartOptions = ref({
 					w.globals.seriesNames[seriesIndex]
 				}` +
 				`</h6>` +
-				`<span>${series[seriesIndex][dataPointIndex]} ${props.chart_config.unit}</span>` +
+				`<span>${formatValue(series[seriesIndex][dataPointIndex], getSeriesUnit(w.globals.seriesNames[seriesIndex]))} ${getSeriesUnit(w.globals.seriesNames[seriesIndex])}</span>` +
 				`</div>`
 			);
 		},
@@ -129,55 +214,14 @@ const chartOptions = ref({
 		tooltip: {
 			enabled: false,
 		},
-		type: "datetime",
+		type: xaxisType.value,
+		tickAmount: tickAmount.value,
 	},
-	yaxis: [
-		{
-			min: 0,
-			max: function (max) {
-				if (totalMax.value) {
-					return totalMax.value;
-				}
-				return max;
-			},
-			labels: {
-				formatter: function (val) {
-					return val.toFixed(0);
-				},
-			},
-			title: {
-				text: props.series[0].name,
-				style: {
-					color: "var(--color-complement-text)",
-				},
-			},
-		},
-		{
-			min: 0,
-			max: function (max) {
-				if (totalMax.value) {
-					return totalMax.value;
-				}
-				return max;
-			},
-			labels: {
-				formatter: function (val) {
-					return val.toFixed(0);
-				},
-			},
-			opposite: true,
-			title: {
-				text: props.series?.[1]?.name ?? "",
-				style: {
-					color: "var(--color-complement-text)",
-				},
-			},
-		},
-	],
-});
+	yaxis: chartYAxes.value,
+}));
 
 function parseTime(time) {
-	return time.replace("T00:00:00+08:00", " ");
+	return String(time).replace("T00:00:00+08:00", " ");
 }
 
 watch(
@@ -198,23 +242,11 @@ watch(
 					x: a.x.slice(0, 4),
 				}));
 			});
-			chartOptions.value = {
-				...chartOptions.value,
-				xaxis: {
-					...chartOptions.value.xaxis,
-					type: "category",
-					tickAmount: Math.floor(newDiff / 31536000000),
-				},
-			};
+			xaxisType.value = "category";
+			tickAmount.value = Math.floor(newDiff / 31536000000);
 		} else {
-			chartOptions.value = {
-				...chartOptions.value,
-				xaxis: {
-					...chartOptions.value.xaxis,
-					type: "datetime",
-					labels: { datetimeUTC: false },
-				},
-			};
+			xaxisType.value = "datetime";
+			tickAmount.value = undefined;
 		}
 	},
 	{ deep: true, immediate: true }

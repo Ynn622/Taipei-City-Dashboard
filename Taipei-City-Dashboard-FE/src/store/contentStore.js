@@ -17,6 +17,47 @@ import { useAuthStore } from "./authStore";
 import { getComponentDataTimeframe } from "../assets/utilityFunctions/dataTimeframe";
 import { CityManager } from "../dashboardComponent/utilities/cityManager";
 
+const FOOD_SAFETY_HEALTH_DASHBOARDS = new Set([
+	"food_safety_health_tpe",
+	"food_safety_health_metrotaipei",
+	"food-safety-health-tpe",
+	"food-safety-health-metrotaipei",
+]);
+
+const FOOD_SAFETY_COMPONENT_ORDER = new Map(
+	[
+		"fda_good_restaurants",
+		"food_processing_pass_rate",
+		"food_safety_logistics_vendor",
+		"food_safety_market",
+		"food_source",
+		"agri_sales_resume_noncompliance",
+		"water_quality",
+		"food_safety_health_office",
+		"health_audit_violation",
+		"food_audit_violation",
+		"cdc_infectious_disease",
+		"food_safety_death_share",
+		"food_allergen_classification",
+		"post_help_agency",
+	].map((componentIndex, order) => [componentIndex, order]),
+);
+
+function sortDashboardComponents(dashboardIndex, components) {
+	if (!FOOD_SAFETY_HEALTH_DASHBOARDS.has(dashboardIndex)) {
+		return components;
+	}
+
+	return [...components].sort((a, b) => {
+		const aOrder =
+			FOOD_SAFETY_COMPONENT_ORDER.get(a.index) ?? Number.MAX_SAFE_INTEGER;
+		const bOrder =
+			FOOD_SAFETY_COMPONENT_ORDER.get(b.index) ?? Number.MAX_SAFE_INTEGER;
+
+		return aOrder - bOrder;
+	});
+}
+
 export const useContentStore = defineStore("content", {
 	state: () => ({
 		// cityManager is used to manage city settings. (tag, select, sidebar, mobileNavigation etc.)
@@ -75,6 +116,12 @@ export const useContentStore = defineStore("content", {
 			"metro_green_line",
 			"metro_br_line",
 		],
+		hiddenMapLayersByDashboard: {
+			food_safety_health_tpe: ["bike_map"],
+			food_safety_health_metrotaipei: ["bike_map"],
+			"food-safety-health-tpe": ["bike_map"],
+			"food-safety-health-metrotaipei": ["bike_map"],
+		},
 	}),
 	getters: {},
 	actions: {
@@ -88,6 +135,7 @@ export const useContentStore = defineStore("content", {
 		// 1. Check the current path and execute actions based on the current path
 		setRouteParams(mode, index, city) {
 			this.currentDashboard.mode = mode;
+			const hasIndex = typeof index === "string" && index.length > 0;
 			// 1-1. Don't do anything if the path is the same
 			if (
 				this.currentDashboard.index === index &&
@@ -95,6 +143,7 @@ export const useContentStore = defineStore("content", {
 			) {
 				if (
 					this.currentDashboard.mode === "/mapview" &&
+					hasIndex &&
 					!index.includes("map-layers")
 				) {
 					this.setMapLayers(city);
@@ -330,6 +379,11 @@ export const useContentStore = defineStore("content", {
 						component.history_config.range
 					) {
 						for (let i in component.history_config.range) {
+							if (i === "0") {
+								this.cityDashboard.components[
+									index
+								].history_data = [];
+							}
 							try {
 								const response = await http.get(
 									`/component/${component.id}/history`,
@@ -347,11 +401,6 @@ export const useContentStore = defineStore("content", {
 									},
 								);
 
-								if (i === "0") {
-									this.cityDashboard.components[
-										index
-									].history_data = [];
-								}
 								this.cityDashboard.components[
 									index
 								].history_data.push(response.data.data);
@@ -630,9 +679,15 @@ export const useContentStore = defineStore("content", {
 
 				// If city is defined, filter components by city
 				if (this.currentDashboard.city) {
-					this.currentDashboard.components = currentCityData;
+					this.currentDashboard.components = sortDashboardComponents(
+						this.currentDashboard.index,
+						currentCityData,
+					);
 					this.currentDashboardExcluded.components =
-						notCurrentCityData;
+						sortDashboardComponents(
+							this.currentDashboard.index,
+							notCurrentCityData,
+						);
 				} else {
 					// Is personal dashboard
 
@@ -662,8 +717,15 @@ export const useContentStore = defineStore("content", {
 						);
 						return uniqueItem && uniqueItem.city !== item.city;
 					});
-					this.currentDashboard.components = uniqueData;
-					this.currentDashboardExcluded.components = excludedData;
+					this.currentDashboard.components = sortDashboardComponents(
+						this.currentDashboard.index,
+						uniqueData,
+					);
+					this.currentDashboardExcluded.components =
+						sortDashboardComponents(
+							this.currentDashboard.index,
+							excludedData,
+						);
 				}
 			} else {
 				this.currentDashboard.components = [];
@@ -764,9 +826,16 @@ export const useContentStore = defineStore("content", {
 		},
 		// Filter layers by city
 		filterMapLayersByCity(city) {
+			const hiddenLayerIndexes =
+				this.hiddenMapLayersByDashboard[
+					this.currentDashboard.index
+				] || [];
+
 			// Filter layers of the specified city from allMapLayers
 			this.mapLayers = this.allMapLayers.filter(
-				(item) => item.city === city,
+				(item) =>
+					item.city === city &&
+					!hiddenLayerIndexes.includes(item.index),
 			);
 		},
 		// 8. Call an API for each map layer component to get its chart data and store it (if in /mapview)

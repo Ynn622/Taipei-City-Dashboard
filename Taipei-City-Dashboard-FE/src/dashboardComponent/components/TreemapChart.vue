@@ -21,6 +21,25 @@ const emits = defineEmits([
 	"fly"
 ]);
 
+const treemapSeries = computed(() => {
+	const series = Array.isArray(props.series) ? props.series : [];
+
+	if (!props.chart_config.categories) {
+		return series.length ? series : [{ name: props.chart_config.name || "", data: [] }];
+	}
+
+	const data = props.chart_config.categories.map((category, index) => ({
+		x: category,
+		y: series.reduce((sum, serie) => {
+			const value = serie.data?.[index];
+			return sum + Number(value?.y ?? value ?? 0);
+		}, 0),
+	}));
+
+	data.sort((a, b) => b.y - a.y);
+	return [{ name: "優良餐廳", data }];
+});
+
 const chartOptions = ref({
 	chart: {
 		borderRadius: 5,
@@ -89,12 +108,45 @@ const chartOptions = ref({
 	},
 });
 
-const sum = computed(() => {
-	let sum = 0;
-	props.series[0].data.forEach(
-		(item) => (sum += item.y)
-	);
-	return Math.round(sum * 100) / 100;
+const treemapValues = computed(() =>
+	(treemapSeries.value[0]?.data || [])
+		.map((item) => Number(item.y ?? item ?? 0))
+		.filter(Number.isFinite)
+);
+
+const isNonAdditiveMetric = computed(() => props.chart_config.unit === "NTU");
+
+const summaryLabel = computed(() =>
+	isNonAdditiveMetric.value ? "最高" : "總和"
+);
+
+const summaryValue = computed(() => {
+	if (!treemapValues.value.length) {
+		return 0;
+	}
+	const value = isNonAdditiveMetric.value
+		? Math.max(...treemapValues.value)
+		: treemapValues.value.reduce((sum, item) => sum + item, 0);
+
+	return Math.round(value * 100) / 100;
+});
+
+const metricSummary = computed(() => {
+	if (!treemapValues.value.length) {
+		return {
+			average: 0,
+			max: 0,
+			min: 0,
+		};
+	}
+
+	const total = treemapValues.value.reduce((sum, item) => sum + item, 0);
+
+	return {
+		average: Math.round((total / treemapValues.value.length) * 100) / 100,
+		max: Math.round(Math.max(...treemapValues.value) * 100) / 100,
+		min: Math.round(Math.min(...treemapValues.value) * 100) / 100,
+	};
 });
 
 const selectedIndex = ref(null);
@@ -141,15 +193,35 @@ function handleDataSelection(_e, _chartContext, config) {
     v-if="activeChart === 'TreemapChart'"
     class="treemapchart"
   >
-    <div class="treemapchart-title">
-      <h5>總合</h5>
-      <h6>{{ sum }} {{ chart_config.unit }}</h6>
+    <div
+      v-if="isNonAdditiveMetric"
+      class="treemapchart-title treemapchart-title--metrics"
+    >
+      <div>
+        <h5>平均</h5>
+        <h6>{{ metricSummary.average }} {{ chart_config.unit }}</h6>
+      </div>
+      <div>
+        <h5>最高</h5>
+        <h6>{{ metricSummary.max }} {{ chart_config.unit }}</h6>
+      </div>
+      <div>
+        <h5>最低</h5>
+        <h6>{{ metricSummary.min }} {{ chart_config.unit }}</h6>
+      </div>
+    </div>
+    <div
+      v-else
+      class="treemapchart-title"
+    >
+      <h5>{{ summaryLabel }}</h5>
+      <h6>{{ summaryValue }} {{ chart_config.unit }}</h6>
     </div>
     <VueApexCharts
       width="100%"
       type="treemap"
       :options="chartOptions"
-      :series="series"
+      :series="treemapSeries"
       @data-point-selection="handleDataSelection"
     />
   </div>
@@ -173,6 +245,17 @@ function handleDataSelection(_e, _chartContext, config) {
 			color: var(--color-complement-text);
 			font-size: var(--font-m);
 			font-weight: 400;
+		}
+
+		&--metrics {
+			align-items: center;
+			flex-direction: row;
+			gap: 1rem;
+			margin-bottom: -0.25rem;
+
+			div {
+				min-width: 4.5rem;
+			}
 		}
 	}
 }

@@ -27,34 +27,45 @@ const steps = ref(100);
 // Donut charts in apexcharts uses a slightly different data format from other chart types
 // As such, the following parsing functions are required
 const parsedSeries = computed(() => {
-	const toParse = [...props.series[0].data];
-	if (toParse.length <= steps.value) {
-		return toParse.map((item) => item.y);
+	if (props.series[0]?.data) {
+		const toParse = [...props.series[0].data];
+		if (toParse.length <= steps.value) {
+			return toParse.map((item) => item.y);
+		}
+		let output = [];
+		for (let i = 0; i < steps.value; i++) {
+			output.push(toParse[i].y);
+		}
+		const toSum = toParse.splice(steps.value, toParse.length - steps.value);
+		let sum = 0;
+		toSum.forEach((element) => (sum += element.y));
+		output.push(sum);
+		return output;
 	}
-	let output = [];
-	for (let i = 0; i < steps.value; i++) {
-		output.push(toParse[i].y);
-	}
-	const toSum = toParse.splice(steps.value, toParse.length - steps.value);
-	let sum = 0;
-	toSum.forEach((element) => (sum += element.y));
-	output.push(sum);
-	return output;
+	const mapLegendData = props.series.filter((item) => item.type === "donut");
+	return mapLegendData.map((item) => item.value);
 });
 const parsedLabels = computed(() => {
-	const toParse = [...props.series[0].data];
-	if (toParse.length <= steps.value) {
-		return toParse.map((item) => item.x);
+	if (props.series[0]?.data) {
+		const toParse = [...props.series[0].data];
+		if (toParse.length <= steps.value) {
+			return toParse.map((item) => item.x);
+		}
+		let output = [];
+		for (let i = 0; i < steps.value; i++) {
+			output.push(toParse[i].x);
+		}
+		output.push("其他");
+		return output;
 	}
-	let output = [];
-	for (let i = 0; i < steps.value; i++) {
-		output.push(toParse[i].x);
-	}
-	output.push("其他");
-	return output;
+	const mapLegendData = props.series.filter((item) => item.type === "donut");
+	return mapLegendData.map((item) => item.name);
 });
 const sum = computed(() => {
 	return Math.round(parsedSeries.value.reduce((a, b) => a + b) * 100) / 100;
+});
+const showSum = computed(() => {
+	return props.chart_config.index !== "food_allergen_classification";
 });
 
 // chartOptions needs to be in the bottom since it uses computed data
@@ -168,7 +179,10 @@ function handleDataSelection(_e, _chartContext, config) {
       :series="parsedSeries"
       @data-point-selection="handleDataSelection"
     />
-    <div class="donutchart-title">
+    <div
+      v-if="showSum"
+      class="donutchart-title"
+    >
       <h5>總合</h5>
       <h6>{{ sum }}</h6>
     </div>

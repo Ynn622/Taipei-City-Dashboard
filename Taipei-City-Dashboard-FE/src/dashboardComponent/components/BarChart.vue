@@ -20,6 +20,85 @@ const emits = defineEmits([
 	"fly"
 ]);
 
+const rankedSeries = computed(() => {
+	const categories = props.chart_config.categories || [];
+	const rankedData = categories.map((category, index) => ({
+		x: category,
+		y: props.series.reduce((sum, serie) => {
+			const value = serie.data[index];
+			return sum + Number(value?.y ?? value ?? 0);
+		}, 0),
+	}));
+
+	rankedData.sort((a, b) => b.y - a.y);
+	return [{ name: "優良餐廳", data: rankedData }];
+});
+
+const displaySeries = computed(() => (
+	props.activeChart === "RankListChart" ? rankedSeries.value : props.series
+));
+
+const isNtuMetric = computed(() => props.chart_config.unit === "NTU");
+const isAuditViolationMetric = computed(() =>
+	["food_audit_violation", "health_audit_violation"].includes(
+		props.chart_config.index
+	)
+);
+const auditViolationRangeColors = [
+	"#72C6A4",
+	"#F2C94C",
+	"#F2994A",
+	"#E86F51",
+	"#B8325A",
+];
+
+function getDataPointValue(item) {
+	return Number(item?.y ?? item ?? 0);
+}
+
+function getDataPointLabel(item, index) {
+	return item?.x ?? props.chart_config.categories?.[index] ?? "";
+}
+
+function getNtuColor(value) {
+	const colors = props.chart_config.color || [];
+	if (value < 0.1) return colors[0] || "#2F7D6D";
+	if (value <= 0.3) return colors[1] || "#30B68F";
+	if (value <= 0.5) return colors[2] || "#1E88E5";
+	if (value <= 2) return colors[3] || "#F5B041";
+	return colors[4] || "#D84C73";
+}
+
+function getAuditViolationColor(value) {
+	if (value <= 5) return auditViolationRangeColors[0];
+	if (value <= 10) return auditViolationRangeColors[1];
+	if (value <= 20) return auditViolationRangeColors[2];
+	if (value <= 40) return auditViolationRangeColors[3];
+	return auditViolationRangeColors[4];
+}
+
+const chartSeries = computed(() => {
+	if (!isNtuMetric.value && !isAuditViolationMetric.value) {
+		return displaySeries.value;
+	}
+
+	return displaySeries.value.map((serie) => ({
+		...serie,
+		data: serie.data.map((item, index) => {
+			const y = getDataPointValue(item);
+			const fillColor = isNtuMetric.value
+				? getNtuColor(y)
+				: getAuditViolationColor(y);
+			return {
+				...(typeof item === "object" && item !== null ? item : {}),
+				x: getDataPointLabel(item, index),
+				y,
+				fillColor,
+			};
+		}),
+	}));
+});
+
 const chartOptions = ref({
 	chart: {
 		offsetY: 15,
@@ -86,6 +165,9 @@ const chartOptions = ref({
 		labels: {
 			show: false,
 		},
+		categories: props.chart_config.categories
+			? props.chart_config.categories
+			: [],
 		type: "category",
 	},
 	yaxis: {
@@ -98,7 +180,7 @@ const chartOptions = ref({
 });
 
 const chartHeight = computed(() => {
-	return `${40 + props.series[0].data.length * 30}`;
+	return `${40 + chartSeries.value[0].data.length * 30}`;
 });
 
 const selectedIndex = ref(null);
@@ -141,13 +223,13 @@ function handleDataSelection(_e, _chartContext, config) {
 </script>
 
 <template>
-  <div v-if="activeChart === 'BarChart'">
+  <div v-if="activeChart === 'BarChart' || activeChart === 'RankListChart'">
     <VueApexCharts
       width="100%"
       :height="chartHeight"
       type="bar"
       :options="chartOptions"
-      :series="series"
+      :series="chartSeries"
       @data-point-selection="handleDataSelection"
     />
   </div>
