@@ -13,10 +13,7 @@ export const COMPONENT_IDS = {
 export const GEOJSON_FILES = {
 	foodSource: ["food_source_tpe.geojson", "food_source_ntpe.geojson"],
 	market: ["food_safety_market_tpe.geojson", "food_safety_market_ntpe.geojson"],
-	logisticsVendor: [
-		"food_safety_logistics_vendor_tpe.geojson",
-		"food_safety_logistics_vendor_ntpe.geojson",
-	],
+	logisticsVendor: ["food_safety_logistics_vendor.geojson"],
 	waterQuality: ["water_quality_tpe.geojson", "water_quality_ntpe.geojson"],
 	healthOffice: [
 		"food_safety_health_office_tpe.geojson",

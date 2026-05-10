@@ -9,10 +9,9 @@ def _transfer(**kwargs):
     import pandas as pd
     import requests
     from sqlalchemy import create_engine
-    from utils.district_geocoder import DISTRICT_CENTROIDS
-    from utils.fda_food_vendor import (
+    from utils.district_geocoder import (
+        DISTRICT_CENTROIDS,
         extract_district,
-        geocode_taipei_addresses_with_house_number_dataset,
         jitter_coordinate,
     )
     from utils.load_stage import (
@@ -20,6 +19,9 @@ def _transfer(**kwargs):
         update_lasttime_in_data_to_dataset_info,
     )
     from utils.nominatim_geocoder import geocode_addresses_with_osm
+    from utils.taipei_address_geocoder import (
+        geocode_taipei_addresses_with_house_number_dataset,
+    )
     from utils.transform_geometry import add_point_wkbgeometry_column_to_df
 
     ready_data_db_uri = kwargs.get("ready_data_db_uri")

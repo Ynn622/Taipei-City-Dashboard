@@ -9,7 +9,7 @@ def _transfer(**kwargs):
     import pandas as pd
     import requests
     from sqlalchemy import create_engine
-    from utils.fda_food_vendor import extract_district
+    from utils.district_geocoder import extract_district
     from utils.load_stage import (
         save_geodataframe_to_postgresql,
         update_lasttime_in_data_to_dataset_info,

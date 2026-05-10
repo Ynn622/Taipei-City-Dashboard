@@ -142,14 +142,14 @@ WHERE "index" = 'food_safety_market_ntpe';
 
 INSERT INTO public.component_maps ("index", title, type, source, size, icon, paint, property)
 SELECT
-  'food_safety_logistics_vendor_tpe',
-  '臺北市食品物流業者',
+  'food_safety_logistics_vendor',
+  '雙北食品物流業者',
   'circle',
   'geojson',
   'small',
   NULL,
   '{
-    "circle-color": "#4F8EF7",
+    "circle-color": ["match", ["get", "city"], "臺北市", "#4F8EF7", "新北市", "#7B5EF5", "#5E6B7A"],
     "circle-opacity": 0.72,
     "circle-stroke-color": "#F5F9FF",
     "circle-stroke-width": 1,
@@ -166,18 +166,18 @@ SELECT
     {"key":"registration_item","name":"登錄項目"}
   ]'::json
 WHERE NOT EXISTS (
-  SELECT 1 FROM public.component_maps WHERE "index" = 'food_safety_logistics_vendor_tpe'
+  SELECT 1 FROM public.component_maps WHERE "index" = 'food_safety_logistics_vendor'
 );
 
 UPDATE public.component_maps
 SET
-  title = '臺北市食品物流業者',
+  title = '雙北食品物流業者',
   type = 'circle',
   source = 'geojson',
   size = 'small',
   icon = NULL,
   paint = '{
-    "circle-color": "#4F8EF7",
+    "circle-color": ["match", ["get", "city"], "臺北市", "#4F8EF7", "新北市", "#7B5EF5", "#5E6B7A"],
     "circle-opacity": 0.72,
     "circle-stroke-color": "#F5F9FF",
     "circle-stroke-width": 1,
@@ -193,62 +193,7 @@ SET
     {"key":"vendor_category","name":"業者分類"},
     {"key":"registration_item","name":"登錄項目"}
   ]'::json
-WHERE "index" = 'food_safety_logistics_vendor_tpe';
-
-INSERT INTO public.component_maps ("index", title, type, source, size, icon, paint, property)
-SELECT
-  'food_safety_logistics_vendor_ntpe',
-  '新北市食品物流業者',
-  'circle',
-  'geojson',
-  'small',
-  NULL,
-  '{
-    "circle-color": "#7B5EF5",
-    "circle-opacity": 0.72,
-    "circle-stroke-color": "#F7F3FF",
-    "circle-stroke-width": 1,
-    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 8]
-  }'::json,
-  '[
-    {"key":"name","name":"業者名稱"},
-    {"key":"registration_no","name":"登錄字號"},
-    {"key":"company_registration_name","name":"公司/商業登記名稱"},
-    {"key":"city","name":"縣市"},
-    {"key":"district","name":"行政區"},
-    {"key":"address","name":"地址"},
-    {"key":"vendor_category","name":"業者分類"},
-    {"key":"registration_item","name":"登錄項目"}
-  ]'::json
-WHERE NOT EXISTS (
-  SELECT 1 FROM public.component_maps WHERE "index" = 'food_safety_logistics_vendor_ntpe'
-);
-
-UPDATE public.component_maps
-SET
-  title = '新北市食品物流業者',
-  type = 'circle',
-  source = 'geojson',
-  size = 'small',
-  icon = NULL,
-  paint = '{
-    "circle-color": "#7B5EF5",
-    "circle-opacity": 0.72,
-    "circle-stroke-color": "#F7F3FF",
-    "circle-stroke-width": 1,
-    "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 8]
-  }'::json,
-  property = '[
-    {"key":"name","name":"業者名稱"},
-    {"key":"registration_no","name":"登錄字號"},
-    {"key":"company_registration_name","name":"公司/商業登記名稱"},
-    {"key":"city","name":"縣市"},
-    {"key":"district","name":"行政區"},
-    {"key":"address","name":"地址"},
-    {"key":"vendor_category","name":"業者分類"},
-    {"key":"registration_item","name":"登錄項目"}
-  ]'::json
-WHERE "index" = 'food_safety_logistics_vendor_ntpe';
+WHERE "index" = 'food_safety_logistics_vendor';
 
 INSERT INTO public.components ("index", name)
 SELECT 'food_safety_market', '食品供應市場分布'
@@ -311,8 +256,7 @@ DECLARE
   v_fda_component_id integer;
   v_market_tpe_map_id integer;
   v_market_ntpe_map_id integer;
-  v_logistics_tpe_map_id integer;
-  v_logistics_ntpe_map_id integer;
+  v_logistics_map_id integer;
   v_tpe_dashboard_id integer;
   v_metrotpe_dashboard_id integer;
   v_taipei_group_id integer;
@@ -324,8 +268,7 @@ BEGIN
 
   SELECT id INTO v_market_tpe_map_id FROM public.component_maps WHERE "index" = 'food_safety_market_tpe';
   SELECT id INTO v_market_ntpe_map_id FROM public.component_maps WHERE "index" = 'food_safety_market_ntpe';
-  SELECT id INTO v_logistics_tpe_map_id FROM public.component_maps WHERE "index" = 'food_safety_logistics_vendor_tpe';
-  SELECT id INTO v_logistics_ntpe_map_id FROM public.component_maps WHERE "index" = 'food_safety_logistics_vendor_ntpe';
+  SELECT id INTO v_logistics_map_id FROM public.component_maps WHERE "index" = 'food_safety_logistics_vendor';
 
   INSERT INTO public.query_charts (
     "index", history_config, map_config_ids, map_filter, time_from, time_to,
@@ -413,13 +356,13 @@ BEGIN
     links, contributors, created_at, updated_at, query_type, query_chart, query_history, city
   )
   SELECT
-    'food_safety_logistics_vendor', NULL, ARRAY[v_logistics_tpe_map_id], '{}'::json, 'static', NULL,
-    NULL, NULL, '衛生監管機構', '顯示臺北市食品物流業者分布。',
-    '顯示臺北市 FDA 食品業者登錄中物流業者的地理分布。',
+    'food_safety_logistics_vendor', NULL, ARRAY[v_logistics_map_id], '{"mode":"byParam","byParam":{"xParam":"district"}}'::json, 'static', NULL,
+    NULL, NULL, '衛生福利部食品藥物管理署', '統計臺北市食品物流業者行政區分布。',
+    '此組件彙整衛生福利部食品藥物管理署食品業者登錄資料，篩選業者分類為物流業的食品物流業者，統計臺北市各行政區業者數量，並以行政區圖、矩形圖與橫向長條圖呈現分布。',
     '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
     ARRAY['https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?city=臺北市'],
-    ARRAY['doit'], NOW(), NOW(), 'map_legend',
-    $q$SELECT unnest(array['臺北市食品物流業者']) as name, unnest(array['circle']) as type, unnest(array[256]) as value$q$,
+    ARRAY['doit'], NOW(), NOW(), 'two_d',
+    $q$SELECT district AS x_axis, COUNT(*)::int AS data FROM public.food_safety_logistics_vendor WHERE city = '臺北市' AND district != '' GROUP BY district ORDER BY data DESC, x_axis$q$,
     NULL, 'taipei'
   WHERE NOT EXISTS (
     SELECT 1 FROM public.query_charts WHERE "index" = 'food_safety_logistics_vendor' AND city = 'taipei'
@@ -427,18 +370,18 @@ BEGIN
 
   UPDATE public.query_charts
   SET
-    map_config_ids = ARRAY[v_logistics_tpe_map_id],
-    map_filter = '{}'::json,
+    map_config_ids = ARRAY[v_logistics_map_id],
+    map_filter = '{"mode":"byParam","byParam":{"xParam":"district"}}'::json,
     time_from = 'static',
-    source = '衛生監管機構',
-    short_desc = '顯示臺北市食品物流業者分布。',
-    long_desc = '顯示臺北市 FDA 食品業者登錄中物流業者的地理分布。',
+    source = '衛生福利部食品藥物管理署',
+    short_desc = '統計臺北市食品物流業者行政區分布。',
+    long_desc = '此組件彙整衛生福利部食品藥物管理署食品業者登錄資料，篩選業者分類為物流業的食品物流業者，統計臺北市各行政區業者數量，並以行政區圖、矩形圖與橫向長條圖呈現分布。',
     use_case = '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
     links = ARRAY['https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?city=臺北市'],
     contributors = ARRAY['doit'],
     updated_at = NOW(),
-    query_type = 'map_legend',
-    query_chart = $q$SELECT unnest(array['臺北市食品物流業者']) as name, unnest(array['circle']) as type, unnest(array[256]) as value$q$,
+    query_type = 'two_d',
+    query_chart = $q$SELECT district AS x_axis, COUNT(*)::int AS data FROM public.food_safety_logistics_vendor WHERE city = '臺北市' AND district != '' GROUP BY district ORDER BY data DESC, x_axis$q$,
     city = 'taipei'
   WHERE "index" = 'food_safety_logistics_vendor' AND city = 'taipei';
 
@@ -448,18 +391,16 @@ BEGIN
     links, contributors, created_at, updated_at, query_type, query_chart, query_history, city
   )
   SELECT
-    'food_safety_logistics_vendor', NULL, ARRAY[v_logistics_tpe_map_id, v_logistics_ntpe_map_id], '{}'::json, 'static', NULL,
-    NULL, NULL, '衛生監管機構', '顯示雙北食品物流業者分布。',
-    '顯示雙北 FDA 食品業者登錄中物流業者的地理分布。',
+    'food_safety_logistics_vendor', NULL, ARRAY[v_logistics_map_id], '{"mode":"byParam","byParam":{"xParam":"district"}}'::json, 'static', NULL,
+    NULL, NULL, '衛生福利部食品藥物管理署', '統計雙北食品物流業者行政區分布。',
+    '此組件彙整衛生福利部食品藥物管理署食品業者登錄資料，篩選業者分類為物流業的食品物流業者，統計雙北各行政區業者數量，並以行政區圖、矩形圖與橫向長條圖呈現分布。',
     '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
     ARRAY[
       'https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?city=臺北市',
       'https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?city=新北市'
     ],
-    ARRAY['doit', 'ntpc'], NOW(), NOW(), 'map_legend',
-    $q$SELECT unnest(array['臺北市食品物流業者','新北市食品物流業者']) as name,
-             unnest(array['circle','circle']) as type,
-             unnest(array[256,479]) as value$q$,
+    ARRAY['doit', 'ntpc'], NOW(), NOW(), 'two_d',
+    $q$SELECT district AS x_axis, COUNT(*)::int AS data FROM public.food_safety_logistics_vendor WHERE district != '' GROUP BY district ORDER BY data DESC, x_axis$q$,
     NULL, 'metrotaipei'
   WHERE NOT EXISTS (
     SELECT 1 FROM public.query_charts WHERE "index" = 'food_safety_logistics_vendor' AND city = 'metrotaipei'
@@ -467,12 +408,12 @@ BEGIN
 
   UPDATE public.query_charts
   SET
-    map_config_ids = ARRAY[v_logistics_tpe_map_id, v_logistics_ntpe_map_id],
-    map_filter = '{}'::json,
+    map_config_ids = ARRAY[v_logistics_map_id],
+    map_filter = '{"mode":"byParam","byParam":{"xParam":"district"}}'::json,
     time_from = 'static',
-    source = '衛生監管機構',
-    short_desc = '顯示雙北食品物流業者分布。',
-    long_desc = '顯示雙北 FDA 食品業者登錄中物流業者的地理分布。',
+    source = '衛生福利部食品藥物管理署',
+    short_desc = '統計雙北食品物流業者行政區分布。',
+    long_desc = '此組件彙整衛生福利部食品藥物管理署食品業者登錄資料，篩選業者分類為物流業的食品物流業者，統計雙北各行政區業者數量，並以行政區圖、矩形圖與橫向長條圖呈現分布。',
     use_case = '可用於食安稽查、物流節點盤點與食物供應鏈空間分析。',
     links = ARRAY[
       'https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?city=臺北市',
@@ -480,23 +421,21 @@ BEGIN
     ],
     contributors = ARRAY['doit', 'ntpc'],
     updated_at = NOW(),
-    query_type = 'map_legend',
-    query_chart = $q$SELECT unnest(array['臺北市食品物流業者','新北市食品物流業者']) as name,
-                          unnest(array['circle','circle']) as type,
-                          unnest(array[256,479]) as value$q$,
+    query_type = 'two_d',
+    query_chart = $q$SELECT district AS x_axis, COUNT(*)::int AS data FROM public.food_safety_logistics_vendor WHERE district != '' GROUP BY district ORDER BY data DESC, x_axis$q$,
     city = 'metrotaipei'
   WHERE "index" = 'food_safety_logistics_vendor' AND city = 'metrotaipei';
 
   INSERT INTO public.dashboards ("index", name, components, icon, created_at, updated_at)
   SELECT
-    'food-safety-health-tpe',
+    'food_safety_health_tpe',
     '食安健康',
     array_remove(ARRAY[v_market_component_id, v_logistics_component_id], NULL),
     'restaurant_menu',
     NOW(),
     NOW()
   WHERE NOT EXISTS (
-    SELECT 1 FROM public.dashboards WHERE "index" = 'food-safety-health-tpe'
+    SELECT 1 FROM public.dashboards WHERE "index" = 'food_safety_health_tpe'
   );
 
   UPDATE public.dashboards
@@ -505,18 +444,18 @@ BEGIN
     components = array_remove(ARRAY[v_market_component_id, v_logistics_component_id], NULL),
     icon = 'restaurant_menu',
     updated_at = NOW()
-  WHERE "index" = 'food-safety-health-tpe';
+  WHERE "index" = 'food_safety_health_tpe';
 
   INSERT INTO public.dashboards ("index", name, components, icon, created_at, updated_at)
   SELECT
-    'food-safety-health-metrotaipei',
+    'food_safety_health_metrotaipei',
     '食安健康',
     array_remove(ARRAY[v_market_component_id, v_logistics_component_id, v_fda_component_id], NULL),
     'restaurant_menu',
     NOW(),
     NOW()
   WHERE NOT EXISTS (
-    SELECT 1 FROM public.dashboards WHERE "index" = 'food-safety-health-metrotaipei'
+    SELECT 1 FROM public.dashboards WHERE "index" = 'food_safety_health_metrotaipei'
   );
 
   UPDATE public.dashboards
@@ -525,10 +464,10 @@ BEGIN
     components = array_remove(ARRAY[v_market_component_id, v_logistics_component_id, v_fda_component_id], NULL),
     icon = 'restaurant_menu',
     updated_at = NOW()
-  WHERE "index" = 'food-safety-health-metrotaipei';
+  WHERE "index" = 'food_safety_health_metrotaipei';
 
-  SELECT id INTO v_tpe_dashboard_id FROM public.dashboards WHERE "index" = 'food-safety-health-tpe';
-  SELECT id INTO v_metrotpe_dashboard_id FROM public.dashboards WHERE "index" = 'food-safety-health-metrotaipei';
+  SELECT id INTO v_tpe_dashboard_id FROM public.dashboards WHERE "index" = 'food_safety_health_tpe';
+  SELECT id INTO v_metrotpe_dashboard_id FROM public.dashboards WHERE "index" = 'food_safety_health_metrotaipei';
   SELECT id INTO v_taipei_group_id FROM public.groups WHERE name = 'taipei';
   SELECT id INTO v_metrotaipei_group_id FROM public.groups WHERE name = 'metrotaipei';
 
@@ -547,6 +486,16 @@ BEGIN
     AND NOT EXISTS (
       SELECT 1 FROM public.dashboard_groups WHERE dashboard_id = v_metrotpe_dashboard_id AND group_id = v_metrotaipei_group_id
     );
+
+  DELETE FROM public.dashboard_groups
+  WHERE dashboard_id IN (
+    SELECT id
+    FROM public.dashboards
+    WHERE "index" IN ('food-safety-health-tpe', 'food-safety-health-metrotaipei')
+  );
+
+  DELETE FROM public.dashboards
+  WHERE "index" IN ('food-safety-health-tpe', 'food-safety-health-metrotaipei');
 END $$;
 
 COMMIT;

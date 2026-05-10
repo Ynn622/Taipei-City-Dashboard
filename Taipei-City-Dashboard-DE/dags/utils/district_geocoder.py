@@ -1,3 +1,36 @@
+import hashlib
+import math
+import re
+
+import pandas as pd
+
+DISTRICTS = ["中正區", "大同區", "中山區", "松山區", "大安區", "萬華區", "信義區", "士林區", 
+             "北投區", "內湖區", "南港區", "文山區", "萬里區", "金山區", "板橋區", "汐止區", 
+             "深坑區", "石碇區", "瑞芳區", "平溪區", "雙溪區", "貢寮區", "新店區", "坪林區", 
+             "烏來區", "永和區", "中和區", "土城區", "三峽區", "樹林區", "鶯歌區", "三重區", 
+             "新莊區", "泰山區", "林口區", "蘆洲區", "五股區", "八里區", "淡水區", "三芝區",
+             "石門區", ]
+
+
+def extract_district(address):
+    text = str(address).strip()
+    text_without_city = re.sub(r"^(?:台北市|臺北市|新北市)", "", text)
+    for district in DISTRICTS:
+        if text_without_city.startswith(district):
+            return district
+    match = re.search(r"([一-龥]{2,3}區)", text)
+    return match.group(1) if match else ""
+
+
+def jitter_coordinate(lng, lat, key, radius=0.00035):
+    if pd.isna(lng) or pd.isna(lat):
+        return lng, lat
+    digest = hashlib.sha1(str(key).encode("utf-8")).hexdigest()
+    angle = (int(digest[:8], 16) % 3600) / 10 * math.pi / 180
+    ring = 0.35 + ((int(digest[8:10], 16) % 9) / 8) * 0.65
+    return lng + math.cos(angle) * radius * ring, lat + math.sin(angle) * radius * ring
+
+
 DISTRICT_CENTROIDS = {
     "新北市三峽區": (121.413354, 24.893153),
     "新北市三芝區": (121.517466, 25.232291),

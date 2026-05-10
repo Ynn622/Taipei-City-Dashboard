@@ -20,8 +20,6 @@ import { CityManager } from "../dashboardComponent/utilities/cityManager";
 const FOOD_SAFETY_HEALTH_DASHBOARDS = new Set([
 	"food_safety_health_tpe",
 	"food_safety_health_metrotaipei",
-	"food-safety-health-tpe",
-	"food-safety-health-metrotaipei",
 ]);
 
 const FOOD_SAFETY_COMPONENT_ORDER = new Map(
@@ -119,8 +117,6 @@ export const useContentStore = defineStore("content", {
 		hiddenMapLayersByDashboard: {
 			food_safety_health_tpe: ["bike_map"],
 			food_safety_health_metrotaipei: ["bike_map"],
-			"food-safety-health-tpe": ["bike_map"],
-			"food-safety-health-metrotaipei": ["bike_map"],
 		},
 	}),
 	getters: {},

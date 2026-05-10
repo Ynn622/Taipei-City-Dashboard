@@ -5,18 +5,20 @@ from operators.common_pipeline import CommonDag
 def _transfer(**kwargs):
     import pandas as pd
     from sqlalchemy import create_engine
-    from utils.district_geocoder import DISTRICT_CENTROIDS
-    from utils.extract_stage import get_current_rid_from_page_id, get_data_taipei_api
-    from utils.fda_food_vendor import (
+    from utils.district_geocoder import (
+        DISTRICT_CENTROIDS,
         extract_district,
-        geocode_taipei_addresses_with_house_number_dataset,
         jitter_coordinate,
     )
+    from utils.extract_stage import get_current_rid_from_page_id, get_data_taipei_api
     from utils.load_stage import (
         save_geodataframe_to_postgresql,
         update_lasttime_in_data_to_dataset_info,
     )
     from utils.nominatim_geocoder import geocode_addresses_with_osm
+    from utils.taipei_address_geocoder import (
+        geocode_taipei_addresses_with_house_number_dataset,
+    )
     from utils.transform_geometry import add_point_wkbgeometry_column_to_df
 
     ready_data_db_uri = kwargs.get("ready_data_db_uri")

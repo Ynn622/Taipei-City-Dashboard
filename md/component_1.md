@@ -38,7 +38,7 @@ GET https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?req=getlis
 
 - `city`：縣市名稱，例如 `臺北市`、`新北市`
 - `Page`：頁碼
-- `Size`：每頁筆數，頁面可選 10、20、30、40
+- `Size`：每頁筆數，本 DAG 使用 `100`
 - `tp`：登錄類別，`0` 代表全部
 
 `tp` 分類：
@@ -53,7 +53,7 @@ GET https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?req=getlis
 範例：
 
 ```txt
-https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?req=getlist&city=臺北市&Page=1&Size=40&tp=0
+https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?req=getlist&city=新北市&Page=1&Size=100&tp=6
 ```
 
 目前觀察：
@@ -70,21 +70,19 @@ https://fadenbook.fda.gov.tw/pub/search-Vendor-County-result.aspx?req=getlist&ci
 
 ETL DAG：
 
-- 臺北市：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/food_safety_logistics_vendor_tpe/food_safety_logistics_vendor_tpe.py`
-- 新北市：`Taipei-City-Dashboard-DE/dags/proj_new_taipei_city_dashboard/food_safety_logistics_vendor_ntpe/food_safety_logistics_vendor_ntpe.py`
-- 共用 FDA helper：`Taipei-City-Dashboard-DE/dags/utils/fda_food_vendor.py`
+- 雙北合併：`Taipei-City-Dashboard-DE/dags/proj_city_dashboard/food_safety_logistics_vendor/food_safety_logistics_vendor.py`
+- FDA 端點解析 helper 已內嵌在此 DAG，避免 `utils` 被其他資料集混用。
+- API 端點固定使用 `search-Vendor-County-result.aspx?req=getlist&Size=100&tp=6`，以 `city` 切換 `臺北市` / `新北市`，再用 `Page` 跑完整頁數。
 
 前端地圖 GeoJSON：
 
-- 臺北市：`Taipei-City-Dashboard-FE/public/mapData/food_safety_logistics_vendor_tpe.geojson`
-- 新北市：`Taipei-City-Dashboard-FE/public/mapData/food_safety_logistics_vendor_ntpe.geojson`
+- 雙北合併：`Taipei-City-Dashboard-FE/public/mapData/food_safety_logistics_vendor.geojson`
 
 食安健康 tab 設定：
 
 - 新增 component：`food_safety_logistics_vendor`
 - 新增 map config：
-  - `203` / `food_safety_logistics_vendor_tpe`
-  - `204` / `food_safety_logistics_vendor_ntpe`
+  - `304` / `food_safety_logistics_vendor`
 - 已掛到 dashboard：
   - `food_safety_health_tpe`
   - `food_safety_health_metrotaipei`
@@ -105,22 +103,24 @@ ETL DAG：
 地圖呈現方式：
 
 - FDA 縣市列表端點沒有提供經緯度。
-- 目前地圖以每筆業者顯示一個點；臺北市 DAG 會先用臺北市門牌位置數值資料做門牌級定位，未命中者再嘗試專案既有 TPGOS 地址轉座標、OpenStreetMap Nominatim 道路/地名層級定位，最後才使用行政區中心點加微小偏移。
+- 目前地圖以每筆業者顯示一個點；DAG 會依縣市使用不同定位流程。
 - 臺北市門牌位置數值資料來源：`https://data.taipei/dataset/detail?id=b7c8e724-1e98-45ee-a0bd-f3840623ed97`。
 - 臺北市門牌位置數值資料欄位包含：省市縣市代碼、鄉鎮市區代碼、村里、鄰、街路段、地區、巷、弄、號、橫座標、縱座標。
 - 臺北市門牌資料座標為 TWD97，DAG 會轉成 WGS84 後輸出給 Mapbox。
 - OpenStreetMap 對台灣門牌通常無法穩定精準到號，因此物流業者多數是「道路/地名定位」，不是 FDA 原始資料提供經緯度。
 - 每一點代表一筆物流業者。
-- 臺北市 GeoJSON 目前有 256 個業者點位。
-- 新北市 GeoJSON 目前有 479 個業者點位。
-- 目前臺北市 144 筆使用臺北市門牌位置數值資料定位，112 筆使用 OpenStreetMap 道路/地名定位；新北市 477 筆使用 OpenStreetMap 道路/地名定位，2 筆保留行政區中心微偏移。
 
 目前定位順序：
 
-1. 臺北市門牌位置數值資料：只用於臺北市，能命中時可到門牌級。
-2. 專案既有 TPGOS 地址轉座標：需要 `TPGOS_GET_ADDR_XY` 設定。
-3. OpenStreetMap Nominatim：使用道路/地名層級查詢。
-4. 行政區中心微偏移：最後 fallback，避免點位完全消失。
+- 臺北市：
+  1. 臺北市門牌位置資料：優先做門牌級定位，門牌檔首次使用會下載並快取於本機/container。
+  2. TPGOS：若門牌資料未命中，使用專案既有 `get_addr_xy_parallel` 地址轉座標。
+  3. Nominatim：若 TPGOS 仍未命中，使用 OpenStreetMap Nominatim 作為道路或地名層級定位備援。
+  4. 行政區中心微偏移：最後 fallback，避免點位完全消失。
+- 新北市：
+  1. TPGOS：使用專案既有 `get_addr_xy_parallel` 地址轉座標。
+  2. Nominatim：若 TPGOS 未命中，使用 OpenStreetMap Nominatim 作為道路或地名層級定位備援。
+  3. 行政區中心微偏移：最後用行政區大概位置呈現。
 
 輸出欄位：
 
@@ -130,6 +130,7 @@ ETL DAG：
 - `district`
 - `vendor_category_code`
 - `vendor_category`
+- `source_city_row_no`
 - `registration_item`
 - `registration_no`
 - `name`
