@@ -45,7 +45,7 @@ UPDATE public.query_charts
 SET short_desc = '顯示雙北淨水場水質濁度比較。',
     long_desc = '顯示臺北自來水淨水場清水水質年度統計，以及臺灣自來水公司平均水質中關鍵字為新北市的淨水場最新測值；總覽以橫向長條圖比較各淨水場濁度(NTU)，並在地圖點位中提供 pH、濁度、自由有效餘氯、總硬度、總溶解固體量與大腸桿菌群等欄位。',
     query_type = 'two_d',
-    query_chart = 'SELECT unnest(array[''林莊淨水場'',''員山淨水場'',''雙溪淨水場'',''老梅淨水場'',''貢寮淨水場'',''陽明淨水場'',''坪林淨水場'',''板新淨水場'',''長興淨水場'',''公館淨水場'',''直潭淨水場'']) as x_axis, unnest(array[0.55,0.5,0.48,0.45,0.4,0.32,0.25,0.2,0.2,0.1,0.1]) as data',
+    query_chart = 'SELECT name AS x_axis, turbidity_ntu::float AS data FROM (SELECT name, turbidity_ntu FROM public.water_quality_tpe UNION ALL SELECT name, turbidity_ntu FROM public.water_quality_ntpe) d WHERE turbidity_ntu IS NOT NULL ORDER BY data DESC, x_axis',
     updated_at = NOW()
 WHERE index = 'water_quality'
   AND city = 'metrotaipei';
@@ -54,7 +54,7 @@ UPDATE public.query_charts
 SET short_desc = '顯示臺北市淨水場水質濁度比較。',
     long_desc = '顯示臺北自來水淨水場清水水質年度統計；總覽以橫向長條圖比較各淨水場濁度(NTU)，並在地圖點位中提供 pH、濁度、自由有效餘氯、總硬度、總溶解固體量與大腸桿菌群等欄位。',
     query_type = 'two_d',
-    query_chart = 'SELECT unnest(array[''雙溪淨水場'',''陽明淨水場'',''長興淨水場'',''公館淨水場'',''直潭淨水場'']) as x_axis, unnest(array[0.48,0.32,0.2,0.1,0.1]) as data',
+    query_chart = 'SELECT name AS x_axis, turbidity_ntu::float AS data FROM public.water_quality_tpe WHERE turbidity_ntu IS NOT NULL ORDER BY data DESC, x_axis',
     updated_at = NOW()
 WHERE index = 'water_quality'
   AND city = 'taipei';

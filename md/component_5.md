@@ -137,17 +137,18 @@
 - 新北資料雖有地址，但外部地理編碼對淨水場、山區與郊區地址可能產生漂移。
 - 固定座標可避免重跑 DAG 後點位跳動，讓地圖呈現穩定。
 
-固定座標集中在：
+固定座標位置：
 
-- `Taipei-City-Dashboard-DE/dags/utils/water_quality.py`
-  - `TAIPEI_PLANT_LOCATIONS`
-  - `NEW_TAIPEI_PLANT_LOCATIONS`
+- 臺北市：
+  - `Taipei-City-Dashboard-DE/dags/proj_city_dashboard/water_quality_tpe/water_quality_tpe.py`
+  - `plant_locations`
+- 新北市：
+  - `Taipei-City-Dashboard-DE/dags/proj_new_taipei_city_dashboard/water_quality_ntpe/water_quality_ntpe.py`
+  - `plant_locations`
 
 ## ETL DAG
 
-共用 helper：
-
-- `Taipei-City-Dashboard-DE/dags/utils/water_quality.py`
+臺北市與新北市資料處理都直接寫在各自 DAG 內，不再透過水質共用 helper。
 
 臺北市 DAG：
 
@@ -170,9 +171,17 @@
 
 - `db-sample-data/dashboardmanager-demo.sql`
 
-另外補了一份可直接套用在已初始化 manager DB 的 migration：
+Dashboard data DB 初始化表結構已加入：
+
+- `db-sample-data/food-safety-dashboard-data.sql`
+  - `water_quality_tpe`
+  - `water_quality_ntpe`
+  - 內含 5 筆臺北與 6 筆新北 seed 資料，DAG 跑完後會以 `replace` 覆蓋。
+
+另外補了可直接套用在已初始化 DB 的 migration：
 
 - `db-sample-data/add-water-quality-manager.sql`
+- `db-sample-data/add-water-quality-data.sql`
 
 已設定項目：
 
@@ -185,8 +194,8 @@
   - `food_safety_health_tpe`：新增 `306`
   - `food_safety_health_metrotaipei`：新增 `306`
 - Query chart：
-  - `taipei`：臺北市各淨水場濁度(NTU)
-  - `metrotaipei`：雙北各淨水場濁度(NTU)
+  - `taipei`：由 `public.water_quality_tpe` 查詢臺北市各淨水場濁度(NTU)
+  - `metrotaipei`：由 `public.water_quality_tpe` 與 `public.water_quality_ntpe` 查詢雙北各淨水場濁度(NTU)
 
 注意：若 Docker DB volume 已存在，修改 `dashboardmanager-demo.sql` 不會自動影響畫面。需要執行 `db-sample-data/add-water-quality-manager.sql`，或重建 manager DB volume 後重新初始化。
 
