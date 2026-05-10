@@ -17,7 +17,7 @@
       "email_on_retry": false,
       "email_on_failure": true,
       "retries": 1,
-      "retry_delay": 60
+      "retry_delay": 20
     },
     "ready_data_db": "postgres_default",
     "ready_data_default_table": "food_safety_market_tpe",
@@ -29,14 +29,14 @@
   "data_infos": {
     "name_cn": "臺北市各區公有零售市(商)場攤位數",
     "airflow_update_freq": "@monthly",
-    "source": "https://data.taipei/dataset/detail?id=f490476d-d156-4492-a463-cf3405de3b55",
+    "source": "https://data.taipei/dataset/detail?id=f490476d-d156-4492-a463-cf3405de3b55; https://data.gov.tw/dataset/121593",
     "source_type": "data.taipei API",
     "source_dept": "臺北市市場處",
     "gis_format": null,
     "output_coordinate": "EPSG:4326",
     "is_geometry": 1,
     "dataset_description": "臺北市各區公有零售市(商)場攤位數量。",
-    "etl_description": "resolve latest resource id, standardize market stall columns, geocode market names, standardize geometry",
+    "etl_description": "取得最新攤位數資料，標準化市場攤位欄位，併入臺北市公有市場清冊地址與經緯度；缺漏座標時以市場名稱查詢 TPGOS 補值，最後產生標準點位圖資。",
     "sensitivity": "public"
   }
 }

@@ -17,7 +17,7 @@
       "email_on_retry": false,
       "email_on_failure": true,
       "retries": 1,
-      "retry_delay": 60
+      "retry_delay": 20
     },
     "ready_data_db": "postgres_default",
     "ready_data_default_table": "food_safety_market_ntpe",
@@ -29,14 +29,14 @@
   "data_infos": {
     "name_cn": "新北市公有市場名冊",
     "airflow_update_freq": "@monthly",
-    "source": "https://data.ntpc.gov.tw/datasets/785be91a-caaf-4e1c-91d6-f7d616d31a45",
-    "source_type": "data.ntpc API",
+    "source": "https://data.ntpc.gov.tw/datasets/785be91a-caaf-4e1c-91d6-f7d616d31a45; https://oas.bas.ntpc.gov.tw/NTPCTRWD/NewPage/Publish.aspx?Mid1=382170000G&p=0&y={report_year}%2f12%2f25&s=50",
+    "source_type": "data.ntpc API; 新北市統計資訊網 ods file",
     "source_dept": "新北市政府市場處",
     "gis_format": null,
     "output_coordinate": "EPSG:4326",
     "is_geometry": 1,
-    "dataset_description": "新北市公有市場名冊，含市場名稱、行政區、地址、電話及市場型態。",
-    "etl_description": "retrieve all API pages, standardize fields, geocode addresses, standardize geometry",
+    "dataset_description": "新北市公有市場名冊，含市場名稱、行政區、地址、電話、市場型態及各類攤位數。",
+    "etl_description": "取得新北市公有市場名冊，從新北市統計資訊網下載前一年公有零售市場攤位數 ODS，標準化市場與攤位欄位，依市場名稱與行政區併入攤位細項；地址定位依序使用 TPGOS、OpenStreetMap Nominatim 與行政區中心補值，最後產生標準點位圖資。",
     "sensitivity": "public"
   }
 }

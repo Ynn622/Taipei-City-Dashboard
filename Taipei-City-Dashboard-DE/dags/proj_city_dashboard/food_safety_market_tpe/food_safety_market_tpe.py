@@ -3,6 +3,7 @@ from operators.common_pipeline import CommonDag
 
 
 def _transfer(**kwargs):
+    import re
     import pandas as pd
     from sqlalchemy import create_engine
     from utils.extract_stage import get_current_rid_from_page_id, get_data_taipei_api
@@ -21,8 +22,45 @@ def _transfer(**kwargs):
     history_table = dag_infos.get("ready_data_history_table")
 
     page_id = "f490476d-d156-4492-a463-cf3405de3b55"
+    market_location_csv_url = (
+        "https://data.taipei/api/dataset/89bebb3a-990d-4070-bd67-631a575f6d4a/"
+        "resource/35acfce1-2c4d-4c70-aa75-601cdab2b3f7/download"
+    )
     from_crs = 4326
     geometry_type = "Point"
+
+    def _normalize_market_name(name):
+        normalized = "" if pd.isna(name) else str(name).strip()
+        normalized = re.sub(r"\(.*?\)|（.*?）", "", normalized)
+        for token in ["臺北市", "台北市", "公有", "零售", "市場", "中繼"]:
+            normalized = normalized.replace(token, "")
+        return normalized.strip()
+
+    def _load_market_locations():
+        location_data = pd.read_csv(market_location_csv_url, encoding="cp950")
+        location_data = location_data.rename(
+            columns={
+                "stitle": "location_name",
+                "xAddress": "location_address",
+                "GTag_longitude": "source_lng",
+                "GTag_latitude": "source_lat",
+            }
+        )
+        location_data["market_key"] = location_data["location_name"].apply(
+            _normalize_market_name
+        )
+        location_data["lng"] = pd.to_numeric(
+            location_data["source_lng"], errors="coerce"
+        )
+        location_data["lat"] = pd.to_numeric(
+            location_data["source_lat"], errors="coerce"
+        )
+        location_data["location_address"] = (
+            location_data["location_address"].fillna("").astype(str).str.strip()
+        )
+        return location_data.dropna(subset=["lng", "lat"]).drop_duplicates(
+            subset=["market_key"]
+        )[["market_key", "location_address", "lng", "lat"]]
 
     rid = get_current_rid_from_page_id(page_id)
     raw_data = pd.DataFrame(get_data_taipei_api(rid))
@@ -73,12 +111,45 @@ def _transfer(**kwargs):
     data["name_for_geocoding"] = data["name"].str.replace(
         r"\(.*?\)", "", regex=True
     ).str.strip()
-    data["geocode_query"] = data["city"] + data["district"] + data["name_for_geocoding"]
+    data["geocode_query"] = (
+        data["city"] + data["district"] + data["name_for_geocoding"]
+    )
+    data["market_key"] = data["name"].apply(_normalize_market_name)
 
-    unique_queries = pd.Series(data["geocode_query"].dropna().unique())
-    lng, lat = get_addr_xy_parallel(unique_queries, sleep_time=0.5)
-    geocoded = pd.DataFrame({"geocode_query": unique_queries, "lng": lng, "lat": lat})
-    data = data.merge(geocoded, on="geocode_query", how="left")
+    try:
+        market_locations = _load_market_locations()
+    except Exception as e:
+        print(f"Unable to load Taipei market location CSV: {e}")
+        market_locations = pd.DataFrame(
+            columns=["market_key", "location_address", "lng", "lat"]
+        )
+
+    data = data.merge(market_locations, on="market_key", how="left")
+    data["address"] = data["location_address"].where(
+        data["location_address"].fillna("").ne(""),
+        data["address"],
+    )
+
+    missing = data["lng"].isna() | data["lat"].isna()
+    if missing.any():
+        try:
+            unique_queries = pd.Series(
+                data.loc[missing, "geocode_query"].dropna().unique()
+            )
+            lng, lat = get_addr_xy_parallel(unique_queries, sleep_time=0.5)
+            geocoded = pd.DataFrame(
+                {
+                    "geocode_query": unique_queries,
+                    "tpgos_lng": lng,
+                    "tpgos_lat": lat,
+                }
+            )
+            data = data.merge(geocoded, on="geocode_query", how="left")
+            data["lng"] = data["lng"].fillna(data["tpgos_lng"])
+            data["lat"] = data["lat"].fillna(data["tpgos_lat"])
+        except Exception as e:
+            print(f"Unable to geocode missing Taipei markets with TPGOS: {e}")
+
     data = data.dropna(subset=["lng", "lat"])
     if data.empty:
         raise ValueError("No Taipei market records were geocoded successfully.")

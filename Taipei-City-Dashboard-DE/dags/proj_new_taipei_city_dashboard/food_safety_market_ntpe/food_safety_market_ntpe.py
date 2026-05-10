@@ -4,12 +4,14 @@ from operators.common_pipeline import CommonDag
 
 def _transfer(**kwargs):
     import io
+    import html as html_lib
     import pandas as pd
     import re
     import requests
     import zipfile
     from xml.etree import ElementTree as ET
     from sqlalchemy import create_engine
+    from utils.district_geocoder import DISTRICT_CENTROIDS
     from utils.extract_stage import NewTaipeiAPIClient
     from utils.load_stage import (
         save_geodataframe_to_postgresql,
@@ -48,90 +50,77 @@ def _transfer(**kwargs):
         "vacant_stalls",
     ]
 
-    def _extract_hidden_inputs(html):
-        inputs = {}
-        for match in re.finditer(r"<input[^>]+>", html):
-            tag = match.group(0)
-            name = re.search(r'name="([^"]+)"', tag)
-            if not name:
+    def _get_html_attr(tag, attr):
+        """取出 HTML tag 的指定 attribute，並處理 HTML escape。"""
+        match = re.search(
+            rf"{attr}\s*=\s*(['\"])(.*?)\1",
+            tag,
+            re.I | re.S,
+        )
+        return html_lib.unescape(match.group(2)) if match else ""
+
+    def _find_stall_download_link(page_html):
+        """從統計發布頁表格中找到目標 ODS 下載連結。"""
+        report_name = "新北市各區公有零售市場攤位數"
+        expected_filename = f"{report_name}.ods"
+        rows = re.findall(r"<tr\b.*?</tr>", page_html, re.I | re.S)
+        for row in rows:
+            if report_name not in row:
                 continue
-            value = re.search(r'value="([^"]*)"', tag)
-            inputs[name.group(1)] = value.group(1) if value else ""
-        return inputs
+            for tag in re.findall(r"<a\b[^>]*>", row, re.I | re.S):
+                href = _get_html_attr(tag, "href")
+                title = _get_html_attr(tag, "title")
+                if expected_filename == title and "DownloadHandler.aspx" in href:
+                    return href
+        return ""
 
     def _download_latest_stall_ods():
-        report_url = "https://oas.bas.ntpc.gov.tw/NTPCTRWD/NewPage/kcg08.aspx"
+        """下載去年發布的市場攤位數 ODS。"""
+        report_year = pd.Timestamp.now(tz="Asia/Taipei").year - 1
+        report_url = (
+            "https://oas.bas.ntpc.gov.tw/NTPCTRWD/NewPage/Publish.aspx"
+            f"?Mid1=382170000G&p=0&y={report_year}%2f12%2f25&s=50"
+        )
+        print(f"[food_safety_market_ntpe] Fetch stall report page: {report_url}")
         session = requests.Session()
         session.headers.update({"User-Agent": "Mozilla/5.0"})
         response = session.get(report_url, timeout=60)
         response.raise_for_status()
-        data = _extract_hidden_inputs(response.text)
+        download_link = _find_stall_download_link(response.text)
+        if not download_link:
+            raise ValueError(
+                "Unable to find New Taipei market stall ODS download link "
+                f"for report year {report_year}."
+            )
 
-        last_year = pd.Timestamp.now(tz="Asia/Taipei").year - 1
-        data.update(
-            {
-                "ctl00$ContentPlaceHolder1$txtRptNo": "21412-02-01-2",
-                "ctl00$ContentPlaceHolder1$txtRptName": "",
-                "ctl00$ContentPlaceHolder1$ddlOrg": "382170000G",
-                "ctl00$ContentPlaceHolder1$ddlYearMonth": (
-                    f"{last_year}-01-01~{last_year}-12-31"
-                ),
-                "ctl00$ContentPlaceHolder1$btnGo": "查詢",
-            }
+        download_url = requests.compat.urljoin(report_url, download_link)
+        print(f"[food_safety_market_ntpe] Download stall ODS: {download_url}")
+        response = session.get(
+            download_url,
+            headers={"Referer": report_url},
+            timeout=60,
         )
-        response = session.post(report_url, data=data, timeout=60)
         response.raise_for_status()
-        match = re.search(
-            r"21412-02-01-2.*?href=\"([^\"]*DownloadHandler\.aspx[^\"]+)\"",
-            response.text,
-            re.S,
-        )
-        if not match:
-            raise ValueError("Unable to find New Taipei market stall ODS download link.")
-
-        download_url = requests.compat.urljoin(report_url, match.group(1))
-        response = session.get(download_url, timeout=60)
-        response.raise_for_status()
+        if not zipfile.is_zipfile(io.BytesIO(response.content)):
+            raise ValueError(
+                "Downloaded New Taipei market stall file is not a valid ODS file "
+                f"for report year {report_year}."
+            )
         return response.content
 
     def _parse_stall_ods(ods_content):
+        """解析 ODS content.xml，整理各市場攤位類別欄位。"""
         ns = {
             "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
             "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
         }
-        districts = [
-            "板橋",
-            "三重",
-            "中和",
-            "永和",
-            "新莊",
-            "新店",
-            "土城",
-            "蘆洲",
-            "樹林",
-            "鶯歌",
-            "三峽",
-            "淡水",
-            "汐止",
-            "瑞芳",
-            "五股",
-            "泰山",
-            "林口",
-            "深坑",
-            "石碇",
-            "坪林",
-            "三芝",
-            "石門",
-            "八里",
-            "平溪",
-            "雙溪",
-            "貢寮",
-            "金山",
-            "萬里",
-            "烏來",
-        ]
+        districts = ["板橋", "三重", "中和", "永和", "新莊", "新店", "土城", "蘆洲", "樹林", 
+                     "鶯歌", "三峽", "淡水", "汐止", "瑞芳", "五股", "泰山", "林口", "深坑", 
+                     "石碇", "坪林", "三芝", "石門", "八里", "平溪", "雙溪", "貢寮", "金山", 
+                     "萬里", "烏來",]
 
         def split_market_name(full_name):
+            """把 ODS 的市場全名拆成行政區與市場名稱。"""
             for district in sorted(districts, key=len, reverse=True):
                 if full_name.startswith(f"{district}區"):
                     return f"{district}區", full_name[len(f"{district}區") :]
@@ -181,16 +170,94 @@ def _transfer(**kwargs):
                     "vacant_stalls": cells[12],
                 }
             )
-        return pd.DataFrame(rows)
+        result = pd.DataFrame(rows)
+        print(f"[food_safety_market_ntpe] Parsed stall rows: {len(result)}")
+        return result
 
     def _normalize_market_name(name):
+        """移除市場名稱常見詞，供名冊與 ODS 資料比對。"""
         normalized = str(name).strip()
         for token in ["公有零售市場", "公有市場", "零售市場", "公有", "零售", "市場", "2樓"]:
             normalized = normalized.replace(token, "")
         return normalized.strip()
 
+    def _geocode_with_tpgos(addresses):
+        """用 TPgOS 批次地址轉座標；失敗時回傳空結果讓下一階段接手。"""
+        if addresses.empty:
+            print("[food_safety_market_ntpe] Skip TPgOS geocoding: no addresses")
+            return pd.DataFrame(
+                columns=["geocoding_address", "tpgos_lng", "tpgos_lat"]
+            )
+
+        print(f"[food_safety_market_ntpe] TPgOS geocoding addresses: {len(addresses)}")
+        try:
+            lng, lat = get_addr_xy_parallel(addresses, sleep_time=0.5)
+        except Exception as error:
+            print(f"Skip TPgOS geocoding: {error}")
+            return pd.DataFrame(
+                columns=["geocoding_address", "tpgos_lng", "tpgos_lat"]
+            )
+
+        result = pd.DataFrame(
+            {"geocoding_address": addresses, "tpgos_lng": lng, "tpgos_lat": lat}
+        )
+        print(
+            "[food_safety_market_ntpe] TPgOS geocoded: "
+            f"{result['tpgos_lng'].notna().sum()}/{len(result)}"
+        )
+        return result
+
+    def _geocode_with_nominatim(addresses):
+        """用 Nominatim 補定位 TPgOS 未命中的地址。"""
+        if addresses.empty:
+            print("[food_safety_market_ntpe] Skip Nominatim geocoding: no addresses")
+            return pd.DataFrame(
+                columns=[
+                    "geocoding_address",
+                    "osm_lng",
+                    "osm_lat",
+                    "osm_query",
+                    "osm_display_name",
+                    "osm_location_method",
+                ]
+            )
+
+        print(
+            "[food_safety_market_ntpe] Nominatim geocoding addresses: "
+            f"{len(addresses)}"
+        )
+        try:
+            from utils.nominatim_geocoder import geocode_addresses_with_osm
+
+            result = geocode_addresses_with_osm(addresses).rename(
+                columns={"address": "geocoding_address"}
+            )
+            print(
+                "[food_safety_market_ntpe] Nominatim geocoded: "
+                f"{result['osm_lng'].notna().sum()}/{len(result)}"
+            )
+            return result
+        except ImportError as error:
+            print(f"Skip Nominatim geocoding import: {error}")
+        except Exception as error:
+            print(f"Skip Nominatim geocoding: {error}")
+
+        return pd.DataFrame(
+            columns=[
+                "geocoding_address",
+                "osm_lng",
+                "osm_lat",
+                "osm_query",
+                "osm_display_name",
+                "osm_location_method",
+            ]
+        )
+
+    print("[food_safety_market_ntpe] Start ETL")
+    print("[food_safety_market_ntpe] Fetch New Taipei market list")
     client = NewTaipeiAPIClient(rid, input_format="json")
     raw_data = pd.DataFrame(client.get_all_data(size=1000))
+    print(f"[food_safety_market_ntpe] Raw market rows: {len(raw_data)}")
 
     data = raw_data.rename(
         columns={
@@ -232,22 +299,51 @@ def _transfer(**kwargs):
         on=["district", "market_key"],
         how="left",
     )
+    print(
+        "[food_safety_market_ntpe] Market rows matched with stall data: "
+        f"{data['stall_total'].notna().sum()}/{len(data)}"
+    )
     for col in stall_cols:
         data[col] = pd.to_numeric(data[col], errors="coerce")
 
+    print("[food_safety_market_ntpe] Normalize addresses")
     addr = data["address"]
     addr_cleaned = clean_data(addr)
     standard_addr_list = main_process(addr_cleaned)
     _, output = save_data(addr, addr_cleaned, standard_addr_list)
     data["address"] = output
+    data["geocoding_address"] = data["address"]
 
-    unique_addresses = pd.Series(data["address"].dropna().unique())
-    lng, lat = get_addr_xy_parallel(unique_addresses, sleep_time=0.5)
-    geocoded = pd.DataFrame({"address": unique_addresses, "lng": lng, "lat": lat})
-    data = data.merge(geocoded, on="address", how="left")
-    data = data.dropna(subset=["lng", "lat"])
-    if data.empty:
-        raise ValueError("No New Taipei market records were geocoded successfully.")
+    # 定位順序參考 component6 新北市做法：TPgOS、Nominatim、行政區中心。
+    tpgos_addresses = pd.Series(data["geocoding_address"].dropna().unique())
+    tpgos_geocoded = _geocode_with_tpgos(tpgos_addresses)
+    data = data.merge(tpgos_geocoded, on="geocoding_address", how="left")
+
+    missing_addresses = pd.Series(
+        data.loc[data["tpgos_lng"].isna(), "geocoding_address"].dropna().unique()
+    )
+    osm_geocoded = _geocode_with_nominatim(missing_addresses)
+    data = data.merge(osm_geocoded, on="geocoding_address", how="left")
+    data["lng"] = data["tpgos_lng"].combine_first(data["osm_lng"])
+    data["lat"] = data["tpgos_lat"].combine_first(data["osm_lat"])
+    data["location_method"] = "OpenStreetMap道路/地名定位"
+    data.loc[data["tpgos_lng"].notna(), "location_method"] = "地址轉座標"
+
+    missing = data["lng"].isna() | data["lat"].isna()
+    for index, row in data.loc[missing].iterrows():
+        centroid = DISTRICT_CENTROIDS.get(f"{row['city']}{row['district']}")
+        if centroid:
+            data.loc[index, "lng"] = centroid[0]
+            data.loc[index, "lat"] = centroid[1]
+            data.loc[index, "location_method"] = "行政區中心"
+    print(
+        "[food_safety_market_ntpe] District centroid fallback rows: "
+        f"{(data['location_method'] == '行政區中心').sum()}"
+    )
+
+    if data["lng"].isna().any() or data["lat"].isna().any():
+        raise ValueError("Some New Taipei market records were not geocoded.")
+    print(f"[food_safety_market_ntpe] Geocoded market rows: {len(data)}")
 
     gdata = add_point_wkbgeometry_column_to_df(
         data,
@@ -284,6 +380,7 @@ def _transfer(**kwargs):
             "wkb_geometry",
         ]
     ]
+    print(f"[food_safety_market_ntpe] Ready rows to save: {len(ready_data)}")
 
     engine = create_engine(ready_data_db_uri)
     save_geodataframe_to_postgresql(
@@ -295,6 +392,7 @@ def _transfer(**kwargs):
         geometry_type=geometry_type,
     )
     update_lasttime_in_data_to_dataset_info(engine, dag_id, lasttime_in_data)
+    print("[food_safety_market_ntpe] ETL finished")
 
 
 dag = CommonDag(
