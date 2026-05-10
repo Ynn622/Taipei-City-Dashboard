@@ -16,6 +16,16 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+CREATE OR REPLACE FUNCTION public.trigger_set_timestamp()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    NEW._mtime = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -539,14 +549,6 @@ CREATE SEQUENCE public.tran_ubike_realtime_ogc_fid_seq
 
 
 --
--- Name: tran_ubike_realtime_ogc_fid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.tran_ubike_realtime_ogc_fid_seq OWNED BY public.tran_ubike_realtime.ogc_fid;
-
-
-
-
 --
 -- Name: tran_ubike_realtime; Type: TABLE; Schema: public; Owner: -
 --
@@ -565,6 +567,13 @@ CREATE TABLE public.tran_ubike_realtime (
     _mtime timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     ogc_fid integer DEFAULT nextval('public.tran_ubike_realtime_ogc_fid_seq'::regclass) NOT NULL
 );
+
+
+--
+-- Name: tran_ubike_realtime_ogc_fid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tran_ubike_realtime_ogc_fid_seq OWNED BY public.tran_ubike_realtime.ogc_fid;
 
 
 --
