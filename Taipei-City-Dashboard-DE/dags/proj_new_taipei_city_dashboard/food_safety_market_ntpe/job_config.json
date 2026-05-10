@@ -5,11 +5,10 @@
     "schedule_interval": "@monthly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "market",
-      "data.ntpc",
-      "新北市",
-      "Taipei-City"
+      "食安健康",
+      "公有市場",
+      "市場攤位",
+      "新北市"
     ],
     "description": "Monthly update of New Taipei public market list with address geocoding and point geometry.",
     "default_args": {

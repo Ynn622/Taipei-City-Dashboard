@@ -5,11 +5,10 @@
     "schedule_interval": "@monthly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "health_audit_violation",
-      "fsmc.ntpc",
-      "新北市",
-      "Taipei-City"
+      "食安健康",
+      "衛生稽核",
+      "違規單位",
+      "新北市"
     ],
     "description": "Monthly update of New Taipei environmental sanitation audit violation units with provided coordinates.",
     "default_args": {

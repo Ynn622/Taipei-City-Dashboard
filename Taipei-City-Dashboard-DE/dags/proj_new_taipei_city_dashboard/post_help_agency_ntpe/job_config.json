@@ -5,12 +5,11 @@
     "schedule_interval": "@monthly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "post_help_agency",
-      "medical",
-      "consumer_protection",
-      "新北市",
-      "Taipei-City"
+      "食安健康",
+      "事後求助機構",
+      "醫療機構",
+      "消費者保護",
+      "新北市"
     ],
     "description": "Monthly update of New Taipei post-incident help agencies including medical institutions and consumer protection agencies.",
     "default_args": {

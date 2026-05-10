@@ -5,12 +5,10 @@
     "schedule_interval": "@monthly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "food_source",
-      "organic_farm",
-      "data.ntpc",
-      "新北市",
-      "Taipei-City"
+      "食安健康",
+      "有機農場",
+      "食材來源",
+      "新北市"
     ],
     "description": "Monthly update of New Taipei organic farms with geocoded point geometry.",
     "default_args": {

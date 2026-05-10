@@ -5,12 +5,11 @@
     "schedule_interval": "@yearly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "death_share",
-      "death_cause",
+      "食安健康",
+      "死因統計",
+      "主要死因占比",
       "臺北市",
-      "新北市",
-      "Taipei-City"
+      "新北市"
     ],
     "description": "Taipei and New Taipei 10-year major death-cause share time series for food safety health dashboard.",
     "default_args": {

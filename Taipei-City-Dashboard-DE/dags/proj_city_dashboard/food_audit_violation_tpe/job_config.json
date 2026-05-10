@@ -5,11 +5,10 @@
     "schedule_interval": "@yearly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "food_audit_violation",
-      "data.taipei",
-      "臺北市",
-      "Taipei-City"
+      "食安健康",
+      "食品稽核",
+      "違規單位",
+      "臺北市"
     ],
     "description": "Yearly update of Taipei food sampling non-compliant units with geocoded point geometry.",
     "default_args": {

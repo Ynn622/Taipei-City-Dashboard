@@ -5,11 +5,10 @@
     "schedule_interval": "@monthly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "water_quality",
-      "water.gov.tw",
-      "新北市",
-      "New-Taipei-City"
+      "食安健康",
+      "飲用水水質",
+      "淨水場",
+      "新北市"
     ],
     "description": "Monthly update of New Taipei drinking water quality by purification plant.",
     "default_args": {

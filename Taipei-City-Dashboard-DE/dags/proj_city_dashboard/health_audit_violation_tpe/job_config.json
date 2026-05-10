@@ -5,11 +5,10 @@
     "schedule_interval": "@monthly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "health_audit_violation",
-      "imap.health.gov.taipei",
-      "臺北市",
-      "Taipei-City"
+      "食安健康",
+      "衛生稽核",
+      "違規單位",
+      "臺北市"
     ],
     "description": "Monthly update of Taipei food sanitation audit violation units with point geometry from health map search.",
     "default_args": {

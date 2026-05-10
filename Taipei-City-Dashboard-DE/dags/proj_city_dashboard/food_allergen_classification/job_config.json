@@ -5,9 +5,9 @@
     "schedule_interval": "0 2 * * 1",
     "catchup": false,
     "tags": [
-      "mohw",
       "食安健康",
-      "過敏原",
+      "衛福部",
+      "食品過敏原",
       "食品衛生管理"
     ],
     "description": "Weekly classification of food allergens for Taipei City food ingredient platform, sampling 30 products per company.",

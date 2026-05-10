@@ -5,8 +5,8 @@
     "schedule_interval": "0 2 * * 1",
     "catchup": false,
     "tags": [
-      "moa",
       "食安健康",
+      "農業部",
       "農產品",
       "產銷履歷",
       "不合格率"

@@ -5,11 +5,10 @@
     "schedule_interval": "@monthly",
     "catchup": false,
     "tags": [
-      "food_safety_health",
-      "fda",
-      "logistics",
-      "新北市",
-      "Taipei-City"
+      "食安健康",
+      "食品業者登錄",
+      "物流業者",
+      "新北市"
     ],
     "description": "Monthly update of New Taipei FDA registered food logistics vendors as individual map points.",
     "default_args": {
