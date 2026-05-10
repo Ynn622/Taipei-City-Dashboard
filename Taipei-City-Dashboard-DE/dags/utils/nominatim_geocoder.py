@@ -1,5 +1,6 @@
 import re
 import time
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -8,7 +9,16 @@ import requests
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 DEFAULT_NOMINATIM_MIN_INTERVAL_SECONDS = 1.1
 DEFAULT_NOMINATIM_USER_AGENT = "Taipei-City-Dashboard/1.0"
+DEFAULT_NOMINATIM_CACHE = "/tmp/nominatim_geocoding_cache.csv"
 NOMINATIM_LOCATION_METHOD = "OpenStreetMap道路/地名定位"
+NOMINATIM_RESULT_COLUMNS = [
+    "address",
+    "lng",
+    "lat",
+    "nominatim_query",
+    "nominatim_display_name",
+    "nominatim_location_method",
+]
 
 
 def normalize_address_text(address):
@@ -112,6 +122,39 @@ def _empty_record(address, query=""):
     }
 
 
+def _load_nominatim_cache(cache_path):
+    path = Path(cache_path)
+    if not path.exists() or path.stat().st_size == 0:
+        return pd.DataFrame(columns=NOMINATIM_RESULT_COLUMNS)
+
+    data = pd.read_csv(path, dtype=str)
+    for column in NOMINATIM_RESULT_COLUMNS:
+        if column not in data.columns:
+            data[column] = None
+
+    data = data[NOMINATIM_RESULT_COLUMNS].dropna(subset=["address"])
+    data = data.drop_duplicates(subset=["address"], keep="last")
+    for column in ("lng", "lat"):
+        data[column] = pd.to_numeric(data[column], errors="coerce")
+    return data
+
+
+def _append_nominatim_cache(records, cache_path):
+    if not records:
+        return
+
+    path = Path(cache_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    new_data = pd.DataFrame(records, columns=NOMINATIM_RESULT_COLUMNS)
+    if path.exists() and path.stat().st_size > 0:
+        current_data = _load_nominatim_cache(cache_path)
+        new_data = pd.concat([current_data, new_data], ignore_index=True)
+
+    new_data = new_data.drop_duplicates(subset=["address"], keep="last")
+    new_data.to_csv(path, index=False)
+
+
 def geocode_address_with_nominatim(
     address,
     session=None,
@@ -176,37 +219,58 @@ def geocode_addresses_with_nominatim(
     countrycodes="tw",
     accept_language="zh-TW",
     timeout=30,
+    cache_path=DEFAULT_NOMINATIM_CACHE,
 ):
     session = requests.Session()
     session.headers.update({"User-Agent": user_agent})
     last_request_time = [0.0]
+    target_addresses = pd.Series(addresses).dropna().astype(str).drop_duplicates()
+
+    cached_rows = []
+    cached_addresses = set()
+    if cache_path:
+        cache_data = _load_nominatim_cache(cache_path)
+        if not cache_data.empty:
+            cache_hits = cache_data[cache_data["address"].isin(target_addresses)]
+            cached_rows = cache_hits.to_dict("records")
+            cached_addresses = set(cache_hits["address"])
 
     rows = []
-    for address in pd.Series(addresses).dropna().astype(str).drop_duplicates():
-        rows.append(
-            geocode_address_with_nominatim(
-                address,
-                session=session,
-                last_request_time=last_request_time,
-                min_interval_seconds=min_interval_seconds,
-                user_agent=user_agent,
-                query_builder=query_builder or default_query_candidates,
-                countrycodes=countrycodes,
-                accept_language=accept_language,
-                timeout=timeout,
-            )
+    new_rows = []
+    for address in target_addresses:
+        if address in cached_addresses:
+            continue
+
+        row = geocode_address_with_nominatim(
+            address,
+            session=session,
+            last_request_time=last_request_time,
+            min_interval_seconds=min_interval_seconds,
+            user_agent=user_agent,
+            query_builder=query_builder or default_query_candidates,
+            countrycodes=countrycodes,
+            accept_language=accept_language,
+            timeout=timeout,
         )
+        rows.append(row)
+        new_rows.append(row)
+
+    if cache_path:
+        _append_nominatim_cache(new_rows, cache_path)
+
+    rows_by_address = {
+        row["address"]: row
+        for row in [*cached_rows, *rows]
+    }
+    ordered_rows = [
+        rows_by_address[address]
+        for address in target_addresses
+        if address in rows_by_address
+    ]
 
     return pd.DataFrame(
-        rows,
-        columns=[
-            "address",
-            "lng",
-            "lat",
-            "nominatim_query",
-            "nominatim_display_name",
-            "nominatim_location_method",
-        ],
+        ordered_rows,
+        columns=NOMINATIM_RESULT_COLUMNS,
     )
 
 
@@ -215,12 +279,14 @@ def geocode_addresses_with_osm(
     delay_seconds=DEFAULT_NOMINATIM_MIN_INTERVAL_SECONDS,
     user_agent=DEFAULT_NOMINATIM_USER_AGENT,
     query_builder=None,
+    cache_path=DEFAULT_NOMINATIM_CACHE,
 ):
     data = geocode_addresses_with_nominatim(
         addresses,
         min_interval_seconds=delay_seconds,
         user_agent=user_agent,
         query_builder=query_builder,
+        cache_path=cache_path,
     )
     return data.rename(
         columns={
