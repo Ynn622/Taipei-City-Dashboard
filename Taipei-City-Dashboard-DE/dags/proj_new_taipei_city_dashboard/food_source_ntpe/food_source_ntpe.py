@@ -10,16 +10,16 @@ def _transfer(**kwargs):
     import pandas as pd
     import requests
     from sqlalchemy import create_engine
+    from utils.district_geocoder import DISTRICT_CENTROIDS
     from utils.extract_stage import NewTaipeiAPIClient
     from utils.fda_food_vendor import (
-        DISTRICT_CENTROIDS,
-        geocode_addresses_with_osm,
         jitter_coordinate,
     )
     from utils.load_stage import (
         save_geodataframe_to_postgresql,
         update_lasttime_in_data_to_dataset_info,
     )
+    from utils.nominatim_geocoder import geocode_addresses_with_osm
     from utils.transform_geometry import add_point_wkbgeometry_column_to_df
 
     ready_data_db_uri = kwargs.get("ready_data_db_uri")

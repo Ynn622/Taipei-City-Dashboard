@@ -126,8 +126,8 @@
 
 ## ETL 與資料處理
 
-- 共用 helper：
-  - `Taipei-City-Dashboard-DE/dags/utils/health_office.py`
+- 資料抓取與欄位標準化：
+  - 臺北市與新北市邏輯已拆回各自 DAG，避免城市專屬處理散落在共用 helper。
 - 臺北市 DAG：
   - `Taipei-City-Dashboard-DE/dags/proj_city_dashboard/food_safety_health_office_tpe/food_safety_health_office_tpe.py`
   - `Taipei-City-Dashboard-DE/dags/proj_city_dashboard/food_safety_health_office_tpe/job_config.json`
@@ -138,8 +138,8 @@
 定位方式：
 
 - 臺北市健康服務中心與臺北市政府衛生局優先使用臺北市門牌位置數值資料定位。
-- 臺北市若門牌資料未命中，會再嘗試專案既有地址轉座標與 OpenStreetMap。
-- 新北市衛生所主要使用 OpenStreetMap 道路/地名定位。
+- 臺北市若門牌資料未命中，會依序嘗試 TPgOS、Nominatim 與行政區中心。
+- 新北市衛生所依序使用 TPgOS、Nominatim 與行政區中心定位。
 - 新北市政府衛生局目前固定在英士路 192/192-1 號這組衛生局所位置，避免重跑 DAG 時因外部地理編碼結果漂移。
 
 ## Seed SQL
@@ -147,10 +147,16 @@
 相關設定已放在：
 
 - `db-sample-data/dashboardmanager-demo.sql`
+- `db-sample-data/food-safety-dashboard-data.sql`
+- 已初始化過的 running dashboard data DB 可套用：
+  - `db-sample-data/add-health-office-data.sql`
 
 已設定項目：
 
 - Component：`food_safety_health_office`
+- Dashboard data DB table：
+  - `public.food_safety_health_office_tpe`
+  - `public.food_safety_health_office_ntpe`
 - Map config：
   - `205` / `food_safety_health_office_tpe`
   - `206` / `food_safety_health_office_ntpe`
@@ -165,5 +171,6 @@
 
 - 此組件目前是食安健康 tab 下的「衛生局」component，用於支援事前稽查情境。
 - `agency_type` 是前端判斷圓點大小的重要欄位，衛生局本體必須維持為 `衛生局`。
+- DAG 使用 `load_behavior = replace`，dashboard data DB 必須先有 `public.food_safety_health_office_tpe` 與 `public.food_safety_health_office_ntpe`，否則第一次跑會在 `TRUNCATE TABLE` 時出現 `relation does not exist`。
 - GeoJSON 變更後通常不需要重啟 Docker，硬重新整理前端即可重新讀取 `/mapData/*.geojson`。
 - 若 dashboard component 或圖例沒有更新，需確認 running DB 是否已套用最新 seed SQL 或手動 update。

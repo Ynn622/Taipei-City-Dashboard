@@ -2,13 +2,13 @@ import re
 
 import pandas as pd
 import requests
+from utils.district_geocoder import DISTRICT_CENTROIDS
 from utils.fda_food_vendor import (
-    DISTRICT_CENTROIDS,
     extract_district,
-    geocode_addresses_with_osm,
     geocode_taipei_addresses_with_house_number_dataset,
     jitter_coordinate,
 )
+from utils.nominatim_geocoder import geocode_addresses_with_osm
 
 
 TAIPEI_MEDICAL_DATASETS = [

@@ -5,7 +5,7 @@ from io import StringIO
 
 import pandas as pd
 import requests
-from utils.nominatim_geocoder import geocode_addresses_with_osm as geocode_osm_queries
+from utils.district_geocoder import DISTRICT_CENTROIDS
 from utils.taipei_address_geocoder import (
     TAIPEI_DISTRICT_CODE_TO_NAME,
     download_taipei_house_number_csv,
@@ -76,51 +76,6 @@ DISTRICTS = [
     "三芝區",
     "石門區",
 ]
-DISTRICT_CENTROIDS = {
-    "新北市三峽區": (121.413354, 24.893153),
-    "新北市三芝區": (121.517466, 25.232291),
-    "新北市三重區": (121.486201, 25.063365),
-    "新北市中和區": (121.499489, 24.990292),
-    "新北市五股區": (121.427650, 25.093573),
-    "新北市八里區": (121.407976, 25.11546),
-    "新北市土城區": (121.448033, 24.96548),
-    "新北市坪林區": (121.732409, 24.923358),
-    "新北市平溪區": (121.758048, 25.016928),
-    "新北市新店區": (121.533978, 24.934005),
-    "新北市新莊區": (121.428444, 25.032374),
-    "新北市板橋區": (121.453898, 25.002968),
-    "新北市林口區": (121.374907, 25.087785),
-    "新北市樹林區": (121.402972, 24.98462),
-    "新北市永和區": (121.517244, 25.004615),
-    "新北市汐止區": (121.654072, 25.074906),
-    "新北市泰山區": (121.407111, 25.059266),
-    "新北市淡水區": (121.479584, 25.187318),
-    "新北市深坑區": (121.622864, 24.995257),
-    "新北市烏來區": (121.576788, 24.802641),
-    "新北市瑞芳區": (121.830746, 25.098296),
-    "新北市石碇區": (121.649352, 24.953388),
-    "新北市石門區": (121.556422, 25.260311),
-    "新北市萬里區": (121.650864, 25.180892),
-    "新北市蘆洲區": (121.471517, 25.089373),
-    "新北市貢寮區": (121.905344, 25.030129),
-    "新北市金山區": (121.602872, 25.211978),
-    "新北市雙溪區": (121.830835, 24.99552),
-    "新北市鶯歌區": (121.34318, 24.958941),
-    "臺北市中山區": (121.541478, 25.074745),
-    "臺北市中正區": (121.521324, 25.024897),
-    "臺北市信義區": (121.575052, 25.029492),
-    "臺北市內湖區": (121.597575, 25.087621),
-    "臺北市北投區": (121.523576, 25.159071),
-    "臺北市南港區": (121.62122, 25.032316),
-    "臺北市士林區": (121.547793, 25.130161),
-    "臺北市大同區": (121.51117, 25.064),
-    "臺北市大安區": (121.547859, 25.022626),
-    "臺北市文山區": (121.572757, 24.986774),
-    "臺北市松山區": (121.561326, 25.060093),
-    "臺北市萬華區": (121.496474, 25.028308),
-}
-
-
 def extract_total_count(html):
     match = re.search(r"共\s*([0-9,]+)\s*筆", html)
     if not match:
@@ -158,78 +113,6 @@ def normalize_address_for_geocoding(address):
     text = re.sub(r"(\d+)(?:樓|F|f)(?:之\d+)?(?:[至~-]\d+(?:樓|F|f))?$", "", text)
     text = re.sub(r"\d+樓.*$", "", text)
     return text
-
-
-def extract_osm_query(address):
-    return extract_osm_query_candidates(address)[0]
-
-
-def extract_osm_query_candidates(address):
-    text = normalize_address_for_geocoding(address)
-    match = re.match(
-        r"(?P<city>臺北市|台北市|新北市)(?P<district>[^市縣]{2,3}區)(?P<rest>.+)",
-        text,
-    )
-    if not match:
-        return [text]
-
-    city = match.group("city")
-    district = match.group("district")
-    rest = match.group("rest")
-    rest_without_village = re.sub(r"^[^路街大道巷弄號]{2,4}里", "", rest)
-    candidates = []
-    road_match = re.match(
-        r"(.+?(?:路|街|大道)(?:[一二三四五六七八九十0-9]+段)?)",
-        rest_without_village,
-    )
-    if not road_match:
-        road_match = re.match(
-            r"(.+?(?:路|街|大道)(?:[一二三四五六七八九十0-9]+段)?)", rest
-        )
-    if road_match:
-        road = road_match.group(1)
-        candidates.extend(
-            [
-                f"{city}{district}{road}",
-                f"{road} {district} {city}",
-            ]
-        )
-        if "五股工業區" in rest:
-            industrial_road_match = re.search(
-                r"(五工(?:路|一路|二路|三路|四路|五路|六路))", rest
-            )
-            industrial_road = (
-                industrial_road_match.group(1) if industrial_road_match else road
-            )
-            candidates.extend(
-                [f"{industrial_road} 五股區 {city}", f"{city}五股區{industrial_road}"]
-            )
-    else:
-        place = re.split(r"[0-9一二三四五六七八九十]+(?:號|鄰|-|之)", rest)[0]
-        place = re.sub(r"(里|村)$", "", place)
-        if place:
-            candidates.extend(
-                [
-                    f"{city}{district}{place}",
-                    f"{place} {district} {city}",
-                ]
-            )
-        else:
-            candidates.append(f"{city}{district}")
-
-    return list(dict.fromkeys(candidates))
-
-
-def geocode_addresses_with_osm(addresses, delay_seconds=1.05):
-    return geocode_osm_queries(
-        addresses,
-        delay_seconds=delay_seconds,
-        user_agent=(
-            "TaipeiCityDashboardPrivate/food-safety-logistics "
-            "(https://github.com/taipei-dashboard)"
-        ),
-        query_builder=extract_osm_query_candidates,
-    )
 
 
 def jitter_coordinate(lng, lat, key, radius=0.00035):

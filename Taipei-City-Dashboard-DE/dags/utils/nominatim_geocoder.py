@@ -20,43 +20,72 @@ def normalize_address_text(address):
 
 def default_query_candidates(address):
     text = normalize_address_text(address)
+    text = text.replace("台北市", "臺北市")
+    text = re.sub(r"^(新北市[^市縣]{2,3}區)新北市[^市縣]{2,3}區", r"\1", text)
+    text = re.sub(r"^(臺北市[^市縣]{2,3}區)臺北市[^市縣]{2,3}區", r"\1", text)
+    text = re.sub(r"[~～].*$", "", text)
+    text = re.sub(r"([0-9一二三四五六七八九十]+)鄰", "", text)
+    text = re.sub(r"(\d+)(?:樓|F|f)(?:之\d+)?(?:[至~-]\d+(?:樓|F|f))?$", "", text)
+    text = re.sub(r"\d+樓.*$", "", text)
     if not text:
         return []
 
     candidates = [f"{text}, Taiwan"]
-    city_variants = [text]
-    if "台北市" in text:
-        city_variants.append(text.replace("台北市", "臺北市"))
-    if "臺北市" in text:
-        city_variants.append(text.replace("臺北市", "台北市"))
+    match = re.match(
+        r"(?P<city>臺北市|台北市|新北市)(?P<district>[^市縣]{2,3}區)(?P<rest>.+)",
+        text,
+    )
+    if not match:
+        return candidates
 
-    for variant in city_variants:
-        if f"{variant}, Taiwan" not in candidates:
-            candidates.append(f"{variant}, Taiwan")
-
-        match = re.match(
-            r"(?P<city>臺北市|台北市|新北市)(?P<district>[^市縣]{2,3}區)(?P<rest>.+)",
-            variant,
-        )
-        if not match:
-            continue
-
-        city = match.group("city")
-        district = match.group("district")
-        rest = re.sub(r"^[^路街大道巷弄號]{2,4}里", "", match.group("rest"))
+    city = match.group("city")
+    district = match.group("district")
+    rest = match.group("rest")
+    rest_without_village = re.sub(r"^[^路街大道巷弄號]{2,4}里", "", rest)
+    road_match = re.match(
+        r"(.+?(?:路|街|大道)(?:[一二三四五六七八九十0-9]+段)?)",
+        rest_without_village,
+    )
+    if not road_match:
         road_match = re.match(
-            r"(.+?(?:路|街|大道)(?:[一二三四五六七八九十0-9]+段)?)",
-            rest,
+            r"(.+?(?:路|街|大道)(?:[一二三四五六七八九十0-9]+段)?)", rest
         )
-        if road_match:
-            road = road_match.group(1)
+
+    if road_match:
+        road = road_match.group(1)
+        candidates.extend(
+            [
+                f"{city}{district}{road}",
+                f"{road} {district} {city}",
+                f"{road}, {district}, {city}, Taiwan",
+            ]
+        )
+        if "五股工業區" in rest:
+            industrial_road_match = re.search(
+                r"(五工(?:路|一路|二路|三路|四路|五路|六路))", rest
+            )
+            industrial_road = (
+                industrial_road_match.group(1) if industrial_road_match else road
+            )
             candidates.extend(
                 [
-                    f"{city}{district}{road}",
-                    f"{road} {district} {city}",
-                    f"{road}, {district}, {city}, Taiwan",
+                    f"{industrial_road} 五股區 {city}",
+                    f"{city}五股區{industrial_road}",
                 ]
             )
+    else:
+        place = re.split(r"[0-9一二三四五六七八九十]+(?:號|鄰|-|之)", rest)[0]
+        place = re.sub(r"(里|村)$", "", place)
+        if place:
+            candidates.extend(
+                [
+                    f"{city}{district}{place}",
+                    f"{place} {district} {city}",
+                    f"{place}, {district}, {city}, Taiwan",
+                ]
+            )
+        else:
+            candidates.append(f"{city}{district}")
 
     return list(dict.fromkeys(candidates))
 

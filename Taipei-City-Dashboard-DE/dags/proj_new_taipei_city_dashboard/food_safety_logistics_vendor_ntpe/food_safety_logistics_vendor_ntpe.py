@@ -7,7 +7,6 @@ def _transfer(**kwargs):
     from sqlalchemy import create_engine
     from utils.fda_food_vendor import (
         fetch_vendor_records,
-        geocode_addresses_with_osm,
         jitter_coordinate,
         normalize_address_for_geocoding,
         vendor_records_to_points,
@@ -16,6 +15,7 @@ def _transfer(**kwargs):
         save_geodataframe_to_postgresql,
         update_lasttime_in_data_to_dataset_info,
     )
+    from utils.nominatim_geocoder import geocode_addresses_with_osm
     from utils.transform_address import get_addr_xy_parallel
     from utils.transform_geometry import add_point_wkbgeometry_column_to_df
 
