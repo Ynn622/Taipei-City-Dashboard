@@ -270,27 +270,189 @@ INSERT INTO public.food_safety_market_tpe (
     vegetable_stalls, fruit_stalls, meat_stalls, seafood_stalls, poultry_stalls,
     grain_stalls, flower_stalls, grocery_stalls, general_merchandise_stalls,
     food_stalls, other_stalls, lng, lat, wkb_geometry
-) VALUES
-    ('2026-05-02 00:00:00+08', 'tpe-market-001', '臺北市', '中正區', '南門市場', '公有市場', '臺北市中正區羅斯福路一段8號', 120, 18, 12, 10, 8, 6, 5, 4, 10, 18, 24, 5, 121.5198, 25.0324, public.ST_SetSRID(public.ST_MakePoint(121.5198, 25.0324), 4326)),
-    ('2026-05-02 00:00:00+08', 'tpe-market-002', '臺北市', '萬華區', '環南市場', '公有市場', '臺北市萬華區環河南路二段245號', 450, 80, 55, 65, 70, 25, 20, 6, 32, 70, 35, 12, 121.4905, 25.0297, public.ST_SetSRID(public.ST_MakePoint(121.4905, 25.0297), 4326));
+) 
+WITH district_seed(district, row_count, lng, lat) AS (
+    VALUES
+        ('中正區', 3, 121.5198, 25.0324),
+        ('萬華區', 4, 121.4905, 25.0297),
+        ('大同區', 3, 121.5137, 25.0632),
+        ('中山區', 3, 121.5336, 25.0644),
+        ('松山區', 2, 121.5639, 25.0497),
+        ('大安區', 3, 121.5434, 25.0268),
+        ('信義區', 2, 121.5668, 25.0330),
+        ('士林區', 3, 121.5246, 25.0950),
+        ('北投區', 2, 121.5063, 25.1324),
+        ('內湖區', 2, 121.5889, 25.0697),
+        ('南港區', 1, 121.6070, 25.0547),
+        ('文山區', 2, 121.5705, 24.9898)
+),
+expanded AS (
+    SELECT
+        row_number() OVER (ORDER BY district, market_no) AS rn,
+        district,
+        market_no,
+        lng + (market_no * 0.0012) AS lng,
+        lat + (market_no * 0.0008) AS lat
+    FROM district_seed
+    CROSS JOIN LATERAL generate_series(1, row_count) AS market_no
+)
+SELECT
+    '2026-05-02 00:00:00+08',
+    'tpe-market-' || lpad(rn::text, 3, '0'),
+    '臺北市',
+    district,
+    district || '示範公有市場' || market_no,
+    '公有市場',
+    '臺北市' || district || '示範路' || market_no || '號',
+    80 + (rn % 9) * 25,
+    10 + (rn % 5) * 3,
+    8 + (rn % 4) * 3,
+    7 + (rn % 6) * 2,
+    6 + (rn % 5) * 2,
+    4 + (rn % 4),
+    3 + (rn % 4),
+    2 + (rn % 3),
+    5 + (rn % 5),
+    8 + (rn % 6) * 2,
+    12 + (rn % 7) * 3,
+    3 + (rn % 4),
+    lng,
+    lat,
+    public.ST_SetSRID(public.ST_MakePoint(lng, lat), 4326)
+FROM expanded;
 
 INSERT INTO public.food_safety_market_ntpe (
     data_time, market_id, name, city, city_code, district, district_code, address,
     phone, type, stall_total, produce_stalls, meat_stalls, seafood_stalls,
     poultry_stalls, grain_stalls, grocery_stalls, flower_stalls, food_stalls,
     general_merchandise_stalls, other_stalls, vacant_stalls, lng, lat, wkb_geometry
-) VALUES
-    ('2026-05-02 00:00:00+08', 'ntpe-market-001', '板橋黃石市場', '新北市', '65000', '板橋區', '65000010', '新北市板橋區宮口街37號', '', '公有市場', 180, 42, 25, 18, 10, 8, 12, 4, 30, 20, 8, 3, 121.4554, 25.0107, public.ST_SetSRID(public.ST_MakePoint(121.4554, 25.0107), 4326)),
-    ('2026-05-02 00:00:00+08', 'ntpe-market-002', '新店中央市場', '新北市', '65000', '新店區', '65000060', '新北市新店區中央路133巷', '', '公有市場', 95, 25, 12, 10, 5, 4, 8, 2, 16, 10, 2, 1, 121.5302, 24.9742, public.ST_SetSRID(public.ST_MakePoint(121.5302, 24.9742), 4326));
+) 
+WITH district_seed(district, district_code, row_count, lng, lat) AS (
+    VALUES
+        ('板橋區', '65000010', 4, 121.4554, 25.0107),
+        ('三重區', '65000020', 3, 121.4937, 25.0615),
+        ('中和區', '65000030', 3, 121.4980, 24.9994),
+        ('永和區', '65000040', 2, 121.5145, 25.0097),
+        ('新莊區', '65000050', 3, 121.4500, 25.0375),
+        ('新店區', '65000060', 3, 121.5302, 24.9742),
+        ('土城區', '65000070', 2, 121.4432, 24.9768),
+        ('蘆洲區', '65000080', 2, 121.4706, 25.0855),
+        ('汐止區', '65000090', 2, 121.6620, 25.0642),
+        ('淡水區', '65000100', 2, 121.4433, 25.1694),
+        ('樹林區', '65000110', 2, 121.4212, 24.9907),
+        ('三峽區', '65000120', 2, 121.3728, 24.9368),
+        ('林口區', '65000170', 2, 121.3880, 25.0790),
+        ('五股區', '65000150', 1, 121.4382, 25.0849),
+        ('瑞芳區', '65000130', 1, 121.8056, 25.1089),
+        ('金山區', '65000270', 1, 121.6364, 25.2219),
+        ('坪林區', '65000200', 1, 121.7113, 24.9358)
+),
+expanded AS (
+    SELECT
+        row_number() OVER (ORDER BY district, market_no) AS rn,
+        district,
+        district_code,
+        market_no,
+        lng + (market_no * 0.0011) AS lng,
+        lat + (market_no * 0.0007) AS lat
+    FROM district_seed
+    CROSS JOIN LATERAL generate_series(1, row_count) AS market_no
+)
+SELECT
+    '2026-05-02 00:00:00+08',
+    'ntpe-market-' || lpad(rn::text, 3, '0'),
+    district || '示範公有市場' || market_no,
+    '新北市',
+    '65000',
+    district,
+    district_code,
+    '新北市' || district || '示範路' || market_no || '號',
+    '',
+    '公有市場',
+    70 + (rn % 10) * 18,
+    14 + (rn % 6) * 3,
+    8 + (rn % 5) * 2,
+    7 + (rn % 4) * 2,
+    4 + (rn % 4),
+    3 + (rn % 4),
+    5 + (rn % 4),
+    2 + (rn % 3),
+    9 + (rn % 6) * 2,
+    7 + (rn % 5) * 2,
+    3 + (rn % 4),
+    rn % 5,
+    lng,
+    lat,
+    public.ST_SetSRID(public.ST_MakePoint(lng, lat), 4326)
+FROM expanded;
 
 INSERT INTO public.food_safety_logistics_vendor (
     data_time, city, normalized_city, district, vendor_category_code, vendor_category,
     source_row_no, source_city_row_no, registration_item, registration_no, name,
     address, geocoding_address, company_registration_name, source_page, point_type,
     location_method, osm_query, osm_display_name, taipei_house_key, lng, lat, wkb_geometry
-) VALUES
-    ('2026-05-02 00:00:00+08', '臺北市', '臺北市', '內湖區', '6', '物流業', 1, 1, '食品業者登錄', 'A-100000001-00000-0', '臺北食安物流股份有限公司', '臺北市內湖區行愛路100號', '臺北市內湖區行愛路100號', '臺北食安物流股份有限公司', 1, 'address', 'seed座標', NULL, NULL, NULL, 121.5802, 25.0646, public.ST_SetSRID(public.ST_MakePoint(121.5802, 25.0646), 4326)),
-    ('2026-05-02 00:00:00+08', '新北市', '新北市', '五股區', '6', '物流業', 2, 1, '食品業者登錄', 'F-100000002-00000-0', '新北低溫配送有限公司', '新北市五股區五權路50號', '新北市五股區五權路50號', '新北低溫配送有限公司', 1, 'address', 'seed座標', NULL, NULL, NULL, 121.4500, 25.0670, public.ST_SetSRID(public.ST_MakePoint(121.4500, 25.0670), 4326));
+) 
+WITH district_seed(city, district, row_count, lng, lat) AS (
+    VALUES
+        ('臺北市', '內湖區', 9, 121.5802, 25.0646),
+        ('臺北市', '南港區', 7, 121.6070, 25.0547),
+        ('臺北市', '中山區', 6, 121.5336, 25.0644),
+        ('臺北市', '大安區', 5, 121.5434, 25.0268),
+        ('臺北市', '士林區', 4, 121.5246, 25.0950),
+        ('臺北市', '萬華區', 4, 121.4905, 25.0297),
+        ('臺北市', '松山區', 3, 121.5639, 25.0497),
+        ('臺北市', '信義區', 3, 121.5668, 25.0330),
+        ('臺北市', '北投區', 3, 121.5063, 25.1324),
+        ('臺北市', '中正區', 2, 121.5198, 25.0324),
+        ('新北市', '五股區', 10, 121.4500, 25.0670),
+        ('新北市', '新莊區', 9, 121.4500, 25.0375),
+        ('新北市', '板橋區', 8, 121.4554, 25.0107),
+        ('新北市', '三重區', 7, 121.4937, 25.0615),
+        ('新北市', '中和區', 7, 121.4980, 24.9994),
+        ('新北市', '汐止區', 6, 121.6620, 25.0642),
+        ('新北市', '林口區', 5, 121.3880, 25.0790),
+        ('新北市', '土城區', 5, 121.4432, 24.9768),
+        ('新北市', '新店區', 4, 121.5302, 24.9742),
+        ('新北市', '蘆洲區', 4, 121.4706, 25.0855),
+        ('新北市', '樹林區', 3, 121.4212, 24.9907),
+        ('新北市', '淡水區', 3, 121.4433, 25.1694)
+),
+expanded AS (
+    SELECT
+        row_number() OVER (ORDER BY city, district, vendor_no) AS rn,
+        city,
+        district,
+        vendor_no,
+        lng + ((vendor_no % 5) * 0.0010) AS lng,
+        lat + ((vendor_no % 7) * 0.0007) AS lat
+    FROM district_seed
+    CROSS JOIN LATERAL generate_series(1, row_count) AS vendor_no
+)
+SELECT
+    '2026-05-02 00:00:00+08',
+    city,
+    city,
+    district,
+    '6',
+    '物流業',
+    rn,
+    vendor_no,
+    '食品業者登錄',
+    CASE city WHEN '臺北市' THEN 'A-' ELSE 'F-' END || lpad(rn::text, 9, '0') || '-00000-0',
+    district || '食品物流示範業者' || vendor_no,
+    city || district || '物流路' || vendor_no || '號',
+    city || district || '物流路' || vendor_no || '號',
+    district || '食品物流示範業者' || vendor_no,
+    CEIL(rn::numeric / 20)::integer,
+    'address',
+    'seed座標',
+    NULL,
+    NULL,
+    NULL,
+    lng,
+    lat,
+    public.ST_SetSRID(public.ST_MakePoint(lng, lat), 4326)
+FROM expanded;
 
 INSERT INTO public.food_safety_health_office_tpe (
     data_time, source_row_no, name, city, district, district_code, agency_type,
